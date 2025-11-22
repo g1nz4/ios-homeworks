@@ -2,7 +2,7 @@ import UIKit
 
 class PostViewController: UIViewController {
 
-    var postName: Post?
+    var postTitle: Post?
     
     private lazy var actionButton: UIButton = {
            let button = UIButton()
@@ -17,16 +17,20 @@ class PostViewController: UIViewController {
         super.viewDidLoad()
         
         view.backgroundColor = .systemYellow
-        self.title = postName?.title
+        self.title = postTitle?.title
         
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
+        setupRightBarButtonItem()
+    }
+    
+    private func setupRightBarButtonItem() {
+            navigationItem.rightBarButtonItem = UIBarButtonItem(
             title: "Info",
             style: .plain,
             target: self,
             action: #selector(buttonPressed(_:))
         )
     }
-   
+    
     @objc func buttonPressed(_ sender: UIButton) {
         let infoViewController = InfoViewController()
         

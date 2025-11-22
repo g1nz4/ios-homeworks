@@ -17,6 +17,10 @@ class InfoViewController: UIViewController {
         view.backgroundColor = .lightGray
         title = "info"
         
+        setupButton()
+    }
+
+    private func setupButton() {
         view.addSubview(actionButton)
       
         let safeAreaLayoutGuide = view.safeAreaLayoutGuide
@@ -35,7 +39,7 @@ class InfoViewController: UIViewController {
         
         actionButton.addTarget(self, action: #selector(buttonPressed(_:)), for: .touchUpInside)
     }
-
+    
     @objc func buttonPressed(_ sender: UIButton) {
         let alertController = UIAlertController(
             title: "Info",

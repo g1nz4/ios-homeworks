@@ -23,6 +23,10 @@ class FeedViewController: UIViewController {
         view.backgroundColor = .systemBackground
         title = "Лента"
         
+        setupActionButton()
+    }
+     
+    private func setupActionButton() {
         view.addSubview(actionButton)
                 
         let safeAreaLayoutGuide = view.safeAreaLayoutGuide
@@ -41,10 +45,10 @@ class FeedViewController: UIViewController {
                 
         actionButton.addTarget(self, action: #selector(buttonPressed(_:)), for: .touchUpInside)
     }
-            
+    
     @objc func buttonPressed(_ sender: UIButton) {
         let postViewController = PostViewController()
-        postViewController.postName = post
+        postViewController.postTitle = post
         navigationController?.pushViewController(postViewController, animated: true)
     }
 }
