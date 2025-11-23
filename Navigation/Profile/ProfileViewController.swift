@@ -12,11 +12,11 @@ class ProfileViewController: UIViewController {
         
         view.backgroundColor = .lightGray
         title = "Профиль"
-        
     }
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
-      
+        
         setupView()
     }
 
