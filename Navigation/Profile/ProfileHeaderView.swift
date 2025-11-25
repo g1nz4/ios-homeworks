@@ -30,8 +30,8 @@ class ProfileHeaderView: UIView {
     
     private lazy var statusLabel: UILabel = {
         let label = UILabel()
-        label.frame = CGRect(x: 142, y: 198, width: 220, height: 20)
-        label.text = "Hello World! I'm cat ios-developer :)"
+        label.frame = CGRect(x: 142, y: 160, width: 220, height: 20)
+        label.text = "I'm cat ios-developer :)"
         label.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         label.textColor = .gray
         label.translatesAutoresizingMaskIntoConstraints = true
@@ -56,6 +56,25 @@ class ProfileHeaderView: UIView {
         return button
     }()
     
+    private lazy var textField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "Введите текст..."
+        textField.layer.backgroundColor = UIColor.white.cgColor
+        textField.layer.borderWidth = 1.0
+        textField.layer.borderColor = UIColor.black.cgColor
+        textField.layer.cornerRadius = 12
+        textField.font = UIFont.systemFont(ofSize: 15, weight: .regular)
+        textField.textColor = .black
+        textField.frame = CGRect(x: 142, y: 181, width: 220, height: 40)
+        textField.clearButtonMode = .whileEditing
+        textField.translatesAutoresizingMaskIntoConstraints = true
+        textField.addTarget(self, action: #selector (statusTextChanged(_ :)), for: .editingChanged)
+
+        return textField
+    }()
+    
+    private var statusText: String = ""
+    
     override func layoutSubviews() {
         super.layoutSubviews()
         
@@ -63,12 +82,31 @@ class ProfileHeaderView: UIView {
     }
     
     private func setupViews() {
-        [avatarImageView, nameLabel, statusLabel, button].forEach(){
+        [avatarImageView, nameLabel, statusLabel, button, textField].forEach(){
             addSubview($0)
         }
     }
     
+    private func changeTitleButton() {
+           if textField.hasText == true {
+               button.setTitle("Set status", for: .normal)
+           } else {
+               button.setTitle("Show status", for: .normal)
+           }
+    }
+    
     @objc func buttonTaped(_ sender: UIButton) {
-        print("\(statusLabel.text ?? "No status")")
-        }
+        statusTextChanged(textField)
+
+              if statusText != "" {
+                  statusLabel.text = statusText
+              } else {
+                  print("\(statusLabel.text!)")
+              }
+    }
+
+    @objc func statusTextChanged(_ textField: UITextField) {
+        changeTitleButton()
+        self.statusText = textField.text!
+    }
 }
