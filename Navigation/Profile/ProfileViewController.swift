@@ -14,6 +14,8 @@ class ProfileViewController: UIViewController {
         button.layer.backgroundColor = UIColor.systemBlue.cgColor
         button.setTitleColor(.white, for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.layer.cornerRadius = 8.0
+        
         return button
     }()
     
@@ -40,7 +42,7 @@ class ProfileViewController: UIViewController {
             profileHeaderView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             profileHeaderView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             profileHeaderView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            profileHeaderView.heightAnchor.constraint(equalToConstant: 220)
+            profileHeaderView.heightAnchor.constraint(equalToConstant: 220.0)
             ]
         )
     }
