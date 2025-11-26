@@ -60,21 +60,47 @@ class FeedViewController: UIViewController {
         let safeAreaLayoutGuide = view.safeAreaLayoutGuide
         NSLayoutConstraint.activate(
             [
-            feedStackView.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 16.0),
-            feedStackView.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor, constant: -16.0),
-            feedStackView.centerYAnchor.constraint(equalTo: safeAreaLayoutGuide.centerYAnchor),
-            feedStackView.centerXAnchor.constraint(equalTo: safeAreaLayoutGuide.centerXAnchor),
-            
-            buttonStackViewOne.widthAnchor.constraint(equalToConstant: 350.0),
-            buttonStackViewOne.heightAnchor.constraint(equalToConstant: 50.0),
-            
-            buttonStackViewTwo.widthAnchor.constraint(equalToConstant: 350.0),
-            buttonStackViewTwo.heightAnchor.constraint(equalToConstant: 50.0),
+                feedStackView.leadingAnchor.constraint(
+                    equalTo: safeAreaLayoutGuide.leadingAnchor,
+                    constant: 16.0
+                ),
+                feedStackView.trailingAnchor.constraint(
+                    equalTo: safeAreaLayoutGuide.trailingAnchor,
+                    constant: -16.0
+                ),
+                feedStackView.centerYAnchor.constraint(
+                    equalTo: safeAreaLayoutGuide.centerYAnchor
+                ),
+                feedStackView.centerXAnchor.constraint(
+                    equalTo: safeAreaLayoutGuide.centerXAnchor
+                ),
+        
+                buttonStackViewOne.widthAnchor.constraint(
+                    equalToConstant: 350.0
+                ),
+                buttonStackViewOne.heightAnchor.constraint(
+                    equalToConstant: 50.0
+                ),
+                
+                buttonStackViewTwo.widthAnchor.constraint(
+                    equalToConstant: 350.0
+                ),
+                buttonStackViewTwo.heightAnchor.constraint(
+                    equalToConstant: 50.0
+                ),
             ]
         )
        
-        buttonStackViewOne.addTarget(self, action: #selector(buttonPressed(_:)), for: .touchUpInside)
-        buttonStackViewTwo.addTarget(self, action: #selector(buttonPressed(_:)), for: .touchUpInside)
+        buttonStackViewOne.addTarget(
+            self,
+            action: #selector(buttonPressed(_:)),
+            for: .touchUpInside
+        )
+        buttonStackViewTwo.addTarget(
+            self,
+            action: #selector(buttonPressed(_:)),
+            for: .touchUpInside
+        )
     }
     
     @objc func buttonPressed(_ sender: UIButton) {

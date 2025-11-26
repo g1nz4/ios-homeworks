@@ -39,10 +39,18 @@ class ProfileViewController: UIViewController {
         
         NSLayoutConstraint.activate(
             [
-            profileHeaderView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            profileHeaderView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            profileHeaderView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            profileHeaderView.heightAnchor.constraint(equalToConstant: 220.0)
+                profileHeaderView.topAnchor.constraint(
+                    equalTo: view.safeAreaLayoutGuide.topAnchor
+                ),
+                profileHeaderView.leadingAnchor.constraint(
+                    equalTo: view.leadingAnchor
+                ),
+                profileHeaderView.trailingAnchor.constraint(
+                    equalTo: view.trailingAnchor
+                ),
+                profileHeaderView.heightAnchor.constraint(
+                    equalToConstant: 220.0
+                )
             ]
         )
     }
@@ -53,10 +61,20 @@ class ProfileViewController: UIViewController {
         let safeAreaLayoutGuide = view.safeAreaLayoutGuide
         NSLayoutConstraint.activate(
             [
-            button.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor,constant: 0.0),
-            button.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor, constant: 0.0),
-            button.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor),
-            button.heightAnchor.constraint(equalToConstant: 50.0)
+                button.leadingAnchor.constraint(
+                    equalTo: safeAreaLayoutGuide.leadingAnchor,
+                    constant: 0.0
+                ),
+                button.trailingAnchor.constraint(
+                    equalTo: safeAreaLayoutGuide.trailingAnchor,
+                    constant: 0.0
+                ),
+                button.bottomAnchor.constraint(
+                    equalTo: safeAreaLayoutGuide.bottomAnchor
+                ),
+                button.heightAnchor.constraint(
+                    equalToConstant: 50.0
+                )
             ]
         )
     }
