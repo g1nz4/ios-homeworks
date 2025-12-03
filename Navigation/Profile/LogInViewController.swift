@@ -118,7 +118,6 @@ class LogInViewController: UIViewController {
         setupView()
         addSubviews()
         setupConstraints()
-        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -177,7 +176,7 @@ class LogInViewController: UIViewController {
             passwordTextField.topAnchor.constraint(equalTo: logInTextField.bottomAnchor),
             passwordTextField.heightAnchor.constraint(equalToConstant: 50.0),
             
-            logInStackView.topAnchor.constraint(equalTo: image.bottomAnchor, constant: 100.0),
+            logInStackView.topAnchor.constraint(equalTo: image.bottomAnchor, constant: 120.0),
             logInStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16.0),
             logInStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16.0),
             logInStackView.heightAnchor.constraint(equalToConstant: 100.0),
