@@ -26,6 +26,20 @@ class ProfileViewController: UIViewController {
         view.addSubview(tableView)
     }
     
+    private func tuneTableView() {
+           tableView.register(
+               PostTableViewCell.self,
+               forCellReuseIdentifier: PostTableViewCell.reuseId
+           )
+           tableView.register(
+               ProfileTableHeaderView.self,
+               forHeaderFooterViewReuseIdentifier: ProfileTableHeaderView.headerReuseId
+           )
+           tableView.sectionHeaderHeight = 220.0
+           tableView.dataSource = self
+           tableView.delegate = self
+    }
+    
     private func setupConstraints() {
         let sefeAreaGuide = view.safeAreaLayoutGuide
         
@@ -46,21 +60,6 @@ class ProfileViewController: UIViewController {
             ]
         )
     }
-    
-    private func tuneTableView() {
-           tableView.register(
-               PostTableViewCell.self,
-               forCellReuseIdentifier: PostTableViewCell.reuseId
-           )
-           
-           tableView.register(
-               ProfileTableHeaderView.self,
-               forHeaderFooterViewReuseIdentifier: ProfileTableHeaderView.headerReuseId
-           )
-           tableView.sectionHeaderHeight = 220.0
-           tableView.dataSource = self
-           tableView.delegate = self
-       }
 }
 
 extension ProfileViewController: UITableViewDataSource {
@@ -68,14 +67,19 @@ extension ProfileViewController: UITableViewDataSource {
     func numberOfSections(
         in tableView: UITableView
     ) -> Int {
-        1
+        2
     }
     
     func tableView(
         _ tableView: UITableView,
         numberOfRowsInSection section: Int
     ) -> Int {
-        posts.count
+        if section == 0 {
+            return 0
+        } else if section == 1 {
+            return posts.count
+        }
+        return 0
     }
     
     func tableView(
@@ -88,27 +92,38 @@ extension ProfileViewController: UITableViewDataSource {
         ) as? PostTableViewCell {
             let post = posts[indexPath.row]
             cell.setupCell(post: post)
-            
             return cell
         } else {
             return UITableViewCell()
         }
     }
 }
+
 extension ProfileViewController: UITableViewDelegate {
+    
+    func tableView(
+        _ tableView: UITableView,
+        heightForHeaderInSection section: Int
+    ) -> CGFloat {
+        if section == 0 {
+            tableView.sectionHeaderHeight = 220.0
+        } else if section == 1 {
+            tableView.sectionHeaderHeight = 0.0
+        }
+        return tableView.sectionHeaderHeight
+    }
     
     func tableView(
         _ tableView: UITableView,
         viewForHeaderInSection section: Int
     ) -> UIView? {
-        if section == 0 {
-            let view = tableView.dequeueReusableHeaderFooterView(
-                withIdentifier: ProfileTableHeaderView.headerReuseId
-            ) as! ProfileTableHeaderView
-            
-            return view
-        } else {
+        let view = tableView.dequeueReusableHeaderFooterView(
+            withIdentifier: ProfileTableHeaderView.headerReuseId
+        ) as! ProfileTableHeaderView
+        
+        guard section == 0 else {
             fatalError("could not dequeueReusableCell")
         }
+        return view
     }
 }
