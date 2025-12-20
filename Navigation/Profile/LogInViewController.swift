@@ -133,7 +133,7 @@ class LogInViewController: UIViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = ColorSet(hex: "#4885CC")
+        view.backgroundColor = .systemBackground
         navigationController?.navigationBar.isHidden = true
     }
     
@@ -149,49 +149,127 @@ class LogInViewController: UIViewController {
     private func setupConstraints() {
         let safeAreaGuide = view.safeAreaLayoutGuide
         
-        NSLayoutConstraint.activate([
-            scrollView.leadingAnchor.constraint(equalTo: safeAreaGuide.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: safeAreaGuide.trailingAnchor),
-            scrollView.topAnchor.constraint(equalTo: safeAreaGuide.topAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: safeAreaGuide.bottomAnchor),
-            
-            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-            
-            image.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 120.0),
-            image.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            image.widthAnchor.constraint(equalToConstant: 100.0),
-            image.heightAnchor.constraint(equalToConstant: 100.0),
-            
-            logInTextField.leadingAnchor.constraint(equalTo: logInStackView.leadingAnchor),
-            logInTextField.trailingAnchor.constraint(equalTo: logInStackView.trailingAnchor),
-            logInTextField.topAnchor.constraint(equalTo: logInStackView.topAnchor),
-            logInTextField.heightAnchor.constraint(equalToConstant: 50.0),
-            
-            passwordTextField.leadingAnchor.constraint(equalTo: logInStackView.leadingAnchor),
-            passwordTextField.trailingAnchor.constraint(equalTo: logInStackView.trailingAnchor),
-            passwordTextField.topAnchor.constraint(equalTo: logInTextField.bottomAnchor),
-            passwordTextField.heightAnchor.constraint(equalToConstant: 50.0),
-            
-            logInStackView.topAnchor.constraint(equalTo: image.bottomAnchor, constant: 120.0),
-            logInStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16.0),
-            logInStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16.0),
-            logInStackView.heightAnchor.constraint(equalToConstant: 100.0),
-            
-            divider.topAnchor.constraint(equalTo: logInStackView.topAnchor, constant: 50.0),
-            divider.leadingAnchor.constraint(equalTo: logInStackView.leadingAnchor),
-            divider.trailingAnchor.constraint(equalTo: logInStackView.trailingAnchor),
-            divider.heightAnchor.constraint(equalToConstant: 0.5),
-            
-            autorizationButton.topAnchor.constraint(equalTo: logInStackView.bottomAnchor, constant: 16.0),
-            autorizationButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16.0),
-            autorizationButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16.0),
-            autorizationButton.heightAnchor.constraint(equalToConstant: 50.0),
-            autorizationButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
-        ])
+        NSLayoutConstraint.activate(
+            [
+                scrollView.leadingAnchor.constraint(
+                    equalTo: safeAreaGuide.leadingAnchor
+                ),
+                scrollView.trailingAnchor.constraint(
+                    equalTo: safeAreaGuide.trailingAnchor
+                ),
+                scrollView.topAnchor.constraint(
+                    equalTo: safeAreaGuide.topAnchor
+                ),
+                scrollView.bottomAnchor.constraint(
+                    equalTo: safeAreaGuide.bottomAnchor
+                ),
+                
+                contentView.leadingAnchor.constraint(
+                    equalTo: scrollView.leadingAnchor
+                ),
+                contentView.trailingAnchor.constraint(
+                    equalTo: scrollView.trailingAnchor
+                ),
+                contentView.topAnchor.constraint(
+                    equalTo: scrollView.topAnchor
+                ),
+                contentView.bottomAnchor.constraint(
+                    equalTo: scrollView.bottomAnchor
+                ),
+                contentView.widthAnchor.constraint(
+                    equalTo: scrollView.widthAnchor
+                ),
+                
+                image.topAnchor.constraint(
+                    equalTo: contentView.topAnchor,
+                    constant: 120.0
+                ),
+                image.centerXAnchor.constraint(
+                    equalTo: contentView.centerXAnchor
+                ),
+                image.widthAnchor.constraint(
+                    equalToConstant: 100.0
+                ),
+                image.heightAnchor.constraint(
+                    equalToConstant: 100.0
+                ),
+                
+                logInTextField.leadingAnchor.constraint(
+                    equalTo: logInStackView.leadingAnchor
+                ),
+                logInTextField.trailingAnchor.constraint(
+                    equalTo: logInStackView.trailingAnchor
+                ),
+                logInTextField.topAnchor.constraint(
+                    equalTo: logInStackView.topAnchor
+                ),
+                logInTextField.heightAnchor.constraint(
+                    equalToConstant: 50.0
+                ),
+                
+                passwordTextField.leadingAnchor.constraint(
+                    equalTo: logInStackView.leadingAnchor
+                ),
+                passwordTextField.trailingAnchor.constraint(
+                    equalTo: logInStackView.trailingAnchor
+                ),
+                passwordTextField.topAnchor.constraint(
+                    equalTo: logInTextField.bottomAnchor
+                ),
+                passwordTextField.heightAnchor.constraint(
+                    equalToConstant: 50.0
+                ),
+                
+                logInStackView.topAnchor.constraint(
+                    equalTo: image.bottomAnchor,
+                    constant: 120.0
+                ),
+                logInStackView.leadingAnchor.constraint(
+                    equalTo: contentView.leadingAnchor,
+                    constant: 16.0
+                ),
+                logInStackView.trailingAnchor.constraint(
+                    equalTo: contentView.trailingAnchor,
+                    constant: -16.0
+                ),
+                logInStackView.heightAnchor.constraint(
+                    equalToConstant: 100.0
+                ),
+                
+                divider.topAnchor.constraint(
+                    equalTo: logInStackView.topAnchor,
+                    constant: 50.0
+                ),
+                divider.leadingAnchor.constraint(
+                    equalTo: logInStackView.leadingAnchor
+                ),
+                divider.trailingAnchor.constraint(
+                    equalTo: logInStackView.trailingAnchor
+                ),
+                divider.heightAnchor.constraint(
+                    equalToConstant: 0.5
+                ),
+                
+                autorizationButton.topAnchor.constraint(
+                    equalTo: logInStackView.bottomAnchor,
+                    constant: 16.0
+                ),
+                autorizationButton.leadingAnchor.constraint(
+                    equalTo: contentView.leadingAnchor,
+                    constant: 16.0
+                ),
+                autorizationButton.trailingAnchor.constraint(
+                    equalTo: contentView.trailingAnchor,
+                    constant: -16.0
+                ),
+                autorizationButton.heightAnchor.constraint(
+                    equalToConstant: 50.0
+                ),
+                autorizationButton.bottomAnchor.constraint(
+                    equalTo: contentView.bottomAnchor
+                )
+            ]
+        )
     }
     
     @objc func willShowKeyboard(_ notification: NSNotification) {
@@ -208,7 +286,14 @@ class LogInViewController: UIViewController {
             let profileViewController = ProfileViewController()
             navigationController?.pushViewController(profileViewController, animated: true)
         } else {
-            print("Заполните все поля")
+            logInStackView.layer.borderWidth = 1.0
+            logInStackView.layer.borderColor = UIColor.red.cgColor
+            divider.backgroundColor = .red
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                self.logInStackView.layer.borderColor = UIColor.lightGray.cgColor
+                self.divider.backgroundColor = .lightGray
+                self.logInStackView.layer.borderWidth = 0.5
+            }
         }
     }
     

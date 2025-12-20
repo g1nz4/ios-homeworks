@@ -76,6 +76,7 @@ class ProfileHeaderView: UIView {
         super.init(frame: frame)
         setupViews()
     }
+    
     required init?(coder: NSCoder) {
         fatalError()
     }
@@ -87,7 +88,7 @@ class ProfileHeaderView: UIView {
         }
         
         NSLayoutConstraint.activate(
-            [
+            [  
                 avatarImageView.topAnchor.constraint(
                     equalTo: safeAreaLayoutGuide.topAnchor,
                     constant: 16.0
