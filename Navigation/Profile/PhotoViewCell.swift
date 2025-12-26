@@ -1,15 +1,16 @@
 import UIKit
 
-class PhotosCollectionViewCell: UICollectionViewCell {
-   
-    static let reuseId = "PhotosCollectionViewCell"
+class PhotoViewCell: UICollectionViewCell {
     
-    private lazy var imageView: UIImageView = {
+    static let reuseId = "PhotoCollectionViewCell"
+    
+    private lazy var image: UIImageView = {
         let image = UIImageView()
-        image.contentMode = .scaleAspectFill
-        image.clipsToBounds = true
         image.translatesAutoresizingMaskIntoConstraints = false
-        
+        image.clipsToBounds = true
+        image.contentMode = .scaleAspectFill
+        image.layer.cornerRadius = 6.0
+    
         return image
     }()
     
@@ -24,21 +25,21 @@ class PhotosCollectionViewCell: UICollectionViewCell {
     }
     
     private func setupView() {
-        contentView.clipsToBounds = true
-        contentView.addSubview(imageView)
+       
+        contentView.addSubview(image)
         
         NSLayoutConstraint.activate(
             [
-                imageView.leadingAnchor.constraint(
+                image.leadingAnchor.constraint(
                     equalTo: contentView.leadingAnchor
                 ),
-                imageView.trailingAnchor.constraint(
+                image.trailingAnchor.constraint(
                     equalTo: contentView.trailingAnchor
                 ),
-                imageView.topAnchor.constraint(
+                image.topAnchor.constraint(
                     equalTo: contentView.topAnchor
                 ),
-                imageView.bottomAnchor.constraint(
+                image.bottomAnchor.constraint(
                     equalTo: contentView.bottomAnchor
                 )
             ]
@@ -46,6 +47,8 @@ class PhotosCollectionViewCell: UICollectionViewCell {
     }
     
     func setupCell(photo: Photo) {
-        imageView.image = UIImage(named: photo.imageName)
+        image.image = UIImage(named: photo.imageName)
     }
 }
+
+

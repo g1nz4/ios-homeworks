@@ -16,12 +16,12 @@ class ProfileViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+      
         addSubView()
         tuneTableView()
         setupConstraints()
     }
-   
+    
     private func addSubView() {
         view.addSubview(tableView)
     }
@@ -125,8 +125,8 @@ extension ProfileViewController: UITableViewDelegate {
         heightForHeaderInSection section: Int
     ) -> CGFloat {
         if section == 0 {
-            tableView.sectionHeaderHeight = 200.0
-            tableView.contentInset.top = -22.0
+            tableView.sectionHeaderHeight = 220.0
+            tableView.contentInset.top = -20.0
         }
         if section == 1 {
             tableView.sectionHeaderHeight = 0.0

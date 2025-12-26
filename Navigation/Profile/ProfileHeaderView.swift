@@ -173,6 +173,10 @@ class ProfileHeaderView: UIView {
                     equalTo: safeAreaLayoutGuide.trailingAnchor,
                     constant: -16.0
                 ),
+                setStatusButton.bottomAnchor.constraint(
+                    equalTo: safeAreaLayoutGuide.bottomAnchor,
+                    constant: -16.0
+                ),
                 setStatusButton.heightAnchor.constraint(
                     equalToConstant: 50.0
                 )
