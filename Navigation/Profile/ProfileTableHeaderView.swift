@@ -1,6 +1,6 @@
 import UIKit
 
-class ProfileTableHeaderView: UITableViewHeaderFooterView {
+final class ProfileTableHeaderView: UITableViewHeaderFooterView {
     
     static let headerReuseId = "HeaderReuseId"
     

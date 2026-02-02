@@ -1,6 +1,6 @@
 import UIKit
 
-class ProfileHeaderView: UIView {
+final class ProfileHeaderView: UIView {
     
     private lazy var contentView: UIView = {
         let view = UIView()

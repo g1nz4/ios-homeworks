@@ -1,6 +1,6 @@
 import UIKit
 
-class PhotosCollectionViewCell: UICollectionViewCell {
+final class PhotosCollectionViewCell: UICollectionViewCell {
    
     static let reuseId = "PhotosCollectionViewCell"
     

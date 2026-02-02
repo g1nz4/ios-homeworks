@@ -1,6 +1,6 @@
 import UIKit
 
-class InfoViewController: UIViewController {
+final class InfoViewController: UIViewController {
 
     private lazy var actionButton: UIButton = {
     let button = UIButton()

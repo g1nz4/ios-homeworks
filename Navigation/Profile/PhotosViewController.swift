@@ -1,6 +1,6 @@
 import UIKit
 
-class PhotosViewController: UIViewController {
+final class PhotosViewController: UIViewController {
     
     fileprivate lazy var photos: [Photo] = Photo.allPhotos()
     

@@ -4,7 +4,7 @@ struct Post {
     var title: String
 }
 
-class FeedViewController: UIViewController {
+final class FeedViewController: UIViewController {
 
     let post = Post(title:"Hello World!")
     

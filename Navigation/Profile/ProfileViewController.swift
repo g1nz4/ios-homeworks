@@ -1,6 +1,6 @@
 import UIKit
 
-class ProfileViewController: UIViewController {
+final class ProfileViewController: UIViewController {
     
     fileprivate let posts = MyPost.make()
 
@@ -50,21 +50,21 @@ class ProfileViewController: UIViewController {
     }
     
     private func setupConstraints() {
-        let sefeAreaGuide = view.safeAreaLayoutGuide
+        let safeAreaGuide = view.safeAreaLayoutGuide
      
         NSLayoutConstraint.activate(
             [
                 tableView.leadingAnchor.constraint(
-                    equalTo: sefeAreaGuide.leadingAnchor
+                    equalTo: safeAreaGuide.leadingAnchor
                 ),
                 tableView.trailingAnchor.constraint(
-                    equalTo: sefeAreaGuide.trailingAnchor
+                    equalTo: safeAreaGuide.trailingAnchor
                 ),
                 tableView.topAnchor.constraint(
-                    equalTo: sefeAreaGuide.topAnchor
+                    equalTo: safeAreaGuide.topAnchor
                 ),
                 tableView.bottomAnchor.constraint(
-                    equalTo: sefeAreaGuide.bottomAnchor
+                    equalTo: safeAreaGuide.bottomAnchor
                 )
             ]
         )
