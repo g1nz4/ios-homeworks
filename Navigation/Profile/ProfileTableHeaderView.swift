@@ -8,6 +8,7 @@ class ProfileTableHeaderView: UITableViewHeaderFooterView {
         let profileHeader = ProfileHeaderView()
         profileHeader.translatesAutoresizingMaskIntoConstraints = false
         profileHeader.backgroundColor = UIColor(named: "Color")
+        
         return profileHeader
     }()
     
@@ -40,7 +41,7 @@ class ProfileTableHeaderView: UITableViewHeaderFooterView {
                 ),
                 profileHeaderView.centerXAnchor.constraint(
                     equalTo: contentView.centerXAnchor
-                ),
+                )
             ]
         )
     }

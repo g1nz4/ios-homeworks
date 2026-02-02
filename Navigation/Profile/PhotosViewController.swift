@@ -23,7 +23,7 @@ class PhotosViewController: UIViewController {
         collection.delegate = self
         collection.register(
             PhotosCollectionViewCell.self,
-            forCellWithReuseIdentifier: PhotosCollectionViewCell.reusedId
+            forCellWithReuseIdentifier: PhotosCollectionViewCell.reuseId
         )
         return collection
     }()
@@ -33,7 +33,7 @@ class PhotosViewController: UIViewController {
 
         title =  "Photo Gallery"
         view.addSubview(photoGalerry)
-        setupConctraints()
+        setupConstraints()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -54,7 +54,7 @@ class PhotosViewController: UIViewController {
         navigationController?.navigationBar.isHidden = true
     }
         
-    private func setupConctraints() {
+    private func setupConstraints() {
         NSLayoutConstraint.activate(
             [
                 photoGalerry.topAnchor.constraint(
@@ -76,12 +76,22 @@ class PhotosViewController: UIViewController {
 
 extension PhotosViewController: UICollectionViewDataSource {
    
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    func collectionView(
+        _ collectionView: UICollectionView,
+        numberOfItemsInSection section: Int
+    ) -> Int {
         photos.count
     }
     
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PhotosCollectionViewCell.reusedId, for: indexPath) as! PhotosCollectionViewCell
+    func collectionView(
+        _ collectionView: UICollectionView,
+        cellForItemAt indexPath: IndexPath
+    ) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(
+            withReuseIdentifier: PhotosCollectionViewCell.reuseId,
+            for: indexPath
+        ) as! PhotosCollectionViewCell
+        
         let photo = photos[indexPath.row]
         cell.setupCell(photo: photo)
                         
@@ -91,8 +101,11 @@ extension PhotosViewController: UICollectionViewDataSource {
 
 extension PhotosViewController: UICollectionViewDelegateFlowLayout {
 
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        collectionView.reloadData()
+    func collectionView(
+        _ collectionView: UICollectionView,
+        layout collectionViewLayout: UICollectionViewLayout,
+        sizeForItemAt indexPath: IndexPath
+    ) -> CGSize {
         let iteritemSpacing = (collectionView.collectionViewLayout as? UICollectionViewFlowLayout)?.minimumInteritemSpacing ?? 0.0
         let width = collectionView.bounds.width - (Constant.itemsInRow - 1) * iteritemSpacing - 16.0
         let itemWidth = floor(width / Constant.itemsInRow)
@@ -100,7 +113,12 @@ extension PhotosViewController: UICollectionViewDelegateFlowLayout {
         return CGSize(width: itemWidth, height: itemWidth)
     }
         
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+    func collectionView(
+        _ collectionView: UICollectionView,
+        layout collectionViewLayout: UICollectionViewLayout,
+        insetForSectionAt section: Int
+    ) -> UIEdgeInsets {
+        
         UIEdgeInsets(
             top: 8.0,
             left: 8.0,

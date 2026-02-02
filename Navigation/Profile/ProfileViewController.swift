@@ -3,7 +3,7 @@ import UIKit
 class ProfileViewController: UIViewController {
     
     fileprivate let posts = MyPost.make()
-    
+
     private lazy var tableView: UITableView = {
         let table = UITableView.init(
             frame: .zero,
@@ -16,12 +16,17 @@ class ProfileViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+      
         addSubView()
         tuneTableView()
         setupConstraints()
     }
-   
+    
+    override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+        
+    }
+    
     private func addSubView() {
         view.addSubview(tableView)
     }
@@ -46,7 +51,7 @@ class ProfileViewController: UIViewController {
     
     private func setupConstraints() {
         let sefeAreaGuide = view.safeAreaLayoutGuide
-        
+     
         NSLayoutConstraint.activate(
             [
                 tableView.leadingAnchor.constraint(
@@ -60,10 +65,11 @@ class ProfileViewController: UIViewController {
                 ),
                 tableView.bottomAnchor.constraint(
                     equalTo: sefeAreaGuide.bottomAnchor
-                ),
+                )
             ]
         )
     }
+    
 }
 
 extension ProfileViewController: UITableViewDataSource {
@@ -124,17 +130,16 @@ extension ProfileViewController: UITableViewDelegate {
         _ tableView: UITableView,
         heightForHeaderInSection section: Int
     ) -> CGFloat {
-        if section == 0 {
-            tableView.sectionHeaderHeight = 200.0
-            tableView.contentInset.top = -22.0
+        var sectionHeaderHeight = tableView.sectionHeaderHeight
+        
+        guard section == 0 else {
+            sectionHeaderHeight = 0.0
+            return sectionHeaderHeight
         }
-        if section == 1 {
-            tableView.sectionHeaderHeight = 0.0
-        }
-        if section == 2 {
-            tableView.sectionHeaderHeight = 0.0
-        }
-        return tableView.sectionHeaderHeight
+        sectionHeaderHeight = 220.0
+        tableView.contentInset.top = -20.0
+        
+        return sectionHeaderHeight
     }
     
     func tableView(
@@ -147,6 +152,7 @@ extension ProfileViewController: UITableViewDelegate {
         guard section == 0 else {
             return UITableViewHeaderFooterView()
         }
+       
         return view
     }
     
@@ -160,3 +166,4 @@ extension ProfileViewController: UITableViewDelegate {
         }
     }
 }
+
