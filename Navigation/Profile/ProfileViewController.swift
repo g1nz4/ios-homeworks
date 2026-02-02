@@ -25,7 +25,11 @@ final class ProfileViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
             super.viewDidAppear(animated)
-        
+        #if DEBUG
+            view.backgroundColor = UIColor.systemYellow
+        #else
+            view.backgroundColor = UIColor.systemCyan
+        #endif
     }
     
     private func addSubView() {
