@@ -1,16 +1,16 @@
 import UIKit
 
-struct MyPost {
-    let author: String
-    let image: String
-    let description: String
-    var likes: Int
-    var views: Int
+public struct MyPost {
+    public let author: String
+    public let image: String
+    public let description: String
+    public var likes: Int
+    public var views: Int
 }
 
 extension MyPost {
     
-    static func make() -> [MyPost] {
+    public static func make() -> [MyPost] {
         [
             MyPost(
                 author: "Cat Developer",
