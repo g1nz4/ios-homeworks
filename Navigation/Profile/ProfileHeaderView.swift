@@ -1,4 +1,5 @@
 import UIKit
+import SnapKit
 
 final class ProfileHeaderView: UIView {
     
@@ -122,144 +123,72 @@ final class ProfileHeaderView: UIView {
     }
     
     private func addSubviews() {
-        [contentView, fullNameLabel, statusLabel, setStatusButton, statusTextField, avatarImageView, backgroundView, closeSymbol].forEach() {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-           addSubview($0)
-        }
+        [
+            contentView,
+            fullNameLabel,
+            statusLabel,
+            setStatusButton,
+            statusTextField,
+            avatarImageView,
+            backgroundView,
+            closeSymbol
+        ].forEach() { addSubview($0) }
     }
     
     private func setupConstraints() {
-        let safeAreaGuide = self.safeAreaLayoutGuide
+        contentView.snp.makeConstraints { make in
+            make.edges.equalTo(self.safeAreaLayoutGuide)
+        }
         
-        NSLayoutConstraint.activate(
-            [
-                contentView.leadingAnchor.constraint(
-                    equalTo: safeAreaGuide.leadingAnchor
-                ),
-                contentView.trailingAnchor.constraint(
-                    equalTo: safeAreaGuide.trailingAnchor
-                ),
-                contentView.topAnchor.constraint(
-                    equalTo: safeAreaGuide.topAnchor
-                ),
-                contentView.bottomAnchor.constraint(
-                    equalTo: safeAreaGuide.bottomAnchor
-                ),
-                avatarImageView.topAnchor.constraint(
-                    equalTo:  contentView.topAnchor,
-                    constant: 16.0
-                ),
-                avatarImageView.leadingAnchor.constraint(
-                    equalTo:  contentView.leadingAnchor,
-                    constant: 16.0
-                ),
-                avatarImageView.heightAnchor.constraint(
-                    equalToConstant: 120.0
-                ),
-                avatarImageView.widthAnchor.constraint(
-                    equalToConstant: 120.0
-                ),
-                fullNameLabel.topAnchor.constraint(
-                    equalTo: contentView.topAnchor,
-                    constant: 27.0
-                ),
-                fullNameLabel.leadingAnchor.constraint(
-                    equalTo: contentView.leadingAnchor,
-                    constant: 152.0
-                ),
-                fullNameLabel.trailingAnchor.constraint(
-                    equalTo: contentView.trailingAnchor,
-                    constant: -16.0
-                ),
-                fullNameLabel.heightAnchor.constraint(
-                    equalToConstant: 20.0
-                ),
-                fullNameLabel.widthAnchor.constraint(
-                    equalToConstant: 220.0
-                ),
-                statusLabel.topAnchor.constraint(
-                    equalTo: contentView.topAnchor,
-                    constant: 70.0
-                ),
-                statusLabel.leadingAnchor.constraint(
-                    equalTo: contentView.leadingAnchor,
-                    constant: 152.0
-                ),
-                statusLabel.trailingAnchor.constraint(
-                    equalTo: contentView.trailingAnchor,
-                    constant: -16.0
-                ),
-                statusLabel.heightAnchor.constraint(
-                    equalToConstant: 20.0
-                ),
-                statusLabel.widthAnchor.constraint(
-                    equalToConstant: 220.0
-                ),
-                statusTextField.topAnchor.constraint(
-                    equalTo: contentView.topAnchor,
-                    constant: 100.0
-                ),
-                statusTextField.leadingAnchor.constraint(
-                    equalTo: contentView.leadingAnchor,
-                    constant: 152.0
-                ),
-                statusTextField.trailingAnchor.constraint(
-                    equalTo: contentView.trailingAnchor,
-                    constant: -16.0
-                ),
-                statusTextField.heightAnchor.constraint(
-                    equalToConstant: 40.0
-                ),
-                statusTextField.widthAnchor.constraint(
-                    equalToConstant: 220.0
-                ),
-                setStatusButton.topAnchor.constraint(
-                    equalTo: contentView.topAnchor,
-                    constant: 152.0
-                ),
-                setStatusButton.leadingAnchor.constraint(
-                    equalTo: contentView.leadingAnchor,
-                    constant: 16.0
-                ),
-                setStatusButton.trailingAnchor.constraint(
-                    equalTo: contentView.trailingAnchor,
-                    constant: -16.0
-                ),
-                setStatusButton.heightAnchor.constraint(
-                    equalToConstant: 50.0
-                ),
-                setStatusButton.bottomAnchor.constraint(
-                    equalTo: contentView.bottomAnchor,
-                    constant: -16.0
-                ),
-                backgroundView.leadingAnchor.constraint(
-                    equalTo: contentView.leadingAnchor
-                ),
-                backgroundView.trailingAnchor.constraint(
-                    equalTo: contentView.trailingAnchor
-                ),
-                backgroundView.topAnchor.constraint(
-                    equalTo: contentView.topAnchor
-                ),
-                backgroundView.heightAnchor.constraint(
-                    equalToConstant: 800.0
-                ),
-                closeSymbol.topAnchor.constraint(
-                    equalTo: backgroundView.topAnchor,
-                    constant: 16.0
-                ),
-                closeSymbol.trailingAnchor.constraint(
-                    equalTo: backgroundView.trailingAnchor,
-                    constant: -16.0
-                ),
-                closeSymbol.widthAnchor.constraint(
-                    equalToConstant: 50.0
-                ),
-                closeSymbol.heightAnchor.constraint(
-                    equalToConstant: 50.0
-                )
-            ]
-        )
+        avatarImageView.snp.makeConstraints { make in
+            make.top.equalTo(contentView.snp.top).offset(16.0)
+            make.leading.equalTo(contentView.snp.leading).offset(16.0)
+            make.size.equalTo(CGSize(width: 120.0, height: 120.0))
+        }
+        
+        fullNameLabel.snp.makeConstraints { make in
+            make.top.equalTo(contentView.snp.top).offset(27.0)
+            make.leading.equalTo(contentView.snp.leading).offset(152.0)
+            make.trailing.equalTo(contentView.snp.trailing).inset(16.0)
+            make.height.equalTo(20.0)
+            make.width.equalTo(220.0)
+        }
+        
+        statusLabel.snp.makeConstraints { make in
+            make.top.equalTo(contentView.snp.top).offset(70.0)
+            make.leading.equalTo(contentView.snp.leading).offset(152.0)
+            make.trailing.equalTo(contentView.snp.trailing).inset(16.0)
+            make.height.equalTo(20.0)
+            make.width.equalTo(220.0)
+        }
+
+        statusTextField.snp.makeConstraints { make in
+            make.top.equalTo(contentView.snp.top).offset(100.0)
+            make.leading.equalTo(contentView.snp.leading).offset(152.0)
+            make.trailing.equalTo(contentView.snp.trailing).inset(16.0)
+            make.height.equalTo(40.0)
+            make.width.equalTo(220.0)
+        }
+        
+        setStatusButton.snp.makeConstraints { make in
+            make.top.equalTo(contentView.snp.top).offset(152.0)
+            make.leading.equalTo(contentView.snp.leading).offset(16.0)
+            make.trailing.equalTo(contentView.snp.trailing).inset(16.0)
+            make.bottom.equalTo(contentView.snp.bottom).inset(16.0)
+            make.height.equalTo(50.0)
+        }
+
+        backgroundView.snp.makeConstraints { make in
+            make.leading.trailing.top.equalTo(contentView)
+            make.height.equalTo(800.0)
+           
+        }
+        
+        closeSymbol.snp.makeConstraints { make in
+            make.top.equalTo(backgroundView.snp.top).offset(16.0)
+            make.trailing.equalTo(backgroundView.snp.trailing).inset(16.0)
+            make.size.equalTo(CGSize(width: 50.0, height: 50.0))
+        }
     }
     
     private func launchAnimation() {

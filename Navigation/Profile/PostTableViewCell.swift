@@ -72,15 +72,6 @@ final class PostTableViewCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setupCell(post: MyPost) {
-        postCellImage.image = UIImage(named: post.image)
-        postCellAuthor.text = post.author
-        postCellDescription.text = post.description
-        postCellLikes.text = "Likes: \(post.likes)"
-        postCellVievvs.text = "Views: \(post.views)"
-        
-    }
-    
     private func addSubViews() {
         contentView.addSubview(postCellView)
         postCellView.addSubview(postCellImage)
@@ -181,6 +172,15 @@ final class PostTableViewCell: UITableViewCell {
             ]
         )
     }
+    
+    func setupCell(post: MyPost) {
+        postCellAuthor.text = post.author
+        postCellDescription.text = post.description
+        postCellLikes.text = "Likes: \(post.likes)"
+        postCellVievvs.text = "Views: \(post.views)"
+    }
+    
+    func processedImage(_ image: UIImage?) {
+        postCellImage.image = image
+    }
 }
-
-
