@@ -1,6 +1,15 @@
 {
-  "originHash" : "dd27728c8848101841bd8d45243ef43144e233aa3767c82656934b73447347b8",
+  "originHash" : "688d834f35c2fbcbc411b959c08471c9a97fb052546075725bca39b9e2884be2",
   "pins" : [
+    {
+      "identity" : "iosintpackage",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/TrueMax/iOSIntPackage",
+      "state" : {
+        "revision" : "78a55cb525e18e6bb05886bd5572cfa67ee7b47e",
+        "version" : "2.2.0"
+      }
+    },
     {
       "identity" : "snapkit",
       "kind" : "remoteSourceControl",
