@@ -18,9 +18,8 @@ final class ProfileViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
       
-        addSubView()
         tuneTableView()
-        setupConstraints()
+        setupTableView()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -30,10 +29,6 @@ final class ProfileViewController: UIViewController {
         #else
             view.backgroundColor = UIColor.systemCyan
         #endif
-    }
-    
-    private func addSubView() {
-        view.addSubview(tableView)
     }
     
     private func tuneTableView() {
@@ -52,24 +47,28 @@ final class ProfileViewController: UIViewController {
            tableView.backgroundColor = UIColor(named: "Color")
            tableView.dataSource = self
            tableView.delegate = self
+        
+           let header = ProfileTableHeaderView()
+           header.frame = CGRect(x: 0, y: 0, width: tableView.bounds.width, height: 220)
+           tableView.tableHeaderView = header
     }
     
-    private func setupConstraints() {
-        let safeAreaGuide = view.safeAreaLayoutGuide
-     
+    private func setupTableView() {
+        view.addSubview(tableView)
+        
         NSLayoutConstraint.activate(
             [
                 tableView.leadingAnchor.constraint(
-                    equalTo: safeAreaGuide.leadingAnchor
+                    equalTo: view.safeAreaLayoutGuide.leadingAnchor
                 ),
                 tableView.trailingAnchor.constraint(
-                    equalTo: safeAreaGuide.trailingAnchor
+                    equalTo: view.safeAreaLayoutGuide.trailingAnchor
                 ),
                 tableView.topAnchor.constraint(
-                    equalTo: safeAreaGuide.topAnchor
+                    equalTo: view.safeAreaLayoutGuide.topAnchor
                 ),
                 tableView.bottomAnchor.constraint(
-                    equalTo: safeAreaGuide.bottomAnchor
+                    equalTo: view.safeAreaLayoutGuide.bottomAnchor
                 )
             ]
         )
@@ -130,36 +129,6 @@ extension ProfileViewController: UITableViewDataSource {
 }
     
 extension ProfileViewController: UITableViewDelegate {
-    
-    func tableView(
-        _ tableView: UITableView,
-        heightForHeaderInSection section: Int
-    ) -> CGFloat {
-        var sectionHeaderHeight = tableView.sectionHeaderHeight
-        
-        guard section == 0 else {
-            sectionHeaderHeight = 0.0
-            return sectionHeaderHeight
-        }
-        sectionHeaderHeight = 220.0
-        tableView.contentInset.top = -20.0
-        
-        return sectionHeaderHeight
-    }
-    
-    func tableView(
-        _ tableView: UITableView,
-        viewForHeaderInSection section: Int
-    ) -> UIView? {
-        let view = tableView.dequeueReusableHeaderFooterView(
-            withIdentifier: ProfileTableHeaderView.headerReuseId
-        ) as! ProfileTableHeaderView
-        guard section == 0 else {
-            return UITableViewHeaderFooterView()
-        }
-       
-        return view
-    }
     
     func tableView(
         _ tableView: UITableView,
