@@ -4,7 +4,7 @@ import StorageService
 final class ProfileViewController: UIViewController {
     
     fileprivate let posts = MyPost.make()
-
+    
     private lazy var tableView: UITableView = {
         let table = UITableView.init(
             frame: .zero,
@@ -14,6 +14,8 @@ final class ProfileViewController: UIViewController {
  
         return table
     }()
+    
+    var user: User?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,25 +34,24 @@ final class ProfileViewController: UIViewController {
     }
     
     private func tuneTableView() {
-           tableView.register(
-               PostTableViewCell.self,
-               forCellReuseIdentifier: PostTableViewCell.reuseId
-           )
-           tableView.register(
-               ProfileTableHeaderView.self,
-               forHeaderFooterViewReuseIdentifier: ProfileTableHeaderView.headerReuseId
-           )
-           tableView.register(
-               PhotosTableViewCell.self,
-               forCellReuseIdentifier: PhotosTableViewCell.reuseId
-           )
-           tableView.backgroundColor = UIColor(named: "Color")
-           tableView.dataSource = self
-           tableView.delegate = self
-        
-           let header = ProfileTableHeaderView()
-           header.frame = CGRect(x: 0, y: 0, width: tableView.bounds.width, height: 220)
-           tableView.tableHeaderView = header
+       tableView.register(
+           PostTableViewCell.self,
+           forCellReuseIdentifier: PostTableViewCell.reuseId
+       )
+       tableView.register(
+           PhotosTableViewCell.self,
+           forCellReuseIdentifier: PhotosTableViewCell.reuseId
+       )
+       tableView.backgroundColor = UIColor(named: "Color")
+       tableView.dataSource = self
+       tableView.delegate = self
+    
+       let header = ProfileHeaderView()
+       header.frame = CGRect(x: 0, y: 0, width: tableView.bounds.width, height: 220)
+       if let user = user {
+           header.configureUI(user: user)
+       }
+       tableView.tableHeaderView = header
     }
     
     private func setupTableView() {

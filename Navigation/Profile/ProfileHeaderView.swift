@@ -32,7 +32,6 @@ final class ProfileHeaderView: UIView {
     
     private lazy var avatarImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(named: "SimpleCat")
         imageView.layer.borderWidth = 3.0
         imageView.layer.borderColor = (UIColor(white: 242.0/255.0, alpha: 1.0)).cgColor
         imageView.contentMode = .scaleAspectFit
@@ -54,7 +53,6 @@ final class ProfileHeaderView: UIView {
     
     private lazy var fullNameLabel: UILabel = {
         let label = UILabel()
-        label.text = "Cat Developer"
         label.textColor = .black
         label.font = UIFont.systemFont(ofSize: 18.0, weight: .bold)
         label.textColor = .black
@@ -64,7 +62,6 @@ final class ProfileHeaderView: UIView {
     
     private lazy var statusLabel: UILabel = {
         let label = UILabel()
-        label.text = "I'm cat ios-developer :)"
         label.font = UIFont.systemFont(ofSize: 14.0, weight: .regular)
         label.textColor = .systemGray
         
@@ -262,6 +259,12 @@ final class ProfileHeaderView: UIView {
         )
     }
     
+    func configureUI(user: User) {
+        avatarImageView.image = user.avatar
+        fullNameLabel.text = user.fullName
+        statusLabel.text = user.status
+    }
+    
     private func launchAnimation() {
         let centerOrigin = avatarImageView.center
 
@@ -359,5 +362,3 @@ final class ProfileHeaderView: UIView {
         reverseAnimation()
     }
 }
-    
-    
