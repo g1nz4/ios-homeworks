@@ -9,35 +9,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         willConnectTo session: UISceneSession,
         options connectionOptions: UIScene.ConnectionOptions
     ) {
-        
         guard let scene = (scene as? UIWindowScene) else { return }
            
         let window = UIWindow(windowScene: scene)
-           
-        let tabBarController =  UITabBarController()
-        
-        let feedViewController = FeedViewController()
         let logInViewController = LogInViewController()
-        
-        let feedNavigationController = UINavigationController(rootViewController: feedViewController)
-        let profileNavigationController = UINavigationController(rootViewController: logInViewController)
-        
-        feedNavigationController.tabBarItem = UITabBarItem(
-            title: "Лента",
-            image: UIImage(systemName: "book"),
-            tag: 0
-        )
-        profileNavigationController.tabBarItem = UITabBarItem(
-            title: "Профиль",
-            image: UIImage(systemName: "person.crop.circle"),
-            tag: 1
-        )
-        
-        let controllers = [feedNavigationController, profileNavigationController]
-        tabBarController.viewControllers = controllers
-        tabBarController.selectedIndex = 1
-        
-        window.rootViewController = tabBarController
+        logInViewController.loginDelegate = LoginInspector()
+        let loginNavigationController = UINavigationController(rootViewController: logInViewController)
+   
+        window.rootViewController = loginNavigationController
         window.makeKeyAndVisible()
                 
         self.window = window
