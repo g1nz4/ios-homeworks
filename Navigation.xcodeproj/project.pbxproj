@@ -45,16 +45,8 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				Profile/MyPost.swift,
 			);
 			target = EA83E2C52EC8D5610050B4EE /* Navigation */;
-		};
-		EA9CC2DB2F30DFB400D2B0A5 /* Exceptions for "Navigation" folder in "StorageService" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Profile/MyPost.swift,
-			);
-			target = EA9CC29D2F30DE9600D2B0A5 /* StorageService */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -63,7 +55,6 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				EA83E2D82EC8D5630050B4EE /* Exceptions for "Navigation" folder in "Navigation" target */,
-				EA9CC2DB2F30DFB400D2B0A5 /* Exceptions for "Navigation" folder in "StorageService" target */,
 			);
 			path = Navigation;
 			sourceTree = "<group>";

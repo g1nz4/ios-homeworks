@@ -1,18 +1,22 @@
+import Foundation
 import UIKit
 
 protocol UserService {
+    var user: User { get set }
     func getUser(login: String) -> User?
 }
 
 final class CurrentUserService: UserService {
     
-    private let user: User
+    var user: User
     
     init(user: User) {
         self.user = user
     }
-    
+}
+
+extension UserService {
     func getUser(login: String) -> User? {
-        login == user.login ? user : nil
+        return login == user.login ? user : nil
     }
 }
