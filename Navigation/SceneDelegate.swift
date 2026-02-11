@@ -13,7 +13,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
            
         let window = UIWindow(windowScene: scene)
         let logInViewController = LogInViewController()
-        logInViewController.loginDelegate = LoginInspector()
+        let loginFactory = MyLoginFactory()
+        logInViewController.loginDelegate = loginFactory.makeLoginInspector()
         let loginNavigationController = UINavigationController(rootViewController: logInViewController)
    
         window.rootViewController = loginNavigationController
