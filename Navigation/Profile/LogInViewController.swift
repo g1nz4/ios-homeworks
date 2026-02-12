@@ -125,7 +125,7 @@ final class LogInViewController: UIViewController {
         setupView()
         addSubviews()
         setupConstraints()
-        setupUserService()
+        autoAuthorization()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -303,17 +303,21 @@ final class LogInViewController: UIViewController {
         notificationCenter.removeObserver(self)
     }
     
-    private func setupUserService() {
+    private func autoAuthorization() {
         #if DEBUG
         userService = TestUserService()
+        logInTextField.text = "test"
+        passwordTextField.text = "debug"
         #else
         let currentUser = User(
-                login: "cat",
-                fullName: "Cat Developer",
-                avatar: UIImage(named: "SimpleCat") ?? UIImage(),
-                status: "I'm cat ios-developer :)"
-            )
+            login: "cat",
+            fullName: "Cat Developer",
+            avatar: UIImage(named: "SimpleCat") ?? UIImage(),
+            status: "I'm cat ios-developer :)"
+        )
         userService = CurrentUserService(user: currentUser)
+        logInTextField.text = "cat"
+        passwordTextField.text = "qwerty"
         #endif
     }
     
@@ -326,6 +330,7 @@ final class LogInViewController: UIViewController {
      
        window.rootViewController = tabBarController
     }
+    
     private func showAlert(message: String) {
             let alert = UIAlertController(
                 title: nil,
