@@ -1,8 +1,13 @@
 import UIKit
+import iOSIntPackage
 
 final class PhotosViewController: UIViewController {
     
     fileprivate lazy var photos: [Photo] = Photo.allPhotos()
+   
+    private var isSubscribed = false
+    private var publishedImages: [UIImage] = []
+    private let imagePublisherFacade = ImagePublisherFacade()
     
     private enum Constant {
         static let spacing: CGFloat = 8.0
@@ -30,30 +35,33 @@ final class PhotosViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
         title =  "Photo Gallery"
         view.addSubview(photoGalerry)
         setupConstraints()
+        subscribeToImagePublisherIfNeeded()
+        startImagesPublishing()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        navigationController?.navigationBar.isHidden = false
+        navigationController?.setNavigationBarHidden(false, animated: true)
     }
     
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
-        
         photoGalerry.collectionViewLayout.invalidateLayout()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        
-        navigationController?.navigationBar.isHidden = true
+        navigationController?.setNavigationBarHidden(true, animated: true)
     }
-        
+    
+    deinit {
+        imagePublisherFacade.removeSubscription(for: PhotosViewController.self as! ImageLibrarySubscriber)
+        isSubscribed = false
+    }
+    
     private func setupConstraints() {
         NSLayoutConstraint.activate(
             [
@@ -72,6 +80,26 @@ final class PhotosViewController: UIViewController {
             ]
         )
     }
+    
+    private func subscribeToImagePublisherIfNeeded() {
+        guard !isSubscribed else { return }
+        imagePublisherFacade.subscribe(self)
+        isSubscribed = true
+    }
+    
+    private func startImagesPublishing() {
+        imagePublisherFacade.addImagesWithTimer(
+            time: 0.5,
+            repeat: 20,
+            userImages: photos.compactMap { UIImage(named: $0.imageName) }
+        )
+    }
+    
+    private func updatePhotosFromPublishedImages() {
+        DispatchQueue.main.async { [weak self] in
+            self?.photoGalerry.reloadData()
+        }
+    }
 }
 
 extension PhotosViewController: UICollectionViewDataSource {
@@ -80,7 +108,7 @@ extension PhotosViewController: UICollectionViewDataSource {
         _ collectionView: UICollectionView,
         numberOfItemsInSection section: Int
     ) -> Int {
-        photos.count
+        publishedImages.count
     }
     
     func collectionView(
@@ -125,5 +153,18 @@ extension PhotosViewController: UICollectionViewDelegateFlowLayout {
             bottom: 8.0,
             right: 8.0
         )
+    }
+}
+
+extension PhotosViewController: ImageLibrarySubscriber {
+    func receive(images: [UIImage]) {
+        publishedImages = images
+        updatePhotosFromPublishedImages()
+        guard !images.isEmpty else { return }
+            photoGalerry.reloadData()
+            let indexPath = IndexPath(item: images.count - 1, section: 0)
+            DispatchQueue.main.async { [weak self] in
+                self?.photoGalerry.scrollToItem(at: indexPath, at: .bottom, animated: true)
+            }
     }
 }
