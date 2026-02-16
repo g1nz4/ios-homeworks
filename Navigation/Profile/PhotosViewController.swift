@@ -160,5 +160,11 @@ extension PhotosViewController: ImageLibrarySubscriber {
     func receive(images: [UIImage]) {
         publishedImages = images
         updatePhotosFromPublishedImages()
+        guard !images.isEmpty else { return }
+            photoGalerry.reloadData()
+            let indexPath = IndexPath(item: images.count - 1, section: 0)
+            DispatchQueue.main.async { [weak self] in
+                self?.photoGalerry.scrollToItem(at: indexPath, at: .bottom, animated: true)
+            }
     }
 }

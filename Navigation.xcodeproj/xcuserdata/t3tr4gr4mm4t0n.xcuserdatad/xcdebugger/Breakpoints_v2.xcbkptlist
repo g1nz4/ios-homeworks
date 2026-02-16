@@ -29,6 +29,15 @@
             continueAfterRunningActions = "No"
             symbolName = "*0x1972f2928">
             <Locations>
+               <Location
+                  uuid = "E3374C58-729C-4DDC-8BCF-44B399FEE68F - 2f6d10146e6ba328"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "protocol witness for Swift.LosslessStringConvertible.init(Swift.String) -&gt; Swift.Optional&lt;&#x3c4;_0_0&gt; in conformance Swift._UInt128 : Swift.LosslessStringConvertible in Swift"
+                  moduleName = "libswiftCore.dylib"
+                  usesParentBreakpointCondition = "Yes">
+               </Location>
             </Locations>
          </BreakpointContent>
       </BreakpointProxy>
