@@ -2,25 +2,23 @@ import UIKit
 
 final class InfoViewController: UIViewController {
 
-    private lazy var actionButton: UIButton = {
-    let button = UIButton()
-    button.translatesAutoresizingMaskIntoConstraints = false
-    button.setTitle("Посмотреть", for: .normal)
-    button.setTitleColor(.systemIndigo, for: .normal)
-
-    return button
-    }()
+    private lazy var actionButton = CustomButton(
+        title: "Посмотреть",
+        titleColor: .systemIndigo,
+        backgroundColor: .lightGray
+    ){ [weak self] in
+        self?.buttonPressed()
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         view.backgroundColor = .lightGray
         title = "info"
-        
         setupButton()
     }
 
     private func setupButton() {
+        actionButton.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(actionButton)
       
         let safeAreaLayoutGuide = view.safeAreaLayoutGuide
@@ -42,15 +40,9 @@ final class InfoViewController: UIViewController {
                 )
             ]
         )
-        
-        actionButton.addTarget(
-            self,
-            action: #selector(buttonPressed(_:)),
-            for: .touchUpInside
-        )
     }
     
-    @objc func buttonPressed(_ sender: UIButton) {
+    private func buttonPressed() {
         let alertController = UIAlertController(
             title: "Info",
             message: "Hello World!",

@@ -8,39 +8,27 @@ final class FeedViewController: UIViewController {
 
     let post = Post(title:"Hello World!")
     
-    private lazy var buttonStackViewOne: UIButton = {
-        let button = UIButton()
-        button.setTitle("Перейти", for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.layer.backgroundColor = UIColor.systemBlue.cgColor
-        button.layer.cornerRadius = 8.0
-        
-        return button
-    }()
+    private lazy var buttonOne = CustomButton(
+        title: "Перейти"
+    ){ [weak self] in
+        self?.buttonPressed()
+    }
     
-    private lazy var buttonStackViewTwo: UIButton = {
-        let button = UIButton()
-        button.setTitle("Открыть", for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.layer.backgroundColor = UIColor.systemBlue.cgColor
-        button.layer.cornerRadius = 8.0
-        
-        return button
-    }()
-    
+    private lazy var buttonTwo = CustomButton(
+        title: "Открыть"
+    ){ [weak self] in
+        self?.buttonPressed()
+    }
+
     private lazy var feedStackView: UIStackView = { [unowned self] in
         let stackView = UIStackView()
-            
-        stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.clipsToBounds = true
-            
         stackView.axis = .vertical
         stackView.distribution = .fillProportionally
         stackView.alignment = .center
         stackView.spacing = 10.0
-                
-        stackView.addArrangedSubview(self.buttonStackViewOne)
-        stackView.addArrangedSubview(self.buttonStackViewTwo)
+        stackView.addArrangedSubview(self.buttonOne)
+        stackView.addArrangedSubview(self.buttonTwo)
             
         return stackView
     }()
@@ -55,6 +43,9 @@ final class FeedViewController: UIViewController {
     }
      
     private func setupActionButton() {
+        [buttonOne, buttonTwo, feedStackView].forEach() {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
         view.addSubview(feedStackView)
         
         let safeAreaLayoutGuide = view.safeAreaLayoutGuide
@@ -75,35 +66,24 @@ final class FeedViewController: UIViewController {
                     equalTo: safeAreaLayoutGuide.centerXAnchor
                 ),
         
-                buttonStackViewOne.widthAnchor.constraint(
+                buttonOne.widthAnchor.constraint(
                     equalToConstant: 350.0
                 ),
-                buttonStackViewOne.heightAnchor.constraint(
+                buttonOne.heightAnchor.constraint(
                     equalToConstant: 50.0
                 ),
                 
-                buttonStackViewTwo.widthAnchor.constraint(
+                buttonTwo.widthAnchor.constraint(
                     equalToConstant: 350.0
                 ),
-                buttonStackViewTwo.heightAnchor.constraint(
+                buttonTwo.heightAnchor.constraint(
                     equalToConstant: 50.0
                 ),
             ]
         )
-       
-        buttonStackViewOne.addTarget(
-            self,
-            action: #selector(buttonPressed(_:)),
-            for: .touchUpInside
-        )
-        buttonStackViewTwo.addTarget(
-            self,
-            action: #selector(buttonPressed(_:)),
-            for: .touchUpInside
-        )
     }
     
-    @objc func buttonPressed(_ sender: UIButton) {
+    private func buttonPressed() {
         let postViewController = PostViewController()
         postViewController.postTitle = post
         navigationController?.pushViewController(postViewController, animated: true)
