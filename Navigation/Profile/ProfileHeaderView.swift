@@ -68,23 +68,12 @@ final class ProfileHeaderView: UIView {
         return label
     }()
     
-    private lazy var setStatusButton: UIButton = {
-        let button = UIButton()
-        button.setTitle("Show Status", for: .normal)
-        button.layer.shadowOffset = CGSize(width: 4.0, height: 4.0)
-        button.layer.shadowRadius = 4.0
-        button.layer.shadowColor = UIColor.black.cgColor
-        button.layer.shadowOpacity = 0.7
-        button.layer.backgroundColor = UIColor.systemBlue.cgColor
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 4.0
-        button.addTarget(
-            self,
-            action: #selector (buttonTaped(_ :)),
-            for: .touchUpInside)
-        
-        return button
-    }()
+    private lazy var setStatusButton = CustomButton(
+        title: "Show status",
+        cornerRadius: 4.0
+    ){ [weak self] in
+        self?.buttonTaped()
+    }
     
     private lazy var statusTextField: UITextField = {
         let textField = UITextField()
@@ -339,7 +328,7 @@ final class ProfileHeaderView: UIView {
         }
     }
     
-    @objc func buttonTaped(_ sender: UIButton) {
+    private func buttonTaped() {
         statusTextChanged(statusTextField)
             
         if statusText != "" {

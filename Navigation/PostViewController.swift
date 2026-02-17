@@ -2,8 +2,6 @@ import UIKit
 
 final class PostViewController: UIViewController {
 
-    var postTitle: Post?
-    
     private lazy var actionButton: UIButton = {
            let button = UIButton()
            button.translatesAutoresizingMaskIntoConstraints = false
@@ -15,10 +13,7 @@ final class PostViewController: UIViewController {
    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         view.backgroundColor = .systemYellow
-        self.title = postTitle?.title
-        
         setupRightBarButtonItem()
     }
     
