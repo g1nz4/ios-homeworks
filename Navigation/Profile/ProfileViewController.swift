@@ -3,7 +3,8 @@ import StorageService
 
 final class ProfileViewController: UIViewController {
     
-    fileprivate let posts = MyPost.make()
+    private let viewModel: ProfileViewModel
+    private let headerView = ProfileHeaderView()
     
     private lazy var tableView: UITableView = {
         let table = UITableView.init(
@@ -15,13 +16,22 @@ final class ProfileViewController: UIViewController {
         return table
     }()
     
-    var user: User?
+    init(viewModel: ProfileViewModelInput & ProfileViewModelOutput) {
+        self.viewModel = viewModel as! ProfileViewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationController?.setNavigationBarHidden(true, animated: true)
-        tuneTableView()
         setupTableView()
+        tuneTableView()
+        bindingViewModel()
+        viewModel.viewDidLoad()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -31,27 +41,6 @@ final class ProfileViewController: UIViewController {
         #else
             view.backgroundColor = UIColor.systemCyan
         #endif
-    }
-    
-    private func tuneTableView() {
-       tableView.register(
-           PostTableViewCell.self,
-           forCellReuseIdentifier: PostTableViewCell.reuseId
-       )
-       tableView.register(
-           PhotosTableViewCell.self,
-           forCellReuseIdentifier: PhotosTableViewCell.reuseId
-       )
-       tableView.backgroundColor = UIColor(named: "Color")
-       tableView.dataSource = self
-       tableView.delegate = self
-    
-       let header = ProfileHeaderView()
-       header.frame = CGRect(x: 0, y: 0, width: tableView.bounds.width, height: 220)
-       if let user = user {
-           header.configureUI(user: user)
-       }
-       tableView.tableHeaderView = header
     }
     
     private func setupTableView() {
@@ -75,6 +64,42 @@ final class ProfileViewController: UIViewController {
         )
     }
     
+    private func tuneTableView() {
+       tableView.register(
+           PostTableViewCell.self,
+           forCellReuseIdentifier: PostTableViewCell.reuseId
+       )
+       tableView.register(
+           PhotosTableViewCell.self,
+           forCellReuseIdentifier: PhotosTableViewCell.reuseId
+       )
+       tableView.backgroundColor = UIColor(named: "Color")
+       tableView.dataSource = self
+       tableView.delegate = self
+    
+       headerView.frame = CGRect(
+        x: 0,
+        y: 0,
+        width: tableView.bounds.width,
+        height: 220
+       )
+       tableView.tableHeaderView = headerView
+    }
+    
+    private func bindingViewModel() {
+        viewModel.updateHeader = { [weak self] user in
+            self?.headerView.configureUI(user: user)
+        }
+        viewModel.updatePosts = { [weak self] in
+            self?.tableView.reloadData()
+        }
+        viewModel.showPhotos = { [weak self] in
+            let photosViewController = PhotosViewController()
+            self?.navigationController?.pushViewController(photosViewController, animated: true)
+        }
+                
+    }
+    
 }
 
 extension ProfileViewController: UITableViewDataSource {
@@ -82,28 +107,22 @@ extension ProfileViewController: UITableViewDataSource {
     func numberOfSections(
         in tableView: UITableView
     ) -> Int {
-        3
+        viewModel.numberOfSections()
     }
     
     func tableView(
         _ tableView: UITableView,
         numberOfRowsInSection section: Int
     ) -> Int {
-        if section == 0 {
-            return 0
-        } else if section == 1 {
-            return 1
-        } else if section == 2 {
-            return posts.count
-        }
-        return 0
+        viewModel.numberOfRows(in: section)
     }
     
     func tableView(
         _ tableView: UITableView,
         cellForRowAt indexPath: IndexPath
     ) -> UITableViewCell {
-        if indexPath.section == 1  {
+        switch viewModel.cellType(for: indexPath.section) {
+        case .photos:
             guard let cell = tableView.dequeueReusableCell(
                 withIdentifier: PhotosTableViewCell.reuseId,
                 for: indexPath
@@ -111,21 +130,20 @@ extension ProfileViewController: UITableViewDataSource {
                 fatalError("could not dequeueReusableCell")
             }
                 return cell
-            }
-        
-         if indexPath.section == 2 {
+        case .posts:
             guard let cell = tableView.dequeueReusableCell(
                 withIdentifier: PostTableViewCell.reuseId,
                 for: indexPath
             ) as? PostTableViewCell else {
                 fatalError("could not dequeueReusableCell")
             }
-            let post = posts[indexPath.row]
-            cell.setupCell(post: post)
+            let post = viewModel.post(section: indexPath.section, row: indexPath.row)
+            cell.setupCell(post: post!)
            
             return cell
+        case .none:
+            return UITableViewCell()
         }
-         return UITableViewCell()
     }
 }
     
@@ -135,10 +153,8 @@ extension ProfileViewController: UITableViewDelegate {
         _ tableView: UITableView,
         didSelectRowAt indexPath: IndexPath
     ) {
-        if indexPath.section == 1 && indexPath.row == 0 {
-            navigationController?.pushViewController(PhotosViewController(), animated: true)
-            tableView.deselectRow(at: indexPath, animated: true)
-        }
+        viewModel.didSelectRow(section: indexPath.section, row: indexPath.row)
+        tableView.deselectRow(at: indexPath, animated: true)
     }
 }
 

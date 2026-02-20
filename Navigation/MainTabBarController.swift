@@ -22,9 +22,9 @@ final class MainTabBarController: UITabBarController {
             image: UIImage(systemName: "book"),
             tag: 0
         )
-
-        let profileViewController = ProfileViewController()
-        profileViewController.user = user
+        
+        let profileViewModel = ProfileViewModel(user: user)
+        let profileViewController = ProfileViewController(viewModel: profileViewModel)
         let profileViewNavigationController = UINavigationController(rootViewController: profileViewController)
         profileViewController.tabBarItem = UITabBarItem(
             title: "Профиль",
