@@ -34,6 +34,17 @@ final class LogInViewController: UIViewController {
         return image
     }()
     
+    private lazy var errorLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .red
+        label.font = UIFont.systemFont(ofSize: 16.0)
+        label.text = "Неверный логин или пароль"
+        label.isHidden = true
+        label.translatesAutoresizingMaskIntoConstraints = false
+        
+        return label
+    }()
+    
     private lazy var logInTextField: UITextField = { [unowned self] in
         let textField = UITextField()
         textField.textColor = .black
@@ -112,12 +123,15 @@ final class LogInViewController: UIViewController {
         return stackView
     }()
     
+    private var userService: UserService?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupView()
         addSubviews()
         setupConstraints()
+        setupUserService()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -141,7 +155,7 @@ final class LogInViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
-        [image, logInStackView, autorizationButton].forEach() {
+        [image, errorLabel, logInStackView, autorizationButton].forEach() {
             contentView.addSubview($0)
         }
     }
@@ -194,6 +208,18 @@ final class LogInViewController: UIViewController {
                     equalToConstant: 100.0
                 ),
                 
+                errorLabel.topAnchor.constraint(
+                    equalTo: image.bottomAnchor,
+                    constant: 100.0
+                ),
+                errorLabel.leadingAnchor.constraint(
+                    equalTo: contentView.leadingAnchor,
+                    constant: 17.0
+                ),
+                errorLabel.trailingAnchor.constraint(
+                    equalTo: contentView.trailingAnchor,
+                    constant: -16.0
+                ),
                 logInTextField.leadingAnchor.constraint(
                     equalTo: logInStackView.leadingAnchor
                 ),
@@ -272,31 +298,6 @@ final class LogInViewController: UIViewController {
         )
     }
     
-    @objc func willShowKeyboard(_ notification: NSNotification) {
-        let keyboardHeight = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue.height
-        scrollView.contentInset.bottom += keyboardHeight ?? 0.0
-    }
-    
-    @objc func willHideKeyboard(_ notification: NSNotification) {
-        scrollView.contentInset.bottom = 0.0
-    }
-    
-    @objc func didTapAutorizationButton(_ sender: UIButton) {
-        if logInTextField.text != "" && passwordTextField.text != "" {
-            let profileViewController = ProfileViewController()
-            navigationController?.pushViewController(profileViewController, animated: true)
-        } else {
-            logInStackView.layer.borderWidth = 1.0
-            logInStackView.layer.borderColor = UIColor.red.cgColor
-            divider.backgroundColor = .red
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                self.logInStackView.layer.borderColor = UIColor.lightGray.cgColor
-                self.divider.backgroundColor = .lightGray
-                self.logInStackView.layer.borderWidth = 0.5
-            }
-        }
-    }
-    
     private func setupKeyboardObservers() {
         let notificationCenter = NotificationCenter.default
         
@@ -318,6 +319,49 @@ final class LogInViewController: UIViewController {
     private func removeKeyboardObservers() {
         let notificationCenter = NotificationCenter.default
         notificationCenter.removeObserver(self)
+    }
+    
+    private func setupUserService() {
+        #if DEBUG
+        userService = TestUserService()
+        #else
+        let currentUser = User(
+                login: "cat",
+                fullName: "Cat Developer",
+                avatar: UIImage(named: "SimpleCat") ?? UIImage(),
+                status: "I'm cat ios-developer :)"
+            )
+        userService = CurrentUserService(user: currentUser)
+        #endif
+    }
+    
+    @objc func didTapAutorizationButton(_ sender: UIButton) {
+        guard let loginText = logInTextField.text, !loginText.isEmpty,
+              let passwordText = passwordTextField.text, !passwordText.isEmpty else {
+            errorLabel.isHidden = false
+            return
+        }
+        guard let user = userService?.getUser(login: loginText) else {
+            errorLabel.isHidden = false
+            return
+        }
+        errorLabel.isHidden = true
+        let profileViewController = ProfileViewController()
+        profileViewController.user = user
+        navigationController?.pushViewController(profileViewController, animated: true)
+        if var viewControllers = navigationController?.viewControllers {
+            viewControllers.removeAll(where: { $0 is LogInViewController })
+            navigationController?.viewControllers = viewControllers
+        }
+    }
+    
+    @objc func willShowKeyboard(_ notification: NSNotification) {
+        let keyboardHeight = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue.height
+        scrollView.contentInset.bottom += keyboardHeight ?? 0.0
+    }
+    
+    @objc func willHideKeyboard(_ notification: NSNotification) {
+        scrollView.contentInset.bottom = 0.0
     }
 }
    
