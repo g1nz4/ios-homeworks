@@ -1,5 +1,9 @@
 import UIKit
 
+protocol LogInViewControllerDelegate {
+    func check(login: String, password: String) -> Bool
+}
+
 final class LogInViewController: UIViewController {
     
     private lazy var scrollView: UIScrollView = {
@@ -32,17 +36,6 @@ final class LogInViewController: UIViewController {
         image.translatesAutoresizingMaskIntoConstraints = false
         
         return image
-    }()
-    
-    private lazy var errorLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = .red
-        label.font = UIFont.systemFont(ofSize: 16.0)
-        label.text = "Неверный логин или пароль"
-        label.isHidden = true
-        label.translatesAutoresizingMaskIntoConstraints = false
-        
-        return label
     }()
     
     private lazy var logInTextField: UITextField = { [unowned self] in
@@ -124,6 +117,7 @@ final class LogInViewController: UIViewController {
     }()
     
     private var userService: UserService?
+    var loginDelegate: LogInViewControllerDelegate?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -131,7 +125,7 @@ final class LogInViewController: UIViewController {
         setupView()
         addSubviews()
         setupConstraints()
-        setupUserService()
+        autoAuthorization()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -155,7 +149,7 @@ final class LogInViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
-        [image, errorLabel, logInStackView, autorizationButton].forEach() {
+        [image, logInStackView, autorizationButton].forEach() {
             contentView.addSubview($0)
         }
     }
@@ -208,18 +202,6 @@ final class LogInViewController: UIViewController {
                     equalToConstant: 100.0
                 ),
                 
-                errorLabel.topAnchor.constraint(
-                    equalTo: image.bottomAnchor,
-                    constant: 100.0
-                ),
-                errorLabel.leadingAnchor.constraint(
-                    equalTo: contentView.leadingAnchor,
-                    constant: 17.0
-                ),
-                errorLabel.trailingAnchor.constraint(
-                    equalTo: contentView.trailingAnchor,
-                    constant: -16.0
-                ),
                 logInTextField.leadingAnchor.constraint(
                     equalTo: logInStackView.leadingAnchor
                 ),
@@ -321,38 +303,60 @@ final class LogInViewController: UIViewController {
         notificationCenter.removeObserver(self)
     }
     
-    private func setupUserService() {
+    private func autoAuthorization() {
         #if DEBUG
         userService = TestUserService()
+        logInTextField.text = "test"
+        passwordTextField.text = "debug"
         #else
         let currentUser = User(
-                login: "cat",
-                fullName: "Cat Developer",
-                avatar: UIImage(named: "SimpleCat") ?? UIImage(),
-                status: "I'm cat ios-developer :)"
-            )
+            login: "cat",
+            fullName: "Cat Developer",
+            avatar: UIImage(named: "SimpleCat") ?? UIImage(),
+            status: "I'm cat ios-developer :)"
+        )
         userService = CurrentUserService(user: currentUser)
+        logInTextField.text = "cat"
+        passwordTextField.text = "qwerty"
         #endif
+    }
+    
+    private func showMainTabBar(user: User) {
+        let tabBarController = MainTabBarController(user: user)
+        
+        guard let windowScene = view.window?.windowScene,
+              let sceneDelegate = windowScene.delegate as? SceneDelegate,
+              let window = sceneDelegate.window else { return }
+     
+       window.rootViewController = tabBarController
+    }
+    
+    private func showAlert(message: String) {
+            let alert = UIAlertController(
+                title: nil,
+                message: message,
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alert, animated: true)
     }
     
     @objc func didTapAutorizationButton(_ sender: UIButton) {
         guard let loginText = logInTextField.text, !loginText.isEmpty,
               let passwordText = passwordTextField.text, !passwordText.isEmpty else {
-            errorLabel.isHidden = false
-            return
+                showAlert(message: "Введите логин и пароль")
+                return
         }
         guard let user = userService?.getUser(login: loginText) else {
-            errorLabel.isHidden = false
+            showAlert(message: "Пользователь не найден")
             return
         }
-        errorLabel.isHidden = true
-        let profileViewController = ProfileViewController()
-        profileViewController.user = user
-        navigationController?.pushViewController(profileViewController, animated: true)
-        if var viewControllers = navigationController?.viewControllers {
-            viewControllers.removeAll(where: { $0 is LogInViewController })
-            navigationController?.viewControllers = viewControllers
+        guard let validation = loginDelegate?.check(login: loginText, password: passwordText),
+            validation else {
+            showAlert(message: "Неверный пароль")
+            return
         }
+        showMainTabBar(user: user)
     }
     
     @objc func willShowKeyboard(_ notification: NSNotification) {
