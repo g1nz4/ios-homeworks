@@ -118,6 +118,7 @@ final class LogInViewController: UIViewController {
     
     private var userService: UserService?
     var loginDelegate: LogInViewControllerDelegate?
+    var loginSuccess: ((User) -> Void)?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -321,16 +322,6 @@ final class LogInViewController: UIViewController {
         #endif
     }
     
-    private func showMainTabBar(user: User) {
-        let tabBarController = MainTabBarController(user: user)
-        
-        guard let windowScene = view.window?.windowScene,
-              let sceneDelegate = windowScene.delegate as? SceneDelegate,
-              let window = sceneDelegate.window else { return }
-     
-       window.rootViewController = tabBarController
-    }
-    
     private func showAlert(message: String) {
             let alert = UIAlertController(
                 title: nil,
@@ -356,7 +347,7 @@ final class LogInViewController: UIViewController {
             showAlert(message: "Неверный пароль")
             return
         }
-        showMainTabBar(user: user)
+        loginSuccess?(user)
     }
     
     @objc func willShowKeyboard(_ notification: NSNotification) {

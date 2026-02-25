@@ -3,6 +3,7 @@ import UIKit
 final class FeedView: UIView {
     
     var tappedOnButton: ((String) -> Void)?
+    var tappedOnShowPost: (() -> Void)?
     
     private lazy var resultLabel: UILabel = {
         let label = UILabel()
@@ -27,11 +28,18 @@ final class FeedView: UIView {
         self?.tappedOnCheckButton()
     }
     
+    private lazy var showPostButton = CustomButton(
+        title: "Open post"
+    ) { [weak self] in
+        self?.tappedOnShowPost?()
+    }
+    
     private lazy var stackView: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [
             resultLabel,
             textField,
-            checkGuessButton
+            checkGuessButton,
+            showPostButton
         ])
         stack.clipsToBounds = true
         stack.axis = .vertical
@@ -66,7 +74,7 @@ final class FeedView: UIView {
     }
     
     private func setupView() {
-        [resultLabel, textField, checkGuessButton, stackView].forEach() {
+        [resultLabel, textField, checkGuessButton, showPostButton, stackView].forEach() {
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
         addSubview(stackView)
@@ -87,7 +95,11 @@ final class FeedView: UIView {
             
             checkGuessButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor),
             checkGuessButton.trailingAnchor.constraint(equalTo: stackView.trailingAnchor),
-            checkGuessButton.heightAnchor.constraint(equalToConstant: 50.0)
+            checkGuessButton.heightAnchor.constraint(equalToConstant: 50.0),
+            
+            showPostButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor),
+            showPostButton.trailingAnchor.constraint(equalTo: stackView.trailingAnchor),
+            showPostButton.heightAnchor.constraint(equalToConstant: 50.0)
         ])
     }
     
