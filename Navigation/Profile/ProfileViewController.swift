@@ -3,7 +3,10 @@ import StorageService
 
 final class ProfileViewController: UIViewController {
     
-    private let viewModel: ProfileViewModel
+    weak var coordinator: ProfileCoordinator?
+    var onShowPhotos: (() -> Void)?
+    
+    private var viewModel: (ProfileViewModelInput & ProfileViewModelOutput)
     private let headerView = ProfileHeaderView()
     
     private lazy var tableView: UITableView = {
@@ -17,7 +20,7 @@ final class ProfileViewController: UIViewController {
     }()
     
     init(viewModel: ProfileViewModelInput & ProfileViewModelOutput) {
-        self.viewModel = viewModel as! ProfileViewModel
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -94,12 +97,9 @@ final class ProfileViewController: UIViewController {
             self?.tableView.reloadData()
         }
         viewModel.showPhotos = { [weak self] in
-            let photosViewController = PhotosViewController()
-            self?.navigationController?.pushViewController(photosViewController, animated: true)
+            self?.onShowPhotos?()
         }
-                
     }
-    
 }
 
 extension ProfileViewController: UITableViewDataSource {
@@ -137,9 +137,9 @@ extension ProfileViewController: UITableViewDataSource {
             ) as? PostTableViewCell else {
                 fatalError("could not dequeueReusableCell")
             }
-            let post = viewModel.post(section: indexPath.section, row: indexPath.row)
-            cell.setupCell(post: post!)
-           
+            if let post = viewModel.post(section: indexPath.section, row: indexPath.row){
+                cell.setupCell(post: post)
+            }
             return cell
         case .none:
             return UITableViewCell()

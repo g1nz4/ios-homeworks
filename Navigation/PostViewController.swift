@@ -1,7 +1,9 @@
 import UIKit
 
 final class PostViewController: UIViewController {
-
+   
+    weak var coordinator: FeedCoordinator?
+    
     private lazy var actionButton: UIButton = {
            let button = UIButton()
            button.translatesAutoresizingMaskIntoConstraints = false
@@ -14,24 +16,19 @@ final class PostViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemYellow
-        setupRightBarButtonItem()
+        setupBarButtonItem()
     }
     
-    private func setupRightBarButtonItem() {
+    private func setupBarButtonItem() {
             navigationItem.rightBarButtonItem = UIBarButtonItem(
             title: "Info",
             style: .plain,
             target: self,
-            action: #selector(buttonPressed(_:))
+            action: #selector(infoButtonPressed(_:))
         )
     }
     
-    @objc func buttonPressed(_ sender: UIButton) {
-        let infoViewController = InfoViewController()
-        
-        infoViewController.modalTransitionStyle = .flipHorizontal
-        infoViewController.modalPresentationStyle = .pageSheet
-       
-        present(infoViewController, animated: true)
+    @objc func infoButtonPressed(_ sender: UIButton) {
+        coordinator?.present(.info)
     }
 }
