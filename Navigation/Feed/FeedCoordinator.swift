@@ -1,43 +1,49 @@
 import UIKit
 
-final class FeedCoordinator: FeedBaseCoordinator {
-    weak var parentCoordinator: (any MainBaseCoordinator)?
-   
-    var rootViewController: UIViewController? = UIViewController()
+final class FeedCoordinator: Coordinator {
     
-    init() {}
+    var controller: UIViewController
+    var children: [Coordinator]
     
-    func start() -> UIViewController {
-        showFeedScreen()
-        return rootViewController ?? UIViewController()
+    let feedVC: FeedViewController
+    let feedNC: UINavigationController
+    
+    enum Presentation {
+        case post
+        case info
     }
     
-    func showFeedScreen() {
+    init() {
+        children = []
+
         let viewModel = FeedViewModel()
-        let module = FeedViewController(feedViewModel: viewModel)
-        module.showPost = { [weak self] in
-            self?.showPost()
-        }
-        let navigationController = UINavigationController(rootViewController: module)
-        rootViewController = navigationController
+        feedVC = FeedViewController(feedViewModel: viewModel)
+        feedNC = UINavigationController(rootViewController: feedVC)
+        feedNC.tabBarItem = UITabBarItem(
+            title: "Feed",
+            image: UIImage(systemName: "text.bubble"),
+            selectedImage: UIImage(systemName: "text.bubble.fill")
+        )
+        controller = feedNC
+        setup()
+    }
+
+    func setup() {
+        feedVC.coordinator = self
     }
     
-    private func showPost() {
-        guard rootViewController is UINavigationController else { return }
-        let postViewController = PostViewController()
-        postViewController.showInfo = { [weak self] in
-            self?.showInfo()
+    func present(_ presentation: Presentation) {
+        switch presentation {
+        case .post:
+            let postVC = PostViewController()
+            postVC.coordinator = self
+            feedNC.pushViewController(postVC, animated: true)
+
+        case .info:
+            let infoVC = InfoViewController()
+            feedNC.present(infoVC, animated: true, completion: nil)
         }
-        postViewController.onBack = { [weak self] in
-            self?.hide(style: .push)
-        }
-        show(viewController: postViewController, style: .push, animated: true)
     }
     
-    private func showInfo() {
-        let infoViewController = InfoViewController()
-        infoViewController.modalTransitionStyle = .flipHorizontal
-        infoViewController.modalPresentationStyle = .pageSheet
-        show(viewController: infoViewController, style: .present, animated: true)
-    }
+    
 }

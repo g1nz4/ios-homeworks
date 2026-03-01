@@ -1,31 +1,48 @@
 import UIKit
 import StorageService
 
-final class ProfileCoordinator: ProfileBaseCoordinator {
-    weak var parentCoordinator: MainBaseCoordinator?
-    var rootViewController: UIViewController? = UIViewController()
-    var user: User!
+final class ProfileCoordinator: Coordinator {
     
-    init() {}
-    
-    func start() -> UIViewController {
-        showProfileScreen()
-        return rootViewController ?? UIViewController()
+    var controller: UIViewController
+    var children: [Coordinator]
+
+    let profileVC: ProfileViewController
+    let profileNC: UINavigationController
+
+    enum Presentation {
+        case photos
     }
+
+    private let user: User
     
-    func showProfileScreen() {
+    init(user: User) {
+        self.user = user
+        children = []
+        
         let viewModel = ProfileViewModel(user: user)
-        let module = ProfileViewController(viewModel: viewModel)
-        viewModel.showPhotos = {[weak self] in
-            self?.showPhotos()
-        }
-        let navigationController = UINavigationController(rootViewController: module)
-        rootViewController = navigationController
+        profileVC = ProfileViewController(viewModel: viewModel)
+        profileNC = UINavigationController(rootViewController: profileVC)
+        profileNC.tabBarItem = UITabBarItem(
+            title: "Профиль",
+            image: UIImage(systemName: "person.crop.circle"),
+            selectedImage: UIImage(systemName: "person.crop.circle.fill")
+        )
+        controller = profileNC
+        setup()
     }
-    
-    private func showPhotos() {
-        guard rootViewController is UINavigationController else { return }
-        let photosViewController = PhotosViewController()
-        show(viewController: photosViewController, style: .push, animated: true)
+
+    func setup() {
+        profileVC.coordinator = self
+        profileVC.onShowPhotos = { [weak self] in
+            self?.present(.photos)
+        }
+    }
+
+    func present(_ presentation: Presentation) {
+        switch presentation {
+        case .photos:
+            let photosVC = PhotosViewController()
+            profileNC.pushViewController(photosVC, animated: true)
+        }
     }
 }

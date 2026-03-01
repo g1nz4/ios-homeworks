@@ -3,6 +3,9 @@ import StorageService
 
 final class ProfileViewController: UIViewController {
     
+    weak var coordinator: ProfileCoordinator?
+    var onShowPhotos: (() -> Void)?
+    
     private var viewModel: (ProfileViewModelInput & ProfileViewModelOutput)
     private let headerView = ProfileHeaderView()
     
@@ -92,6 +95,9 @@ final class ProfileViewController: UIViewController {
         }
         viewModel.updatePosts = { [weak self] in
             self?.tableView.reloadData()
+        }
+        viewModel.showPhotos = { [weak self] in
+            self?.onShowPhotos?()
         }
     }
 }

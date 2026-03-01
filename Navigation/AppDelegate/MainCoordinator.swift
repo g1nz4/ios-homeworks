@@ -1,63 +1,27 @@
 import UIKit
 import StorageService
 
-enum AppFlow {
-    case feed
-    case profile
-}
+final class MainCoordinator: Coordinator {
+   
+    var controller: UIViewController
+    var children: [Coordinator] = []
 
-final class MainCoordinator: MainBaseCoordinator {
-    lazy var feedCoordinator: FeedBaseCoordinator = FeedCoordinator()
-    lazy var profileCoordinator: ProfileBaseCoordinator = ProfileCoordinator()
-    lazy var rootViewController: UIViewController = UITabBarController()
-    
-    private let user: User
-    
+    private let feedCoordinator: FeedCoordinator
+    private let profileCoordinator: ProfileCoordinator
+
     init(user: User) {
-        self.user = user
-    }
-    
-    func start() -> UIViewController {
-        if let profileFlow = profileCoordinator as? ProfileCoordinator {
-            profileFlow.user = user
-        }
-        
-        let feedViewController = feedCoordinator.start()
-        feedCoordinator.parentCoordinator = self
-        feedViewController.tabBarItem = UITabBarItem(
-            title: "Лента",
-            image: UIImage(systemName: "book"),
-            tag: 0
-        )
-        
-        let profileViewController = profileCoordinator.start()
-        profileCoordinator.parentCoordinator = self
-        profileViewController.tabBarItem = UITabBarItem(
-            title: "Профиль",
-            image: UIImage(systemName: "person.crop.circle"),
-            tag: 1
-        )
-    
-        if let rootViewController = rootViewController as? UITabBarController {
-            rootViewController.viewControllers = [feedViewController, profileViewController]
-            rootViewController.selectedIndex = 1
-        }
-        return rootViewController
-    }
-    
-    func moveTo(flow: AppFlow) {
-        switch flow {
-        case .feed:
-            (rootViewController as? UITabBarController)?.selectedIndex = 0
-        case .profile:
-            (rootViewController as? UITabBarController)?.selectedIndex = 1
-        }
+        feedCoordinator = FeedCoordinator()
+        profileCoordinator = ProfileCoordinator(user: user)
+
+        let tabBar = UITabBarController()
+        tabBar.viewControllers = [
+            feedCoordinator.controller,
+            profileCoordinator.controller
+        ]
+        tabBar.selectedIndex = 1
+        controller = tabBar
+        children = [feedCoordinator, profileCoordinator]
     }
 
-    func resetToRoot() -> Self {
-        profileCoordinator.resetToRoot()
-        moveTo(flow: .profile)
-        return self
-    }
+    func setup() { }
 }
-

@@ -1,8 +1,8 @@
 import UIKit
 
 final class PostViewController: UIViewController {
-    var showInfo: (() -> Void)?
-    var onBack: (() -> Void)?
+   
+    weak var coordinator: FeedCoordinator?
     
     private lazy var actionButton: UIButton = {
            let button = UIButton()
@@ -26,19 +26,9 @@ final class PostViewController: UIViewController {
             target: self,
             action: #selector(infoButtonPressed(_:))
         )
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-        title: "Back",
-        style: .plain,
-        target: self,
-        action: #selector(backButtonPressed(_:))
-    )
     }
     
     @objc func infoButtonPressed(_ sender: UIButton) {
-        showInfo?()
-    }
-    
-    @objc func backButtonPressed(_ sender: UIButton) {
-        onBack?()
+        coordinator?.present(.info)
     }
 }

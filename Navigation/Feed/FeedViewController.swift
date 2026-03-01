@@ -2,9 +2,9 @@ import UIKit
 
 final class FeedViewController: UIViewController {
     
+    weak var coordinator: FeedCoordinator?
+    
     private var feedViewModel: (FeedViewModelInput & FeedViewModelOutput)
-   
-    var showPost: (() -> Void)?
     
     private lazy var feedView: FeedView = {
         let view = FeedView()
@@ -13,7 +13,7 @@ final class FeedViewController: UIViewController {
             self?.feedViewModel.checkGuess(word: text)
         }
         view.tappedOnShowPost = { [weak self] in
-            self?.showPost?()
+            self?.coordinator?.present(.post)
         }
         
         return view
