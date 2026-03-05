@@ -10,14 +10,12 @@ final class LogInViewController: UIViewController {
         let scrollView = UIScrollView()
         scrollView.showsVerticalScrollIndicator = true
         scrollView.isScrollEnabled = true
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
         
         return scrollView
     }()
     
     private lazy var contentView: UIView = {
         let contentView = UIView()
-        contentView.translatesAutoresizingMaskIntoConstraints = false
         
         return contentView
     }()
@@ -25,7 +23,6 @@ final class LogInViewController: UIViewController {
     private lazy var divider: UIView = {
         let view = UIView()
         view.backgroundColor = .lightGray
-        view.translatesAutoresizingMaskIntoConstraints = false
         
         return view
     }()
@@ -33,7 +30,6 @@ final class LogInViewController: UIViewController {
     private lazy var image: UIImageView = {
         let image = UIImageView()
         image.image = UIImage(named: "logo")
-        image.translatesAutoresizingMaskIntoConstraints = false
         
         return image
     }()
@@ -49,7 +45,6 @@ final class LogInViewController: UIViewController {
         textField.returnKeyType = UIReturnKeyType.done
         textField.backgroundColor = .systemGray6
         textField.borderStyle = .none
-        textField.translatesAutoresizingMaskIntoConstraints = false
         
         textField.delegate = self
         
@@ -68,7 +63,6 @@ final class LogInViewController: UIViewController {
         textField.backgroundColor = .systemGray6
         textField.isSecureTextEntry = true
         textField.borderStyle = .none
-        textField.translatesAutoresizingMaskIntoConstraints = false
         
         textField.delegate = self
         
@@ -78,7 +72,6 @@ final class LogInViewController: UIViewController {
     private lazy var autorizationButton: UIButton = {
         let button = UIButton()
         let image = UIImage(named: "blue_pixel.png")
-        button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16.0)
         button.layer.cornerRadius = 10.0
@@ -97,9 +90,23 @@ final class LogInViewController: UIViewController {
         return button
     }()
     
+    private lazy var bruteForceButton = CustomButton(
+        title: "Подобрать пароль",
+        backgroundColor: .systemCyan,
+        cornerRadius: 4.0
+    ){ [weak self] in
+        self?.didTapBruteForceButton()
+    }
+    
+    private lazy var activityIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.hidesWhenStopped = true
+        
+        return indicator
+    }()
+    
     private lazy var logInStackView: UIStackView = { [unowned self] in
         let stackView = UIStackView()
-        stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.clipsToBounds = true
         stackView.axis = .vertical
         stackView.distribution = .fillProportionally
@@ -116,6 +123,8 @@ final class LogInViewController: UIViewController {
         return stackView
     }()
     
+    private let bruteForcer = PasswordBruteForcer()
+    private var generatedPassword: String = ""
     private var userService: UserService?
     var loginDelegate: LogInViewControllerDelegate?
     var loginSuccess: ((User) -> Void)?
@@ -147,10 +156,25 @@ final class LogInViewController: UIViewController {
     }
     
     private func addSubviews() {
+        [
+            scrollView,
+            contentView,
+            divider,
+            image,
+            logInTextField,
+            passwordTextField,
+            logInStackView,
+            autorizationButton,
+            bruteForceButton,
+            activityIndicator
+        ].forEach() {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
+        
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
-        [image, logInStackView, autorizationButton].forEach() {
+        [image, logInStackView, autorizationButton, bruteForceButton, activityIndicator].forEach() {
             contentView.addSubview($0)
         }
     }
@@ -229,6 +253,14 @@ final class LogInViewController: UIViewController {
                     equalToConstant: 50.0
                 ),
                 
+                activityIndicator.centerYAnchor.constraint(
+                    equalTo: passwordTextField.centerYAnchor
+                ),
+                activityIndicator.trailingAnchor.constraint(
+                    equalTo: passwordTextField.trailingAnchor,
+                    constant: -8.0
+                ),
+                
                 logInStackView.topAnchor.constraint(
                     equalTo: image.bottomAnchor,
                     constant: 120.0
@@ -274,7 +306,23 @@ final class LogInViewController: UIViewController {
                 autorizationButton.heightAnchor.constraint(
                     equalToConstant: 50.0
                 ),
-                autorizationButton.bottomAnchor.constraint(
+                
+                bruteForceButton.topAnchor.constraint(
+                    equalTo: autorizationButton.bottomAnchor,
+                    constant: 16.0
+                ),
+                bruteForceButton.leadingAnchor.constraint(
+                    equalTo: contentView.leadingAnchor,
+                    constant: 16.0
+                ),
+                bruteForceButton.trailingAnchor.constraint(
+                    equalTo: contentView.trailingAnchor,
+                    constant: -16.0
+                ),
+                bruteForceButton.heightAnchor.constraint(
+                    equalToConstant: 50.0
+                ),
+                bruteForceButton.bottomAnchor.constraint(
                     equalTo: contentView.bottomAnchor
                 )
             ]
@@ -330,6 +378,44 @@ final class LogInViewController: UIViewController {
             )
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             present(alert, animated: true)
+    }
+    
+    private func generateRandomPassword(length: Int) -> String {
+        let chars = Array("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        var result = ""
+        for _ in 0..<length {
+            if let char = chars.randomElement() {
+                result.append(char)
+            }
+        }
+        return result
+    }
+    
+    @objc private func didTapBruteForceButton() {
+        generatedPassword = generateRandomPassword(length: Int.random(in: 3...4))
+        print("Generated password: \(generatedPassword)")
+        
+        passwordTextField.text = ""
+        passwordTextField.isSecureTextEntry = true
+
+        activityIndicator.startAnimating()
+        bruteForceButton.isEnabled = false
+        autorizationButton.isEnabled = false
+
+        bruteForcer.bruteForce(
+            target: generatedPassword,
+            progress: { [weak self] attempt in
+                self?.passwordTextField.text = attempt
+            },
+            completion: { [weak self] found in
+                guard let self = self else { return }
+                self.activityIndicator.stopAnimating()
+                self.bruteForceButton.isEnabled = true
+                self.autorizationButton.isEnabled = true
+                self.passwordTextField.text = found
+                self.passwordTextField.isSecureTextEntry = false
+            }
+        )
     }
     
     @objc func didTapAutorizationButton(_ sender: UIButton) {
