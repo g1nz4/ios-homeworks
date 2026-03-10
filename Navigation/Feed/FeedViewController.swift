@@ -6,17 +6,16 @@ final class FeedViewController: UIViewController {
     
     private var feedViewModel: (FeedViewModelInput & FeedViewModelOutput)
     
-    private lazy var feedView: FeedView = {
-        let view = FeedView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.tappedOnButton = { [weak self] text in
-            self?.feedViewModel.checkGuess(word: text)
-        }
-        view.tappedOnShowPost = { [weak self] in
-            self?.coordinator?.present(.post)
-        }
+    private lazy var tableView: UITableView = {
+        let table = UITableView()
+        table.translatesAutoresizingMaskIntoConstraints = false
+        table.register(FeedPostTableViewCell.self, forCellReuseIdentifier: FeedPostTableViewCell.reuseId)
+        table.dataSource = self
+        table.delegate = self
+        table.rowHeight = UITableView.automaticDimension
+        table.estimatedRowHeight = 200
         
-        return view
+        return table
     }()
     
     init(feedViewModel: FeedViewModelInput & FeedViewModelOutput = FeedViewModel()){
@@ -30,28 +29,88 @@ final class FeedViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupUI()
         bindingViewModel()
-        setupFeedView()
+        feedViewModel.viewDidLoad()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+        #if DEBUG
+            view.backgroundColor = UIColor.systemYellow
+        #else
+            view.backgroundColor = UIColor.systemCyan
+        #endif
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        feedViewModel.viewWillAppear()
+    }
+        
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        feedViewModel.viewWillDisappear()
+    }
+    
+    private func setupUI() {
+        navigationItem.title = "Feed"
+        view.addSubview(tableView)
+        
+        let safeAreaGuide = view.safeAreaLayoutGuide
+        
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: safeAreaGuide.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: safeAreaGuide.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: safeAreaGuide.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: safeAreaGuide.bottomAnchor)
+        ])
     }
     
     private func bindingViewModel() {
-        feedViewModel.emptyTextField = { [weak self] in
-            self?.feedView.showEmptyTextField()
+        feedViewModel.postsUpdated = { [weak self] in
+            self?.tableView.reloadData()
         }
-        feedViewModel.result = { [weak self] isCorrect in
-            self?.feedView.showResult(isCorrect: isCorrect)
+        feedViewModel.postInsertedAtTop = { [weak self] index in
+            guard let self = self else { return }
+            
+            let indexPath = IndexPath(row: index, section: 0)
+            self.tableView.insertRows(at: [indexPath], with: .automatic)
+            self.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
         }
     }
+}
+
+extension FeedViewController: UITableViewDataSource, UITableViewDelegate {
     
-    private func setupFeedView() {
-        view.addSubview(feedView)
+    func tableView(
+        _ tableView: UITableView,
+        numberOfRowsInSection section: Int
+    ) -> Int {
+        feedViewModel.numberOfPosts
+    }
+
+    func tableView(
+        _ tableView: UITableView,
+        cellForRowAt indexPath: IndexPath
+    ) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(
+            withIdentifier: FeedPostTableViewCell.reuseId,
+            for: indexPath
+        ) as? FeedPostTableViewCell else {
+            return UITableViewCell()
+        }
+        let post = feedViewModel.post(at: indexPath.row)
+        cell.configure(with: post)
         
-        let safeArea = view.safeAreaLayoutGuide
-        NSLayoutConstraint.activate([
-            feedView.centerXAnchor.constraint(equalTo: safeArea.centerXAnchor),
-            feedView.centerYAnchor.constraint(equalTo: safeArea.centerYAnchor),
-            feedView.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 16),
-            feedView.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -16)
-        ])
+        return cell
+    }
+
+    func tableView(
+        _ tableView: UITableView,
+        didSelectRowAt indexPath: IndexPath
+    ) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        coordinator?.present(.post)
     }
 }
