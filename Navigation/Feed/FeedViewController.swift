@@ -78,6 +78,18 @@ final class FeedViewController: UIViewController {
             self.tableView.insertRows(at: [indexPath], with: .automatic)
             self.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
         }
+        feedViewModel.onError = { [weak self] error in
+            guard let self = self else { return }
+            
+            let message = error.errorDescription ?? "Ошибка"
+            let alert = UIAlertController(
+                title: "Ошибка",
+                message: message,
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(alert, animated: true)
+        }
     }
 }
 
