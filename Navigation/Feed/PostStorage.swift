@@ -97,17 +97,10 @@ final class PostStorage {
         )
     ]
     
-    func makeRandomPost() -> FeedPost {
+    func makeRandomPost() -> FeedPost? {
         guard let newPost = postsForExperiment.randomElement() else {
-            return FeedPost(
-                author: "Unknown",
-                title: "No posts",
-                description: "",
-                likes: 0,
-                views: 0
-            )
+            return nil
         }
-        
         var post = newPost
         post.likes = Int.random(in: 0...50)
         post.views = Int.random(in: 10...200)

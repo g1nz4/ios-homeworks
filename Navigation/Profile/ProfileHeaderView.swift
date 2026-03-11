@@ -95,6 +95,7 @@ final class ProfileHeaderView: UIView {
     }()
     
     private var statusText: String = ""
+    var onStatusChangeTap: ((String) -> Void)?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -254,6 +255,10 @@ final class ProfileHeaderView: UIView {
         statusLabel.text = user.status
     }
     
+    func setStatusLabelText(_ text: String) {
+        statusLabel.text = text
+    }
+    
     private func launchAnimation() {
         let centerOrigin = avatarImageView.center
 
@@ -330,12 +335,7 @@ final class ProfileHeaderView: UIView {
     
     private func buttonTaped() {
         statusTextChanged(statusTextField)
-            
-        if statusText != "" {
-            statusLabel.text = statusText
-        } else {
-            print("\(statusLabel.text!)")
-        }
+        onStatusChangeTap?(statusText)
     }
         
     @objc func statusTextChanged(_ statusTextField: UITextField) {

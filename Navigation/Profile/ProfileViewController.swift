@@ -87,6 +87,9 @@ final class ProfileViewController: UIViewController {
         height: 220
        )
        tableView.tableHeaderView = headerView
+       headerView.onStatusChangeTap = { [weak self] text in
+           self?.viewModel.updateStatus(text)
+       }
     }
     
     private func bindingViewModel() {
@@ -98,6 +101,21 @@ final class ProfileViewController: UIViewController {
         }
         viewModel.showPhotos = { [weak self] in
             self?.onShowPhotos?()
+        }
+        viewModel.onError = { [weak self] error in
+            guard let self = self else { return }
+            
+            let message = error.rawValue
+            let alert = UIAlertController(
+                title: "Ошибка",
+                message: message,
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(alert, animated: true)
+        }
+        viewModel.onStatusChanged = { [weak self] newStatus in
+            self?.headerView.setStatusLabelText(newStatus)
         }
     }
 }

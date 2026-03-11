@@ -332,22 +332,43 @@ final class LogInViewController: UIViewController {
             present(alert, animated: true)
     }
     
+    private func validateLogin(
+        login: String?,
+        password: String?
+    ) throws -> (
+        login: String,
+        password: String
+    ) {
+        guard let login = login, let password = password,
+              !login.isEmpty, !password.isEmpty else {
+            throw NavigationError.emptyCredentials
+        }
+        return (login, password)
+    }
+    
     @objc func didTapAutorizationButton(_ sender: UIButton) {
-        guard let loginText = logInTextField.text, !loginText.isEmpty,
-              let passwordText = passwordTextField.text, !passwordText.isEmpty else {
-                showAlert(message: "Введите логин и пароль")
-                return
-        }
-        guard let user = userService?.getUser(login: loginText) else {
-            showAlert(message: "Пользователь не найден")
-            return
-        }
-        guard let validation = loginDelegate?.check(login: loginText, password: passwordText),
-            validation else {
-            showAlert(message: "Неверный пароль")
-            return
-        }
-        loginSuccess?(user)
+        do {
+            let (loginText, passwordText) = try validateLogin(
+                login: logInTextField.text,
+                password: passwordTextField.text
+            )
+            guard let user = userService?.getUser(login: loginText) else {
+                throw NavigationError.userNotFound
+            }
+            guard let validation = loginDelegate?.check(login: loginText, password: passwordText),
+                  validation else {
+                throw NavigationError.invalidCredentials
+            }
+            loginSuccess?(user)
+            } catch {
+                let message: String
+                if let navError = error as? NavigationError {
+                    message = navError.rawValue
+                } else {
+                    message = "Произошла неизвестная ошибка."
+                }
+                showAlert(message: message)
+            }
     }
     
     @objc func willShowKeyboard(_ notification: NSNotification) {

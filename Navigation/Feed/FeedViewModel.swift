@@ -19,6 +19,7 @@ protocol FeedViewModelOutput: AnyObject {
     var postsUpdated: (() -> Void)? { get set }
     var numberOfPosts: Int { get }
     var postInsertedAtTop: ((Int) -> Void)? { get set }
+    var onError: ((NavigationError) -> Void)? { get set }
     func post(at index: Int) -> FeedPost
 }
 
@@ -27,6 +28,7 @@ final class FeedViewModel: FeedViewModelInput, FeedViewModelOutput {
     var postsUpdated: (() -> Void)?
     var postInsertedAtTop: ((Int) -> Void)?
     var numberOfPosts: Int { posts.count }
+    var onError: ((NavigationError) -> Void)?
     
     private var posts: [FeedPost] = []
     private var updateTimer: Timer?
@@ -76,30 +78,57 @@ final class FeedViewModel: FeedViewModelInput, FeedViewModelOutput {
     private func loadMorePosts() {
         DispatchQueue.global(qos: .background).async { [weak self] in
             guard let self = self else { return }
-            let newPost = self.storage.makeRandomPost()
-    
-            DispatchQueue.main.async {
-                self.posts.insert(newPost, at: 0)
-                self.postInsertedAtTop?(0)
+            
+            let success = Bool.random()
+            if success {
+                guard let newPost = self.storage.makeRandomPost() else {
+                    DispatchQueue.main.async {
+                        self.onError?(.feedUpdateFailed)
+                    }
+                    return
+                }
+                DispatchQueue.main.async {
+                    self.posts.insert(newPost, at: 0)
+                    self.postInsertedAtTop?(0)
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.onError?(.feedUpdateFailed)
+                }
             }
         }
     }
     
-    private func fetchPosts(completion: @escaping ([FeedPost]) -> Void) {
-        DispatchQueue.global(qos: .background).async {
-            let storedPosts = self.storage.posts.reversed()
-           
-            DispatchQueue.main.async {
-                completion(Array(storedPosts))
+    private func fetchPosts(completion: @escaping (Result<[FeedPost], NavigationError>) -> Void) {
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            guard let self = self else { return }
+            
+            let storedPosts = self.storage.posts
+            if storedPosts.isEmpty {
+                DispatchQueue.main.async {
+                    completion(.failure(.feedLoadingFailed))
+                }
+            } else {
+                let posts = Array(storedPosts.reversed())
+                DispatchQueue.main.async {
+                    completion(.success(posts))
+                }
             }
         }
     }
     
     private func loadFeed() {
-        fetchPosts { [weak self] newPosts in
+        fetchPosts { [weak self] result in
             guard let self = self else { return }
-            self.posts = newPosts
-            self.postsUpdated?()
+            
+            switch result {
+            case .success(let newPosts):
+                self.posts = newPosts
+                self.postsUpdated?()
+            case .failure(let error):
+                self.onError?(error)
+            }
         }
     }
 }
+
