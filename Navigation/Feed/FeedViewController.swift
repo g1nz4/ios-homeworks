@@ -81,7 +81,7 @@ final class FeedViewController: UIViewController {
         feedViewModel.onError = { [weak self] error in
             guard let self = self else { return }
             
-            let message = error.errorDescription ?? "Ошибка"
+            let message = error.rawValue
             let alert = UIAlertController(
                 title: "Ошибка",
                 message: message,

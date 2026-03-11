@@ -361,8 +361,12 @@ final class LogInViewController: UIViewController {
             }
             loginSuccess?(user)
             } catch {
-                let message = (error as? LocalizedError)?.errorDescription
-                    ?? "Неизвестная ошибка"
+                let message: String
+                if let navError = error as? NavigationError {
+                    message = navError.rawValue
+                } else {
+                    message = "Произошла неизвестная ошибка."
+                }
                 showAlert(message: message)
             }
     }
