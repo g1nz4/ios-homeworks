@@ -11,7 +11,7 @@ final class InfoCoordinator: Coordinator {
     init() {
         children = []
         
-        let viewModel = PlanetViewModel()
+        let viewModel = ResidentsViewModel()
         infoVC = InfoViewController(viewModel: viewModel)
         infoNC = UINavigationController(rootViewController: infoVC)
         infoNC.tabBarItem = UITabBarItem(

@@ -3,29 +3,31 @@ import UIKit
 final class InfoViewController: UIViewController {
 
     weak var coordinator: InfoCoordinator?
-    private let viewModel: PlanetViewModelProtocol
-    
-    private lazy var orbitalPeriodLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 18.0, weight: .medium)
-        label.textColor = .systemPurple
-        label.numberOfLines = 0
-        label.textAlignment = .left
-        
-        return label
-    }()
+    private let viewModel: ResidentsViewModelProtocol
     
     private lazy var indicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
         indicator.hidesWhenStopped = true
         indicator.color = .systemPurple
         
         return indicator
     }()
     
-    init(viewModel: PlanetViewModelProtocol = PlanetViewModel()) {
+    private lazy var tableView: UITableView = {
+        let table = UITableView(frame: .zero, style: .plain)
+        table.translatesAutoresizingMaskIntoConstraints = false
+        table.register(UITableViewCell.self, forCellReuseIdentifier: "ResidentCell")
+        table.dataSource = self
+        table.delegate = self
+        
+        return table
+    }()
+    
+    init(viewModel: ResidentsViewModelProtocol = ResidentsViewModel()) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        self.title = "Жители планеты Татуин"
     }
     
     required init?(coder: NSCoder) {
@@ -41,38 +43,70 @@ final class InfoViewController: UIViewController {
     }
 
     private func setupConstraint() {
-        [orbitalPeriodLabel, indicator].forEach() {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            view.addSubview($0)
-        }
-      
+        view.addSubview(tableView)
+        view.addSubview(indicator)
+        
         let safeArea = view.safeAreaLayoutGuide
         NSLayoutConstraint.activate([
-                orbitalPeriodLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 20.0),
-                orbitalPeriodLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 20.0),
-                orbitalPeriodLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -20.0),
-                orbitalPeriodLabel.heightAnchor.constraint(equalToConstant: 80.0),
-                
+                tableView.topAnchor.constraint(equalTo: safeArea.topAnchor),
+                tableView.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor),
+                tableView.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor),
+                tableView.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor),
+
                 indicator.centerXAnchor.constraint(equalTo: safeArea.centerXAnchor),
-                indicator.centerYAnchor.constraint(equalTo: safeArea.centerYAnchor)
+                indicator.centerYAnchor.constraint(equalTo: safeArea.centerYAnchor),
         ])
     }
     
     private func bindingViewModel() {
-        viewModel.orbitalPeriod.binding { [weak self] string in
+        viewModel.residentNames.binding { [weak self] _ in
             DispatchQueue.main.async {
-                self?.orbitalPeriodLabel.text = string
+                self?.tableView.reloadData()
             }
         }
         
         viewModel.isLoading.binding { [weak self] isLoading in
             DispatchQueue.main.async {
-                if isLoading {
-                    self?.indicator.startAnimating()
-                } else {
-                    self?.indicator.stopAnimating()
-                }
+                isLoading ? self?.indicator.startAnimating() : self?.indicator.stopAnimating()
             }
         }
+        
+        viewModel.textError.binding { [weak self] text in
+            guard let text, !text.isEmpty else { return }
+            DispatchQueue.main.async {
+                self?.showErrorAlert(message: text)
+            }
+        }
+    }
+    
+    private func showErrorAlert(message: String) {
+        let alert = UIAlertController(
+            title: "Ошибка",
+            message: message,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+}
+
+extension InfoViewController: UITableViewDataSource, UITableViewDelegate {
+   
+    func tableView(
+        _ tableView: UITableView,
+        numberOfRowsInSection section: Int
+    ) -> Int {
+        viewModel.residentNames.value.count
+    }
+    
+    func tableView(
+        _ tableView: UITableView,
+        cellForRowAt indexPath: IndexPath
+    ) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "ResidentCell", for: indexPath)
+        let name = viewModel.residentNames.value[indexPath.row]
+        cell.textLabel?.text = name
+        
+        return cell
     }
 }
