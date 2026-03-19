@@ -1,8 +1,9 @@
 import Foundation
 
-enum NetworkError: Error {
-    case requestFailed(Error)
-    case errorReceivingData
-    case noData
-    case decodingFailed
+enum NetworkError: String, Error {
+    case requestFailed = "Запрос не выполнен"
+    case errorReceivingData = "Ошибка получения данных из сети"
+    case noData = "Нет данных"
+    case decodingFailed = "Не удалось расшифровать данные"
+    case invalidURL = "Неверный URL"
 }
