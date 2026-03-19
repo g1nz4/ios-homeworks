@@ -6,24 +6,24 @@ final class MainCoordinator: Coordinator {
     var controller: UIViewController
     var children: [Coordinator] = []
 
-    private let feedCoordinator: FeedCoordinator
+    private let infoCoordinator: InfoCoordinator
     private let profileCoordinator: ProfileCoordinator
     private let musicCoordinator: MusicCoordinator
     
     init(user: User) {
-        feedCoordinator = FeedCoordinator()
+        infoCoordinator = InfoCoordinator()
         profileCoordinator = ProfileCoordinator(user: user)
         musicCoordinator = MusicCoordinator()
         
         let tabBar = UITabBarController()
         tabBar.viewControllers = [
-            feedCoordinator.controller,
+            infoCoordinator.controller,
             musicCoordinator.controller,
             profileCoordinator.controller
         ]
-        tabBar.selectedIndex = 1
+        tabBar.selectedIndex = 0
         controller = tabBar
-        children = [feedCoordinator, musicCoordinator, profileCoordinator]
+        children = [infoCoordinator, musicCoordinator, profileCoordinator]
     }
 
     func setup() { }
