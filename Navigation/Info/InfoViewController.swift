@@ -3,9 +3,9 @@ import UIKit
 final class InfoViewController: UIViewController {
 
     weak var coordinator: InfoCoordinator?
-    private let viewModel: TodoViewModelProtocol
+    private let viewModel: PlanetViewModelProtocol
     
-    private lazy var titleLabel: UILabel = {
+    private lazy var orbitalPeriodLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 18.0, weight: .medium)
         label.textColor = .systemPurple
@@ -23,12 +23,7 @@ final class InfoViewController: UIViewController {
         return indicator
     }()
     
-    private lazy var updateButton = CustomButton(
-        title: "Обновить",
-        backgroundColor: .systemPurple
-    )
-    
-    init(viewModel: TodoViewModelProtocol = TodoViewModel()) {
+    init(viewModel: PlanetViewModelProtocol = PlanetViewModel()) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
@@ -42,37 +37,31 @@ final class InfoViewController: UIViewController {
         view.backgroundColor = .systemBackground
         setupConstraint()
         bindingViewModel()
-        updateButtonAction()
         viewModel.viewDidLoad()
     }
 
     private func setupConstraint() {
-        [titleLabel, indicator, updateButton].forEach() {
+        [orbitalPeriodLabel, indicator].forEach() {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
       
         let safeArea = view.safeAreaLayoutGuide
         NSLayoutConstraint.activate([
-                titleLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 20.0),
-                titleLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 20.0),
-                titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -20.0),
-                titleLabel.heightAnchor.constraint(equalToConstant: 80.0),
+                orbitalPeriodLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 20.0),
+                orbitalPeriodLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 20.0),
+                orbitalPeriodLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -20.0),
+                orbitalPeriodLabel.heightAnchor.constraint(equalToConstant: 80.0),
                 
                 indicator.centerXAnchor.constraint(equalTo: safeArea.centerXAnchor),
-                indicator.centerYAnchor.constraint(equalTo: safeArea.centerYAnchor),
-                updateButton.heightAnchor.constraint(equalToConstant: 50.0),
-                updateButton.widthAnchor.constraint(equalToConstant: 150.0),
-                updateButton.centerXAnchor.constraint(equalTo: safeArea.centerXAnchor),
-                updateButton.topAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -250.0),
-                updateButton.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -200.0)
+                indicator.centerYAnchor.constraint(equalTo: safeArea.centerYAnchor)
         ])
     }
     
     private func bindingViewModel() {
-        viewModel.title.binding { [weak self] string in
+        viewModel.orbitalPeriod.binding { [weak self] string in
             DispatchQueue.main.async {
-                self?.titleLabel.text = string
+                self?.orbitalPeriodLabel.text = string
             }
         }
         
@@ -80,20 +69,10 @@ final class InfoViewController: UIViewController {
             DispatchQueue.main.async {
                 if isLoading {
                     self?.indicator.startAnimating()
-                    self?.updateButton.isEnabled = false
-                    self?.updateButton.alpha = 0.7
                 } else {
                     self?.indicator.stopAnimating()
-                    self?.updateButton.isEnabled = true
-                    self?.updateButton.alpha = 1.0
                 }
             }
-        }
-    }
-    
-    private func updateButtonAction() {
-        updateButton.setActionButton { [weak self] in
-            self?.viewModel.update()
         }
     }
 }
