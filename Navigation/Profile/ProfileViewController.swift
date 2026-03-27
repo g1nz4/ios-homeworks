@@ -30,7 +30,7 @@ final class ProfileViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationController?.setNavigationBarHidden(true, animated: true)
+        setupNavigationBar()
         setupTableView()
         tuneTableView()
         bindingViewModel()
@@ -46,6 +46,15 @@ final class ProfileViewController: UIViewController {
         #endif
     }
     
+    private func setupNavigationBar() {
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            title: "Выйти",
+            style: .plain,
+            target: self,
+            action: #selector(logoutTapped)
+        )
+    }
+
     private func setupTableView() {
         view.addSubview(tableView)
         
@@ -117,6 +126,10 @@ final class ProfileViewController: UIViewController {
         viewModel.onStatusChanged = { [weak self] newStatus in
             self?.headerView.setStatusLabelText(newStatus)
         }
+    }
+    
+    @objc private func logoutTapped() {
+        coordinator?.didTapLogout()
     }
 }
 

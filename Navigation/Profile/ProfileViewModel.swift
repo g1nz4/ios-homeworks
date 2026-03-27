@@ -67,7 +67,7 @@ final class ProfileViewModel: ProfileViewModelInput, ProfileViewModelOutput {
             
             let profileUser = self.user
             
-            let success = Bool.random()
+            let success = true
             DispatchQueue.main.async {
                 if success {
                     completion(.success(profileUser))

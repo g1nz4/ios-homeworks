@@ -1,7 +1,8 @@
 import UIKit
 import StorageService
+import FirebaseAuth
 
-final class MainCoordinator: Coordinator {
+final class MainCoordinator: Coordinator, ProfileCoordinatorDelegate {
    
     var controller: UIViewController
     var children: [Coordinator] = []
@@ -21,10 +22,27 @@ final class MainCoordinator: Coordinator {
             musicCoordinator.controller,
             profileCoordinator.controller
         ]
-        tabBar.selectedIndex = 1
+        tabBar.selectedIndex = 2
         controller = tabBar
         children = [feedCoordinator, musicCoordinator, profileCoordinator]
+        
+        profileCoordinator.delegate = self
     }
 
-    func setup() { }
+    func setup() {}
+    
+    func didLogout() {
+        showLogin()
+    }
+    
+    private func showLogin() {
+        let loginCoordinator = LoginCoordinator()
+        children = [loginCoordinator]
+        
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = scene.windows.first {
+            window.rootViewController = loginCoordinator.controller
+            window.makeKeyAndVisible()
+        }
+    }
 }

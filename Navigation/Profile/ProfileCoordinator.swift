@@ -1,7 +1,14 @@
 import UIKit
 import StorageService
+import FirebaseAuth
+
+protocol ProfileCoordinatorDelegate: AnyObject {
+    func didLogout()
+}
 
 final class ProfileCoordinator: Coordinator {
+    
+    weak var delegate: ProfileCoordinatorDelegate?
     
     var controller: UIViewController
     var children: [Coordinator]
@@ -44,5 +51,14 @@ final class ProfileCoordinator: Coordinator {
             let photosVC = PhotosViewController()
             profileNC.pushViewController(photosVC, animated: true)
         }
+    }
+    
+    func didTapLogout() {
+        do {
+            try Auth.auth().signOut()
+        } catch {
+            print("Ошибка:", error.localizedDescription)
+        }
+        delegate?.didLogout()
     }
 }
