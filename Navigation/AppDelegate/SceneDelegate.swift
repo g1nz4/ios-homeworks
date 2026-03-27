@@ -1,9 +1,10 @@
 import UIKit
+import FirebaseAuth
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
-    private var mainCoordinator: MainCoordinator?
+    private var loginCoordinator: LoginCoordinator?
    
     func scene(
         _ scene: UIScene,
@@ -14,22 +15,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
            
         let window = UIWindow(windowScene: scene)
         
-        let logInViewController = LogInViewController()
-        let loginFactory = MyLoginFactory()
-        logInViewController.loginDelegate = loginFactory.makeLoginInspector()
-        let loginNavigationController = UINavigationController(rootViewController: logInViewController)
-        logInViewController.loginSuccess = { [weak self] user in
-            guard let self = self else { return }
-            
-            let mainCoordinator = MainCoordinator(user: user)
-            self.mainCoordinator = mainCoordinator
-            self.window?.rootViewController = mainCoordinator.controller
-        }
-   
-        window.rootViewController = loginNavigationController
+        let loginCoordinator = LoginCoordinator()
+        self.loginCoordinator = loginCoordinator
+        
+        window.rootViewController = loginCoordinator.controller
         window.makeKeyAndVisible()
                 
         self.window = window
+    }
+    
+    func sceneDidDisconnect(_ scene: UIScene) {
+        do {
+            try Auth.auth().signOut()
+        } catch {
+            print("Ошибка:", error.localizedDescription)
+        }
     }
 }
 

@@ -1,10 +1,23 @@
 import UIKit
 
-protocol LogInViewControllerDelegate {
-    func check(login: String, password: String) -> Bool
+protocol LogInViewControllerDelegate: AnyObject {
+    func checkCredentials(
+        email: String,
+        password: String,
+        completion: @escaping (Result<Void, Error>) -> Void
+    )
+    
+    func signUp(
+        email: String,
+        password: String,
+        completion: @escaping (Result<Void, Error>) -> Void
+    )
 }
 
 final class LogInViewController: UIViewController {
+    
+    weak var coordinator: LoginCoordinator?
+    private var viewModel: LoginViewModelProtocol
     
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -38,7 +51,7 @@ final class LogInViewController: UIViewController {
         return image
     }()
     
-    private lazy var logInTextField: UITextField = { [unowned self] in
+    private lazy var emailTextField: UITextField = { [unowned self] in
         let textField = UITextField()
         textField.textColor = .black
         textField.font = UIFont.systemFont(ofSize: 16.0)
@@ -50,7 +63,7 @@ final class LogInViewController: UIViewController {
         textField.backgroundColor = .systemGray6
         textField.borderStyle = .none
         textField.translatesAutoresizingMaskIntoConstraints = false
-        
+        textField.addTarget(self, action: #selector(textFieldsDidChange), for: .editingChanged)
         textField.delegate = self
         
         return textField
@@ -69,7 +82,7 @@ final class LogInViewController: UIViewController {
         textField.isSecureTextEntry = true
         textField.borderStyle = .none
         textField.translatesAutoresizingMaskIntoConstraints = false
-        
+        textField.addTarget(self, action: #selector(textFieldsDidChange), for: .editingChanged)
         textField.delegate = self
         
         return textField
@@ -82,7 +95,7 @@ final class LogInViewController: UIViewController {
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16.0)
         button.layer.cornerRadius = 10.0
-        button.setTitle("Log In", for: .normal)
+        button.setTitle("Войти", for: .normal)
         button.setBackgroundImage(image, for: .normal)
         button.alpha = {
             if button.state == .normal {
@@ -93,6 +106,20 @@ final class LogInViewController: UIViewController {
             return button.alpha
         }()
         button.addTarget(self, action: #selector(didTapAutorizationButton(_:)), for: .touchUpInside)
+        
+        return button
+    }()
+    
+    private lazy var signUpButton: UIButton = {
+        let button = UIButton()
+        let image = UIImage(named: "blue_pixel.png")
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16.0)
+        button.layer.cornerRadius = 10.0
+        button.setTitle("Зарегистрироваться", for: .normal)
+        button.setBackgroundImage(image, for: .normal)
+        button.addTarget(self, action: #selector(didTapSignUpButton), for: .touchUpInside)
         
         return button
     }()
@@ -109,16 +136,21 @@ final class LogInViewController: UIViewController {
         stackView.layer.borderColor = UIColor.lightGray.cgColor
         stackView.layer.borderWidth = 0.5
         
-        stackView.addArrangedSubview(self.logInTextField)
+        stackView.addArrangedSubview(self.emailTextField)
         stackView.addArrangedSubview(self.passwordTextField)
         stackView.addSubview(self.divider)
         
         return stackView
     }()
     
-    private var userService: UserService?
-    var loginDelegate: LogInViewControllerDelegate?
-    var loginSuccess: ((User) -> Void)?
+    init(delegate: LogInViewControllerDelegate) {
+        self.viewModel = LoginViewModel(loginDelegate: delegate)
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -127,6 +159,8 @@ final class LogInViewController: UIViewController {
         addSubviews()
         setupConstraints()
         autoAuthorization()
+        bindingViewModel()
+        updateStateAuthorizationButton()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -146,11 +180,30 @@ final class LogInViewController: UIViewController {
         navigationController?.navigationBar.isHidden = true
     }
     
+    private func bindingViewModel() {
+        viewModel.isLoading.binding { [weak self] isLoading in
+            DispatchQueue.main.async {
+                self?.updateStateAuthorizationButton(isLoad: isLoading)
+            }
+        }
+
+        viewModel.errorText.binding { [weak self] text in
+            guard let text, !text.isEmpty else { return }
+            DispatchQueue.main.async {
+                self?.showAlert(message: text)
+            }
+        }
+        
+        viewModel.onSuccess = { [weak self] user in
+            self?.coordinator?.didLogin(user: user)
+        }
+    }
+    
     private func addSubviews() {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
-        [image, logInStackView, autorizationButton].forEach() {
+        [image, logInStackView, autorizationButton, signUpButton].forEach() {
             contentView.addSubview($0)
         }
     }
@@ -203,16 +256,16 @@ final class LogInViewController: UIViewController {
                     equalToConstant: 100.0
                 ),
                 
-                logInTextField.leadingAnchor.constraint(
+                emailTextField.leadingAnchor.constraint(
                     equalTo: logInStackView.leadingAnchor
                 ),
-                logInTextField.trailingAnchor.constraint(
+                emailTextField.trailingAnchor.constraint(
                     equalTo: logInStackView.trailingAnchor
                 ),
-                logInTextField.topAnchor.constraint(
+                emailTextField.topAnchor.constraint(
                     equalTo: logInStackView.topAnchor
                 ),
-                logInTextField.heightAnchor.constraint(
+                emailTextField.heightAnchor.constraint(
                     equalToConstant: 50.0
                 ),
                 
@@ -223,7 +276,7 @@ final class LogInViewController: UIViewController {
                     equalTo: logInStackView.trailingAnchor
                 ),
                 passwordTextField.topAnchor.constraint(
-                    equalTo: logInTextField.bottomAnchor
+                    equalTo: emailTextField.bottomAnchor
                 ),
                 passwordTextField.heightAnchor.constraint(
                     equalToConstant: 50.0
@@ -274,9 +327,23 @@ final class LogInViewController: UIViewController {
                 autorizationButton.heightAnchor.constraint(
                     equalToConstant: 50.0
                 ),
-                autorizationButton.bottomAnchor.constraint(
-                    equalTo: contentView.bottomAnchor
-                )
+                signUpButton.topAnchor.constraint(
+                    equalTo: autorizationButton.bottomAnchor,
+                    constant: 16.0
+                ),
+                signUpButton.leadingAnchor.constraint(
+                    equalTo: contentView.leadingAnchor,
+                    constant: 16.0
+                ),
+                signUpButton.trailingAnchor.constraint(
+                    equalTo: contentView.trailingAnchor,
+                    constant: -16.0
+                ),
+                signUpButton.bottomAnchor.constraint(
+                    equalTo: contentView.bottomAnchor,
+                    constant: -20.0
+                ),
+                signUpButton.heightAnchor.constraint(equalToConstant: 50.0)
             ]
         )
     }
@@ -306,9 +373,9 @@ final class LogInViewController: UIViewController {
     
     private func autoAuthorization() {
         #if DEBUG
-        userService = TestUserService()
-        logInTextField.text = "test"
-        passwordTextField.text = "debug"
+        let userService = TestUserService()
+        emailTextField.text = "test@test.ru"
+        passwordTextField.text = "123456"
         #else
         let currentUser = User(
             login: "cat",
@@ -317,60 +384,48 @@ final class LogInViewController: UIViewController {
             status: "I'm cat ios-developer :)"
         )
         userService = CurrentUserService(user: currentUser)
-        logInTextField.text = "cat"
+        emailTextField.text = "cat@developer.ru"
         passwordTextField.text = "qwerty"
         #endif
     }
     
-    private func showAlert(message: String) {
-            let alert = UIAlertController(
-                title: nil,
-                message: message,
-                preferredStyle: .alert
-            )
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            present(alert, animated: true)
+    private func updateStateAuthorizationButton(isLoad: Bool? = nil) {
+        let email = emailTextField.text ?? ""
+        let password = passwordTextField.text ?? ""
+        
+        let hasEmail = !email.isEmpty
+        let hasPassword = !password.isEmpty
+        let isLoadNow = isLoad ?? viewModel.isLoading.value
+        let tap = hasEmail && hasPassword && !isLoadNow
+        
+        autorizationButton.isEnabled = tap
+        autorizationButton.alpha = tap ? 1.0 : 0.9
     }
     
-    private func validateLogin(
-        login: String?,
-        password: String?
-    ) throws -> (
-        login: String,
-        password: String
-    ) {
-        guard let login = login, let password = password,
-              !login.isEmpty, !password.isEmpty else {
-            throw NavigationError.emptyCredentials
-        }
-        return (login, password)
+    private func showAlert(message: String) {
+        let alert = UIAlertController(
+            title: "Ошибка",
+            message: message,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
     
     @objc func didTapAutorizationButton(_ sender: UIButton) {
-        do {
-            let (loginText, passwordText) = try validateLogin(
-                login: logInTextField.text,
-                password: passwordTextField.text
-            )
-            guard let user = userService?.getUser(login: loginText) else {
-                throw NavigationError.userNotFound
-            }
-            guard let validation = loginDelegate?.check(login: loginText, password: passwordText),
-                  validation else {
-                throw NavigationError.invalidCredentials
-            }
-            loginSuccess?(user)
-            } catch {
-                let message: String
-                if let navError = error as? NavigationError {
-                    message = navError.rawValue
-                } else {
-                    message = "Произошла неизвестная ошибка."
-                }
-                showAlert(message: message)
-            }
+        viewModel.email = emailTextField.text ?? ""
+        viewModel.password = passwordTextField.text ?? ""
+        viewModel.login()
     }
     
+    @objc private func didTapSignUpButton() {
+        coordinator?.present(.signUp)
+    }
+    
+    @objc private func textFieldsDidChange(_ textField: UITextField) {
+        updateStateAuthorizationButton()
+    }
+
     @objc func willShowKeyboard(_ notification: NSNotification) {
         let keyboardHeight = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue.height
         scrollView.contentInset.bottom += keyboardHeight ?? 0.0
