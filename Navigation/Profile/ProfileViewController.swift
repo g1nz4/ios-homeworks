@@ -171,6 +171,7 @@ extension ProfileViewController: UITableViewDataSource {
             if let post = viewModel.post(section: indexPath.section, row: indexPath.row){
                 cell.setupCell(post: post)
             }
+            cell.delegate = self
             return cell
         case .none:
             return UITableViewCell()
@@ -189,3 +190,13 @@ extension ProfileViewController: UITableViewDelegate {
     }
 }
 
+extension ProfileViewController: PostTableViewCellDelegate {
+    
+    func postDidDoubleTap(_ cell: PostTableViewCell) {
+        guard let indexPath = tableView.indexPath(for: cell),
+              let post = viewModel.post(section: indexPath.section, row: indexPath.row)
+        else { return }
+        
+        viewModel.didDoubleTap(post: post)
+    }
+}

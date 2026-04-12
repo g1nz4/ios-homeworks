@@ -1,9 +1,15 @@
 import UIKit
 import StorageService
 
+protocol PostTableViewCellDelegate: AnyObject {
+    func postDidDoubleTap(_ cell: PostTableViewCell)
+}
+
 final class PostTableViewCell: UITableViewCell {
 
     static let reuseId = "PostCell"
+    
+    weak var delegate: PostTableViewCellDelegate?
    
     private lazy var postCellView: UIView = {
         let view = UIView()
@@ -66,6 +72,7 @@ final class PostTableViewCell: UITableViewCell {
        
         addSubViews()
         setupConstraints()
+        setupDoubleTapGesture()
     }
     
     required init?(coder: NSCoder) {
@@ -180,6 +187,20 @@ final class PostTableViewCell: UITableViewCell {
                 )
             ]
         )
+    }
+    
+    private func setupDoubleTapGesture() {
+        let doubleTap = UITapGestureRecognizer(
+            target: self,
+            action: #selector(handleDoubleTap)
+        )
+        doubleTap.numberOfTapsRequired = 2
+        contentView.addGestureRecognizer(doubleTap)
+        contentView.isUserInteractionEnabled = true
+    }
+    
+    @objc private func handleDoubleTap() {
+        delegate?.postDidDoubleTap(self)
     }
 }
 
