@@ -5,6 +5,7 @@ protocol ProfileViewModelInput {
     func viewDidLoad()
     func didSelectRow(section: Int, row: Int)
     func updateStatus(_ text: String)
+    func didDoubleTap(post: MyPost)
 }
 
 protocol ProfileViewModelOutput {
@@ -29,8 +30,9 @@ enum ProfileCellType {
 final class ProfileViewModel: ProfileViewModelInput, ProfileViewModelOutput {
     
     private var user: User
-    private let postsLoader: () -> [MyPost]
     private var posts: [MyPost] = []
+    private let postsLoader: () -> [MyPost]
+    private let favoritesStorage: CoreDataFavoritesPostProtocol
     
     var updateHeader: ((User) -> Void)?
     var updatePosts: (() -> Void)?
@@ -40,10 +42,12 @@ final class ProfileViewModel: ProfileViewModelInput, ProfileViewModelOutput {
     
     init(
         user: User,
-        postsLoader: @escaping () -> [MyPost] = { MyPost.make() }
+        postsLoader: @escaping () -> [MyPost] = { MyPost.make() },
+        favoritesStorage: CoreDataFavoritesPostProtocol = CoreDataManager()
     ){
         self.user = user
         self.postsLoader = postsLoader
+        self.favoritesStorage = favoritesStorage
     }
     
     func viewDidLoad() {
@@ -127,5 +131,23 @@ final class ProfileViewModel: ProfileViewModelInput, ProfileViewModelOutput {
             return nil
         }
         return posts[row]
+    }
+    
+    func didDoubleTap(post: MyPost) {
+        Task { [weak self] in
+            guard let self else { return }
+           
+            do {
+                try await favoritesStorage.save(post: post)
+                
+                await MainActor.run {
+                    NotificationCenter.default.post(name: .favoritesDidChange, object: nil)
+                }
+            } catch {
+                await MainActor.run {
+                    self.onError?(.favoritesSavingFailed)
+                }
+            }
+        }
     }
 }

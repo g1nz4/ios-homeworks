@@ -12,5 +12,6 @@ enum NavigationError: String, Error {
     case statusUpdateFailed = "Не удалось обновить статус."
     case fileNotFound = "Файл не найден."
     case errorAVAudioPlayer = "Ошибка AVAudioPlayer."
+    case favoritesSavingFailed = "Не удалось сохранить в избранное"
 }
 
