@@ -6,6 +6,7 @@ protocol CoreDataFavoritesPostProtocol {
     func save(post: MyPost) async throws
     func fetchAll() async throws -> [MyPost]
     func delete(post: MyPost) async throws
+    func fetch(by author: String) async throws -> [MyPost]
 }
 
 final class CoreDataManager: CoreDataFavoritesPostProtocol {
@@ -20,21 +21,7 @@ final class CoreDataManager: CoreDataFavoritesPostProtocol {
             let result = try context.fetch(request)
             
             return result.compactMap { obj in
-                guard
-                    let id = obj.id,
-                    let author = obj.author,
-                    let image = obj.image,
-                    let description = obj.postDescription
-                else { return nil }
-                
-                return MyPost(
-                    id: id,
-                    author: author,
-                    image: image,
-                    description: description,
-                    likes: Int(obj.likes),
-                    views: Int(obj.views)
-                )
+                Self.mapFavoritePost(obj)
             }
         }
     }
@@ -82,6 +69,39 @@ final class CoreDataManager: CoreDataFavoritesPostProtocol {
                 if context.hasChanges { try context.save() }
             }
         }
+    }
+    
+    func fetch(by author: String) async throws -> [MyPost] {
+        let context = stack.viewContext
+        
+        return try await context.perform {
+            let request: NSFetchRequest<FavoritePost> = FavoritePost.fetchRequest()
+            request.predicate = NSPredicate(format: "author == %@", author)
+            
+            let result = try context.fetch(request)
+            
+            return result.compactMap { obj in
+                Self.mapFavoritePost(obj)
+            }
+        }
+    }
+    
+    private static func mapFavoritePost(_ obj: FavoritePost) -> MyPost? {
+        guard
+            let id = obj.id,
+            let author = obj.author,
+            let image = obj.image,
+            let description = obj.postDescription
+        else { return nil }
+        
+        return MyPost(
+            id: id,
+            author: author,
+            image: image,
+            description: description,
+            likes: Int(obj.likes),
+            views: Int(obj.views)
+        )
     }
 }
 

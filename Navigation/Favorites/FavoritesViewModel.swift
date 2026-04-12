@@ -4,14 +4,20 @@ import StorageService
 protocol FavoritesViewModelProtocol {
     var posts: [MyPost] { get }
    
-    @MainActor
-    func loadFavorites() async throws
-    
     func numberOfRows() -> Int
     func post(at index: Int) -> MyPost?
     
     @MainActor
+    func loadFavorites() async throws
+    
+    @MainActor
     func remove(at index: Int) async throws
+    
+    @MainActor
+    func search(by author: String) async throws
+
+    @MainActor
+    func resetFilter() async throws
 }
 
 final class FavoritesViewModel: FavoritesViewModelProtocol {
@@ -44,5 +50,15 @@ final class FavoritesViewModel: FavoritesViewModelProtocol {
         let post = posts[index]
         try await storage.delete(post: post)
         posts.remove(at: index)
+    }
+    
+    @MainActor
+    func search(by author: String) async throws {
+        posts = try await storage.fetch(by: author)
+    }
+    
+    @MainActor
+    func resetFilter() async throws {
+        posts = try await storage.fetchAll()
     }
 }
