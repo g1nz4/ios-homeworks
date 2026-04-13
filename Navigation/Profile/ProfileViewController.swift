@@ -169,7 +169,8 @@ extension ProfileViewController: UITableViewDataSource {
                 fatalError("could not dequeueReusableCell")
             }
             if let post = viewModel.post(section: indexPath.section, row: indexPath.row){
-                cell.setupCell(post: post)
+                let isFavorite = viewModel.isFavorite(postID: post.id)
+                cell.setupCell(post: post, isFavorite: isFavorite)
             }
             cell.delegate = self
             return cell

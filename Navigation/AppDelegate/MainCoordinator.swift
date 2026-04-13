@@ -25,7 +25,7 @@ final class MainCoordinator: Coordinator, ProfileCoordinatorDelegate {
             profileCoordinator.controller,
             favoritesCoordinator.controller
         ]
-        tabBar.selectedIndex = 3
+        tabBar.selectedIndex = 2
         controller = tabBar
         children = [feedCoordinator, musicCoordinator, profileCoordinator, favoritesCoordinator]
         

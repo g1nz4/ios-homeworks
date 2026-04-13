@@ -1,12 +1,12 @@
 import UIKit
+import CoreData
 import StorageService
 
 class FavoritesTableViewController: UITableViewController {
 
-    private var viewModel: FavoritesViewModelProtocol
+    private var fetchedResultsController: NSFetchedResultsController<FavoritePost>?
     
-    init(viewModel: FavoritesViewModelProtocol = FavoritesViewModel()) {
-        self.viewModel = viewModel
+    init() {
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -14,21 +14,43 @@ class FavoritesTableViewController: UITableViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-
     override func viewDidLoad() {
         super.viewDidLoad()
         
         title = "Избранное"
-        setupNavigationBar()
         tableView.register(
             PostTableViewCell.self,
             forCellReuseIdentifier: PostTableViewCell.reuseId
         )
-        addObserver()
-        loadFavorites()
+        setupNavigationBar()
+        configureFetchedResultsController()
+    }
+    
+    private func configureFetchedResultsController(searchAuthor: String? = nil) {
+        let context = CoreDataStack.shared.viewContext
+        let request: NSFetchRequest<FavoritePost> = FavoritePost.fetchRequest()
+        
+        request.sortDescriptors = [NSSortDescriptor(key: "id", ascending: true)]
+        
+        if let author = searchAuthor, !author.isEmpty {
+            request.predicate = NSPredicate(format: "author CONTAINS[c] %@", author)
+        }
+        
+        let controller = NSFetchedResultsController(
+            fetchRequest: request,
+            managedObjectContext: context,
+            sectionNameKeyPath: nil,
+            cacheName: nil
+        )
+        controller.delegate = self
+        fetchedResultsController = controller
+        
+        do {
+            try controller.performFetch()
+            tableView.reloadData()
+        } catch {
+            showMessage("Ошибка загрузки данных: \(error.localizedDescription)")
+        }
     }
 
     private func setupNavigationBar() {
@@ -49,44 +71,6 @@ class FavoritesTableViewController: UITableViewController {
         navigationItem.rightBarButtonItems = [resetItem, searchItem]
     }
     
-    private func applySearch(author: String) {
-        Task { [weak self] in
-            guard let self else { return }
-           
-            do {
-                try await viewModel.search(by: author)
-                if viewModel.numberOfRows() == 0 {
-                    self.showMessage("Автор \"\(author)\" не найден.")
-                }
-                self.tableView.reloadData()
-            } catch {
-                self.showMessage("\(error.localizedDescription)")
-            }
-        }
-    }
-    
-    private func addObserver() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(favoritesDidChange),
-            name: .favoritesDidChange,
-            object: nil
-        )
-    }
-    
-    private func loadFavorites() {
-        Task { [weak self] in
-            guard let self else { return }
-            
-            do {
-                try await viewModel.loadFavorites()
-                self.tableView.reloadData()
-            } catch {
-                self.showMessage("\(error.localizedDescription)")
-            }
-        }
-    }
-    
     private func showMessage(_ message: String) {
         let alert = UIAlertController(
             title: "Ошибка",
@@ -98,10 +82,6 @@ class FavoritesTableViewController: UITableViewController {
         present(alert, animated: true)
     }
 
-    @objc private func favoritesDidChange() {
-        loadFavorites()
-    }
-    
     @objc private func searchTapped() {
         let alert = UIAlertController(
             title: "Поиск по автору",
@@ -118,7 +98,11 @@ class FavoritesTableViewController: UITableViewController {
             guard let self else { return }
             guard let text = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !text.isEmpty else { return }
-            self.applySearch(author: text)
+            self.configureFetchedResultsController(searchAuthor: text)
+            
+            if (self.fetchedResultsController?.fetchedObjects?.isEmpty ?? true) {
+                self.showMessage("Автор \"\(text)\" не найден.")
+            }
         }
         
         let cancel = UIAlertAction(
@@ -132,29 +116,20 @@ class FavoritesTableViewController: UITableViewController {
     }
     
     @objc private func resetTapped() {
-        Task { [weak self] in
-            guard let self else { return }
-            
-            do {
-                try await viewModel.resetFilter()
-                self.tableView.reloadData()
-            } catch {
-                self.showMessage("\(error.localizedDescription)")
-            }
-        }
+        configureFetchedResultsController(searchAuthor: nil)
     }
     
     override func numberOfSections(
         in tableView: UITableView
     ) -> Int {
-        return 1
+        return fetchedResultsController?.sections?.count ?? 0
     }
 
     override func tableView(
         _ tableView: UITableView,
         numberOfRowsInSection section: Int
     ) -> Int {
-        return viewModel.numberOfRows()
+        return fetchedResultsController?.sections?[section].numberOfObjects ?? 0
     }
 
     override func tableView(
@@ -167,10 +142,13 @@ class FavoritesTableViewController: UITableViewController {
         ) as? PostTableViewCell else {
             fatalError("could not dequeueReusableCell")
         }
-        if let post = viewModel.post(at: indexPath.row) {
-            cell.setupCell(post: post)
+        
+        if let favoritePost = fetchedResultsController?.object(at: indexPath) {
+            if let post = CoreDataManager.mapFavoritePost(favoritePost) {
+                cell.setupCell(post: post, isFavorite: false)
+            }
         }
-
+        
         return cell
     }
     
@@ -181,19 +159,38 @@ class FavoritesTableViewController: UITableViewController {
         let action = UIContextualAction(
             style: .destructive,
             title: "Удалить") { [weak self] _, _, completion in
-                guard let self else {
+                guard let self,
+                      let frc = self.fetchedResultsController else {
                     completion(false)
                     return
                 }
                 
-                Task {
+                let objectID = frc.object(at: indexPath).objectID
+                
+                Task { [weak self] in
+                    guard let self else {
+                           completion(false)
+                           return
+                       }
+                    
                     do {
-                        try await self.viewModel.remove(at: indexPath.row)
-                        tableView.deleteRows(at: [indexPath], with: .automatic)
-                        NotificationCenter.default.post(name: .favoritesDidChange, object: nil)
+                        let context = CoreDataStack.shared.newBackgroundContext()
+                        try await context.perform{
+                            if let obj = try context.existingObject(with: objectID) as? FavoritePost {
+                                context.delete(obj)
+                                if context.hasChanges {
+                                    try context.save()
+                                }
+                            }
+                        }
+                        await MainActor.run {
+                            NotificationCenter.default.post(name: .favoritesDidChange, object: nil)
+                        }
                         completion(true)
                     } catch {
-                        self.showMessage("\(error.localizedDescription)")
+                        await MainActor.run {
+                            self.showMessage("Ошибка удаления: \(error.localizedDescription)")
+                        }
                         completion(false)
                     }
                 }
@@ -203,5 +200,59 @@ class FavoritesTableViewController: UITableViewController {
         config.performsFirstActionWithFullSwipe = true
         
         return config
+    }
+}
+
+extension FavoritesTableViewController: NSFetchedResultsControllerDelegate {
+    
+    func controllerWillChangeContent(
+        _ controller: NSFetchedResultsController<NSFetchRequestResult>
+    ) {
+        tableView.beginUpdates()
+    }
+    
+    func controllerDidChangeContent(
+        _ controller: NSFetchedResultsController<NSFetchRequestResult>
+    ) {
+        tableView.endUpdates()
+    }
+    
+    func controller(
+        _ controller: NSFetchedResultsController<NSFetchRequestResult>,
+        didChange anObject: Any,
+        at indexPath: IndexPath?,
+        for type: NSFetchedResultsChangeType,
+        newIndexPath: IndexPath?
+    ) {
+        switch type {
+        case .insert:
+            if let newIndexPath {
+                tableView.insertRows(at: [newIndexPath], with: .automatic)
+            }
+            
+        case .delete:
+            if let indexPath {
+                tableView.deleteRows(at: [indexPath], with: .automatic)
+            }
+            
+        case .update:
+            if let indexPath,
+               let cell = tableView.cellForRow(at: indexPath) as? PostTableViewCell,
+               let favoritePost = fetchedResultsController?.object(at: indexPath),
+               let post = CoreDataManager.mapFavoritePost(favoritePost) {
+                cell.setupCell(post: post, isFavorite: false)
+            }
+            
+        case .move:
+            if let indexPath {
+                tableView.deleteRows(at: [indexPath], with: .automatic)
+            }
+            if let newIndexPath {
+                tableView.insertRows(at: [newIndexPath], with: .automatic)
+            }
+            
+        @unknown default:
+            break
+        }
     }
 }
