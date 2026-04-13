@@ -76,7 +76,7 @@ final class CoreDataManager: CoreDataFavoritesPostProtocol {
         
         return try await context.perform {
             let request: NSFetchRequest<FavoritePost> = FavoritePost.fetchRequest()
-            request.predicate = NSPredicate(format: "author == %@", author)
+            request.predicate = NSPredicate(format: "author CONTAINS[c] %@", author)
             
             let result = try context.fetch(request)
             
@@ -86,7 +86,7 @@ final class CoreDataManager: CoreDataFavoritesPostProtocol {
         }
     }
     
-    private static func mapFavoritePost(_ obj: FavoritePost) -> MyPost? {
+    static func mapFavoritePost(_ obj: FavoritePost) -> MyPost? {
         guard
             let id = obj.id,
             let author = obj.author,

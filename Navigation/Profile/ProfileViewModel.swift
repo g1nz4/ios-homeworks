@@ -19,6 +19,7 @@ protocol ProfileViewModelOutput {
     func numberOfRows(in section: Int) -> Int
     func cellType(for section: Int) -> ProfileCellType
     func post(section: Int, row: Int) -> MyPost?
+    func isFavorite(postID: String) -> Bool
 }
 
 enum ProfileCellType {
@@ -31,6 +32,7 @@ final class ProfileViewModel: ProfileViewModelInput, ProfileViewModelOutput {
     
     private var user: User
     private var posts: [MyPost] = []
+    private var favoriteIDs: Set<String> = []
     private let postsLoader: () -> [MyPost]
     private let favoritesStorage: CoreDataFavoritesPostProtocol
     
@@ -48,6 +50,17 @@ final class ProfileViewModel: ProfileViewModelInput, ProfileViewModelOutput {
         self.user = user
         self.postsLoader = postsLoader
         self.favoritesStorage = favoritesStorage
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(favoritesDidChange),
+            name: .favoritesDidChange,
+            object: nil
+        )
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     func viewDidLoad() {
@@ -63,6 +76,31 @@ final class ProfileViewModel: ProfileViewModelInput, ProfileViewModelOutput {
         }
         posts = postsLoader()
         updatePosts?()
+        reloadFavorites()
+    }
+    
+    private func reloadFavorites() {
+        Task { [weak self] in
+            guard let self else { return }
+            
+            do {
+                let favorites = try await favoritesStorage.fetchAll()
+                let ids = Set(favorites.map { $0.id })
+                
+                await MainActor.run {
+                    self.favoriteIDs = ids
+                    self.updatePosts?()
+                }
+            } catch {
+                await MainActor.run {
+                    self.onError?(.favoritesLoadingFailed)
+                }
+            }
+        }
+    }
+    
+    @objc private func favoritesDidChange() {
+        reloadFavorites()
     }
     
     private func fetchProfile(completion: @escaping (Result<User, NavigationError>) -> Void) {
@@ -133,6 +171,10 @@ final class ProfileViewModel: ProfileViewModelInput, ProfileViewModelOutput {
         return posts[row]
     }
     
+    func isFavorite(postID: String) -> Bool {
+        favoriteIDs.contains(postID)
+    }
+    
     func didDoubleTap(post: MyPost) {
         Task { [weak self] in
             guard let self else { return }
@@ -141,7 +183,8 @@ final class ProfileViewModel: ProfileViewModelInput, ProfileViewModelOutput {
                 try await favoritesStorage.save(post: post)
                 
                 await MainActor.run {
-                    NotificationCenter.default.post(name: .favoritesDidChange, object: nil)
+                    self.favoriteIDs.insert(post.id)
+                    self.updatePosts?()
                 }
             } catch {
                 await MainActor.run {

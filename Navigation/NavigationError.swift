@@ -13,5 +13,6 @@ enum NavigationError: String, Error {
     case fileNotFound = "Файл не найден."
     case errorAVAudioPlayer = "Ошибка AVAudioPlayer."
     case favoritesSavingFailed = "Не удалось сохранить в избранное"
+    case favoritesLoadingFailed = "Ошибка загрузки данных избранных постов"
 }
 

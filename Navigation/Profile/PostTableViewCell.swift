@@ -39,6 +39,19 @@ final class PostTableViewCell: UITableViewCell {
         return label
     }()
     
+    private lazy var favoriteIcon: UIImageView = {
+        let image = UIImageView()
+        image.translatesAutoresizingMaskIntoConstraints = false
+        image.heightAnchor.constraint(equalToConstant: 30.0).isActive = true
+        image.widthAnchor.constraint(equalToConstant: 30.0).isActive = true
+        image.image = UIImage(systemName: "heart.fill")
+        image.tintColor = .systemRed
+        image.contentMode = .scaleAspectFit
+        image.isHidden = true
+        
+        return image
+    }()
+    
     private lazy var postCellDescription: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -79,19 +92,20 @@ final class PostTableViewCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setupCell(post: MyPost) {
+    func setupCell(post: MyPost, isFavorite: Bool) {
         postCellImage.image = UIImage(named: post.image)
         postCellAuthor.text = post.author
         postCellDescription.text = post.description
         postCellLikes.text = "Likes: \(post.likes)"
         postCellVievvs.text = "Views: \(post.views)"
-        
+        favoriteIcon.isHidden = isFavorite ? false : true
     }
     
     private func addSubViews() {
         contentView.addSubview(postCellView)
         postCellView.addSubview(postCellImage)
         postCellView.addSubview(postCellAuthor)
+        postCellView.addSubview(favoriteIcon)
         postCellView.addSubview(postCellDescription)
         postCellView.addSubview(postCellLikes)
         postCellView.addSubview(postCellVievvs)
@@ -118,12 +132,19 @@ final class PostTableViewCell: UITableViewCell {
                     constant: 16.0
                 ),
                 postCellAuthor.trailingAnchor.constraint(
-                    equalTo: postCellView.trailingAnchor,
-                    constant: -16.0
+                    equalTo: favoriteIcon.leadingAnchor,
+                    constant: -10.0
                 ),
                 postCellAuthor.topAnchor.constraint(
                     equalTo: postCellView.topAnchor,
                     constant: 16.0
+                ),
+                
+                favoriteIcon.trailingAnchor.constraint(
+                    equalTo: postCellView.trailingAnchor,
+                    constant: -16.0),
+                favoriteIcon.centerYAnchor.constraint(
+                    equalTo: postCellAuthor.centerYAnchor
                 ),
                 
                 postCellImage.leadingAnchor.constraint(
