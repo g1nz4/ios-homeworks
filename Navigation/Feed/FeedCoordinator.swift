@@ -20,7 +20,7 @@ final class FeedCoordinator: Coordinator {
         feedVC = FeedViewController(feedViewModel: viewModel)
         feedNC = UINavigationController(rootViewController: feedVC)
         feedNC.tabBarItem = UITabBarItem(
-            title: "Feed",
+            title: "Лента",
             image: UIImage(systemName: "text.bubble"),
             selectedImage: UIImage(systemName: "text.bubble.fill")
         )
