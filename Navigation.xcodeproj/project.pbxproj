@@ -24,6 +24,13 @@
 			remoteGlobalIDString = EA9CC29D2F30DE9600D2B0A5;
 			remoteInfo = StorageService;
 		};
+		EA9E4ECF2FB26333009C62C4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EA83E2BE2EC8D5610050B4EE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EA83E2C52EC8D5610050B4EE;
+			remoteInfo = Navigation;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -44,6 +51,7 @@
 		EA7FBE6A2F72FE8F00DCB41A /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		EA83E2C62EC8D5610050B4EE /* Navigation.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Navigation.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA9CC29E2F30DE9600D2B0A5 /* StorageService.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = StorageService.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		EA9E4ECB2FB26333009C62C4 /* NavigationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NavigationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -70,6 +78,11 @@
 			path = StorageService;
 			sourceTree = "<group>";
 		};
+		EA9E4ECC2FB26333009C62C4 /* NavigationTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = NavigationTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -92,6 +105,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EA9E4EC82FB26333009C62C4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -107,6 +127,7 @@
 			children = (
 				EA83E2C82EC8D5610050B4EE /* Navigation */,
 				EA9CC29F2F30DE9700D2B0A5 /* StorageService */,
+				EA9E4ECC2FB26333009C62C4 /* NavigationTests */,
 				EA83E2C72EC8D5610050B4EE /* Products */,
 				EA7FBE6A2F72FE8F00DCB41A /* GoogleService-Info.plist */,
 				EA7FBE712F7300EC00DCB41A /* Frameworks */,
@@ -118,6 +139,7 @@
 			children = (
 				EA83E2C62EC8D5610050B4EE /* Navigation.app */,
 				EA9CC29E2F30DE9600D2B0A5 /* StorageService.framework */,
+				EA9E4ECB2FB26333009C62C4 /* NavigationTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -186,6 +208,29 @@
 			productReference = EA9CC29E2F30DE9600D2B0A5 /* StorageService.framework */;
 			productType = "com.apple.product-type.framework";
 		};
+		EA9E4ECA2FB26333009C62C4 /* NavigationTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EA9E4ED32FB26333009C62C4 /* Build configuration list for PBXNativeTarget "NavigationTests" */;
+			buildPhases = (
+				EA9E4EC72FB26333009C62C4 /* Sources */,
+				EA9E4EC82FB26333009C62C4 /* Frameworks */,
+				EA9E4EC92FB26333009C62C4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EA9E4ED02FB26333009C62C4 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				EA9E4ECC2FB26333009C62C4 /* NavigationTests */,
+			);
+			name = NavigationTests;
+			packageProductDependencies = (
+			);
+			productName = NavigationTests;
+			productReference = EA9E4ECB2FB26333009C62C4 /* NavigationTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -193,7 +238,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2610;
+				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					EA83E2C52EC8D5610050B4EE = {
@@ -201,6 +246,10 @@
 					};
 					EA9CC29D2F30DE9600D2B0A5 = {
 						CreatedOnToolsVersion = 26.1;
+					};
+					EA9E4ECA2FB26333009C62C4 = {
+						CreatedOnToolsVersion = 26.4.1;
+						TestTargetID = EA83E2C52EC8D5610050B4EE;
 					};
 				};
 			};
@@ -224,6 +273,7 @@
 			targets = (
 				EA83E2C52EC8D5610050B4EE /* Navigation */,
 				EA9CC29D2F30DE9600D2B0A5 /* StorageService */,
+				EA9E4ECA2FB26333009C62C4 /* NavigationTests */,
 			);
 		};
 /* End PBXProject section */
@@ -238,6 +288,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		EA9CC29C2F30DE9600D2B0A5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EA9E4EC92FB26333009C62C4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -261,6 +318,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EA9E4EC72FB26333009C62C4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -268,6 +332,11 @@
 			isa = PBXTargetDependency;
 			target = EA9CC29D2F30DE9600D2B0A5 /* StorageService */;
 			targetProxy = EA9CC2A42F30DE9700D2B0A5 /* PBXContainerItemProxy */;
+		};
+		EA9E4ED02FB26333009C62C4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EA83E2C52EC8D5610050B4EE /* Navigation */;
+			targetProxy = EA9E4ECF2FB26333009C62C4 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -549,6 +618,48 @@
 			};
 			name = Release;
 		};
+		EA9E4ED12FB26333009C62C4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Mishenina-IOS64.NavigationTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Navigation.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Navigation";
+			};
+			name = Debug;
+		};
+		EA9E4ED22FB26333009C62C4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Mishenina-IOS64.NavigationTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Navigation.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Navigation";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -575,6 +686,15 @@
 			buildConfigurations = (
 				EA9CC2A92F30DE9700D2B0A5 /* Debug */,
 				EA9CC2AA2F30DE9700D2B0A5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EA9E4ED32FB26333009C62C4 /* Build configuration list for PBXNativeTarget "NavigationTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EA9E4ED12FB26333009C62C4 /* Debug */,
+				EA9E4ED22FB26333009C62C4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

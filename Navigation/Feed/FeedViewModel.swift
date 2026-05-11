@@ -32,7 +32,13 @@ final class FeedViewModel: FeedViewModelInput, FeedViewModelOutput {
     
     private var posts: [FeedPost] = []
     private var updateTimer: Timer?
-    private let storage = PostStorage()
+    private let storage: PostStorageProtocol
+    
+    var randomBool: () -> Bool = { Bool.random() }
+    
+    init(storage: PostStorageProtocol = PostStorage()) {
+        self.storage = storage
+    }
     
     func post(at index: Int) -> FeedPost {
         posts[index]
@@ -71,7 +77,7 @@ final class FeedViewModel: FeedViewModelInput, FeedViewModelOutput {
         updateTimer = nil
     }
     
-    @objc private func didUpdateTimer() {
+    @objc func didUpdateTimer() {
         loadMorePosts()
     }
     
@@ -79,7 +85,7 @@ final class FeedViewModel: FeedViewModelInput, FeedViewModelOutput {
         DispatchQueue.global(qos: .background).async { [weak self] in
             guard let self = self else { return }
             
-            let success = Bool.random()
+            let success = self.randomBool()
             if success {
                 guard let newPost = self.storage.makeRandomPost() else {
                     DispatchQueue.main.async {
