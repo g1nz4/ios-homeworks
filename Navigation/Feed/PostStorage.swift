@@ -1,6 +1,11 @@
 import Foundation
 
-final class PostStorage {
+protocol PostStorageProtocol {
+    var posts: [FeedPost] { get }
+    func makeRandomPost() -> FeedPost?
+}
+
+final class PostStorage: PostStorageProtocol {
     
     private(set) var posts: [FeedPost] = [
         FeedPost(
