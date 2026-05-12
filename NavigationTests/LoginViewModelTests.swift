@@ -24,11 +24,23 @@ final class LoginDelegateMock: LogInViewControllerDelegate {
 
 final class LoginViewModelTests: XCTestCase {
     
+    var delegateMock: LoginDelegateMock!
+    var viewModel: LoginViewModel!
+    
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        delegateMock = LoginDelegateMock()
+        viewModel = LoginViewModel(loginDelegate: delegateMock)
+    }
+    
+    override func tearDownWithError() throws {
+        delegateMock = nil
+        viewModel = nil
+        try super.tearDownWithError()
+    }
+    
     func test_login_withEmptyCredentials_emptyCredentialsError() {
         // given
-        let delegateMock = LoginDelegateMock()
-        let viewModel = LoginViewModel(loginDelegate: delegateMock)
-        
         viewModel.email = ""
         viewModel.password = ""
         
@@ -42,9 +54,6 @@ final class LoginViewModelTests: XCTestCase {
     
     func test_login_withInvalidEmail_invalidEmailError() {
         // given
-        let delegateMock = LoginDelegateMock()
-        let viewModel = LoginViewModel(loginDelegate: delegateMock)
-        
         viewModel.email = "abrakadabra mail.ru"
         viewModel.password = "123456"
         
@@ -58,9 +67,6 @@ final class LoginViewModelTests: XCTestCase {
     
     func test_login_withWeakPassword_weakPasswordError() {
         // given
-        let delegateMock = LoginDelegateMock()
-        let viewModel = LoginViewModel(loginDelegate: delegateMock)
-        
         viewModel.email = "test@example.com"
         viewModel.password = "123"
         
@@ -74,10 +80,8 @@ final class LoginViewModelTests: XCTestCase {
     
     func test_login_success_callsOnSuccessAndStopLoading() {
         // given
-        let delegateMock = LoginDelegateMock()
         delegateMock.checkCredentialsResult = .success(())
         
-        let viewModel = LoginViewModel(loginDelegate: delegateMock)
         viewModel.email = "test@example.com"
         viewModel.password = "123456"
         
@@ -103,10 +107,8 @@ final class LoginViewModelTests: XCTestCase {
         // given
         enum TestError: Error { case fail }
         
-        let delegateMock = LoginDelegateMock()
         delegateMock.checkCredentialsResult = .failure(TestError.fail)
         
-        let viewModel = LoginViewModel(loginDelegate: delegateMock)
         viewModel.email = "test@example.com"
         viewModel.password = "123456"
         

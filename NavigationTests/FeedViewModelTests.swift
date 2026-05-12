@@ -12,9 +12,23 @@ final class PostStorageMock: PostStorageProtocol {
 
 final class FeedViewModelTests: XCTestCase {
 
+    var storageMock: PostStorageMock!
+    var viewModel: FeedViewModel!
+    
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        storageMock = PostStorageMock()
+        viewModel = FeedViewModel(storage: storageMock)
+    }
+    
+    override func tearDownWithError() throws {
+        storageMock = nil
+        viewModel = nil
+        try super.tearDownWithError()
+    }
+    
     func test_viewDidLoad_loadsPostsSuccessfully() {
         // given
-        let storageMock = PostStorageMock()
         let post1 = FeedPost(
             author: "author1",
             title: "title1",
@@ -31,8 +45,6 @@ final class FeedViewModelTests: XCTestCase {
         )
         storageMock.posts = [post1, post2]
         
-        let viewModel = FeedViewModel(storage: storageMock)
-        
         let expectation = expectation(description: "postsUpdated called")
         viewModel.postsUpdated = {
             expectation.fulfill()
@@ -43,7 +55,6 @@ final class FeedViewModelTests: XCTestCase {
         
         // then
         waitForExpectations(timeout: 1.0)
-        
         XCTAssertEqual(viewModel.numberOfPosts, 2)
         XCTAssertEqual(viewModel.post(at: 0).author, "author2")
         XCTAssertEqual(viewModel.post(at: 1).author, "author1")
@@ -51,10 +62,7 @@ final class FeedViewModelTests: XCTestCase {
     
     func test_viewDidLoad_whenStoragePostsEmpty_callsOnErrorWithFeedLoadingFailed() {
         // given
-        let storageMock = PostStorageMock()
         storageMock.posts = []
-        
-        let viewModel = FeedViewModel(storage: storageMock)
         
         let expectation = expectation(description: "onError called")
         var receivedError: NavigationError?
@@ -75,7 +83,6 @@ final class FeedViewModelTests: XCTestCase {
 
     func test_didUpdateTimer_onSuccess_insertsPostAtTop() {
         // given
-        let storageMock = PostStorageMock()
         let newPost = FeedPost(
             author: "NewAuthor",
             title: "NewTitle",
@@ -85,7 +92,6 @@ final class FeedViewModelTests: XCTestCase {
         )
         storageMock.randomPostToReturn = newPost
         
-        let viewModel = FeedViewModel(storage: storageMock)
         viewModel.randomBool = { true }
         
         let expectation = expectation(description: "postInsertedAtTop called")
