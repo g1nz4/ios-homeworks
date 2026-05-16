@@ -5,6 +5,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
     private var loginCoordinator: LoginCoordinator?
+    
+    let notificationsService: LocalNotificationsServiceProtocol = LocalNotificationsService()
    
     func scene(
         _ scene: UIScene,
@@ -15,7 +17,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
            
         let window = UIWindow(windowScene: scene)
         
-        let loginCoordinator = LoginCoordinator()
+        let loginCoordinator = LoginCoordinator(notificationsService: notificationsService)
         self.loginCoordinator = loginCoordinator
         
         window.rootViewController = loginCoordinator.controller
@@ -30,6 +32,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         } catch {
             print("Ошибка:", error.localizedDescription)
         }
+    }
+    
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        notificationsService.refreshAuthorizationStatus()
+        UIApplication.shared.applicationIconBadgeNumber = 0
     }
 }
 
