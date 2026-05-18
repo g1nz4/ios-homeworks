@@ -6,8 +6,6 @@ final class MainCoordinator: Coordinator, ProfileCoordinatorDelegate {
    
     var controller: UIViewController
     var children: [Coordinator] = []
-
-    private weak var notificationsService: LocalNotificationsServiceProtocol?
     
     private let feedCoordinator: FeedCoordinator
     private let musicCoordinator: MusicCoordinator
@@ -15,9 +13,7 @@ final class MainCoordinator: Coordinator, ProfileCoordinatorDelegate {
     private let profileCoordinator: ProfileCoordinator
     private let favoritesCoordinator: FavoritesCoordinator
     
-    init(user: User, notificationsService: LocalNotificationsServiceProtocol?) {
-        self.notificationsService = notificationsService
-        
+    init(user: User) {
         feedCoordinator = FeedCoordinator()
         musicCoordinator = MusicCoordinator()
         mapCoordinator = MapCoordinator()
@@ -46,7 +42,7 @@ final class MainCoordinator: Coordinator, ProfileCoordinatorDelegate {
     }
     
     private func showLogin() {
-        let loginCoordinator = LoginCoordinator(notificationsService: notificationsService)
+        let loginCoordinator = LoginCoordinator()
         children = [loginCoordinator]
         
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,

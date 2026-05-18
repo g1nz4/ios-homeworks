@@ -2,13 +2,8 @@ import Foundation
 import UIKit
 import UserNotifications
 
-protocol LocalNotificationsServiceProtocol: AnyObject {
-    func registerForLatestUpdatesIfPossible()
-    func refreshAuthorizationStatus()
-}
-
 @MainActor
-final class LocalNotificationsService: NSObject, LocalNotificationsServiceProtocol {
+final class LocalNotificationsService: NSObject {
     
     private let center = UNUserNotificationCenter.current()
     

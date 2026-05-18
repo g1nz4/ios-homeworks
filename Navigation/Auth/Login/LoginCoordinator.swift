@@ -5,7 +5,6 @@ final class LoginCoordinator: Coordinator {
     var controller: UIViewController
     var children: [Coordinator]
     
-    private weak var notificationsService: LocalNotificationsServiceProtocol?
     private var mainCoordinator: MainCoordinator?
     
     private let loginVC: LogInViewController
@@ -16,9 +15,7 @@ final class LoginCoordinator: Coordinator {
         case signUp
     }
     
-    init(notificationsService: LocalNotificationsServiceProtocol?) {
-        self.notificationsService = notificationsService
-        
+    init() {
         children = []
         loginInspector = LoginInspector()
         
@@ -47,10 +44,7 @@ final class LoginCoordinator: Coordinator {
     }
     
     func didLogin(user: User) {
-        let mainCoordinator = MainCoordinator(
-            user: user,
-            notificationsService: notificationsService
-        )
+        let mainCoordinator = MainCoordinator(user: user)
         self.mainCoordinator = mainCoordinator
         children = [mainCoordinator]
 
@@ -59,7 +53,5 @@ final class LoginCoordinator: Coordinator {
             window.rootViewController = mainCoordinator.controller
             window.makeKeyAndVisible()
         }
-        
-        notificationsService?.registerForLatestUpdatesIfPossible()
     }
 }

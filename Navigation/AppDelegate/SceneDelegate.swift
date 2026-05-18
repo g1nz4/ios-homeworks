@@ -6,7 +6,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
     private var loginCoordinator: LoginCoordinator?
     
-    let notificationsService: LocalNotificationsServiceProtocol = LocalNotificationsService()
+    let notificationsService = LocalNotificationsService()
    
     func scene(
         _ scene: UIScene,
@@ -17,8 +17,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
            
         let window = UIWindow(windowScene: scene)
         
-        let loginCoordinator = LoginCoordinator(notificationsService: notificationsService)
+        let loginCoordinator = LoginCoordinator()
         self.loginCoordinator = loginCoordinator
+        
+        notificationsService.registerForLatestUpdatesIfPossible()
         
         window.rootViewController = loginCoordinator.controller
         window.makeKeyAndVisible()
