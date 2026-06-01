@@ -1,4 +1,5 @@
 import UIKit
+import LocalAuthentication
 
 protocol LogInViewControllerDelegate: AnyObject {
     func checkCredentials(
@@ -18,6 +19,7 @@ final class LogInViewController: UIViewController {
     
     weak var coordinator: LoginCoordinator?
     private var viewModel: LoginViewModelProtocol
+    private let localAuthService = LocalAuthorizationService()
     
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -153,6 +155,38 @@ final class LogInViewController: UIViewController {
         return stackView
     }()
     
+    private lazy var biometricButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+
+        let type = localAuthService.biometryType
+
+        let systemImageName: String?
+        switch type {
+        case .faceID:
+           systemImageName = "faceid"
+        case .touchID:
+           systemImageName = "touchid"
+        case .none:
+           systemImageName = nil
+        }
+
+        if let name = systemImageName,
+          let image = UIImage(systemName: name) {
+           button.setImage(image, for: .normal)
+           button.tintColor = .appAccent
+        } else {
+           button.isHidden = true
+           button.isEnabled = false
+        }
+        button.setTitle(nil, for: .normal)
+        button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
+        button.addTarget(self,
+                        action: #selector(didTapBiometricButton),
+                        for: .touchUpInside)
+        return button
+    }()
+    
     init(delegate: LogInViewControllerDelegate) {
         self.viewModel = LoginViewModel(loginDelegate: delegate)
         super.init(nibName: nil, bundle: nil)
@@ -213,7 +247,7 @@ final class LogInViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
-        [image, logInStackView, autorizationButton, signUpButton].forEach() {
+        [image, logInStackView, autorizationButton, biometricButton, signUpButton].forEach() {
             contentView.addSubview($0)
         }
     }
@@ -264,6 +298,13 @@ final class LogInViewController: UIViewController {
                 ),
                 image.heightAnchor.constraint(
                     equalToConstant: 100.0
+                ),
+                biometricButton.topAnchor.constraint(
+                    equalTo: image.bottomAnchor,
+                    constant: 80.0
+                ),
+                biometricButton.centerXAnchor.constraint(
+                    equalTo: contentView.centerXAnchor
                 ),
                 
                 emailTextField.leadingAnchor.constraint(
@@ -354,6 +395,7 @@ final class LogInViewController: UIViewController {
                     constant: -20.0
                 ),
                 signUpButton.heightAnchor.constraint(equalToConstant: 50.0)
+                
             ]
         )
     }
@@ -422,6 +464,23 @@ final class LogInViewController: UIViewController {
         present(alert, animated: true)
     }
     
+    private func handleBiometricError(_ error: LocalAuthError) {
+        let message: String
+
+        switch error {
+        case .biometryNotAvailable:
+            message = "Биометрическая авторизация недоступна или не настроена на этом устройстве."
+        case .authenticationFailed:
+            message = "Не удалось подтвердить личность. Попробуйте ещё раз."
+        case .canceled:
+            return
+        case .unknown:
+            message = "Произошла неизвестная ошибка биометрии."
+        }
+
+        showAlert(message: message)
+    }
+    
     @objc func didTapAutorizationButton(_ sender: UIButton) {
         viewModel.email = emailTextField.text ?? ""
         viewModel.password = passwordTextField.text ?? ""
@@ -434,6 +493,33 @@ final class LogInViewController: UIViewController {
     
     @objc private func textFieldsDidChange(_ textField: UITextField) {
         updateStateAuthorizationButton()
+    }
+    
+    @objc private func didTapBiometricButton() {
+        Task { [weak self] in
+            guard let self else { return }
+
+            do {
+                let success = try await self.localAuthService.authorizeIfPossible()
+                
+                guard success else { return }
+
+                await MainActor.run {
+                    self.viewModel.email = self.emailTextField.text ?? ""
+                    self.viewModel.password = self.passwordTextField.text ?? ""
+                    self.viewModel.login()
+                }
+
+            } catch let error as LocalAuthError {
+                await MainActor.run {
+                    self.handleBiometricError(error)
+                }
+            } catch {
+                await MainActor.run {
+                    self.handleBiometricError(.unknown(error))
+                }
+            }
+        }
     }
 
     @objc func willShowKeyboard(_ notification: NSNotification) {
