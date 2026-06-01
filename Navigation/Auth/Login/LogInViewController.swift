@@ -106,7 +106,10 @@ final class LogInViewController: UIViewController {
         button.setTitleColor(.appButtonText, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16.0)
         button.layer.cornerRadius = 10.0
-        button.setTitle("Войти", for: .normal)
+        button.setTitle(
+            NSLocalizedString("login_button_title", comment: "Кнопка входа"),
+            for: .normal
+        )
         button.setBackgroundImage(image, for: .normal)
         button.alpha = {
             if button.state == .normal {
@@ -128,7 +131,10 @@ final class LogInViewController: UIViewController {
         button.setTitleColor(.appButtonText, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16.0)
         button.layer.cornerRadius = 10.0
-        button.setTitle("Зарегистрироваться", for: .normal)
+        button.setTitle(
+            NSLocalizedString("signup_button_title", comment: "Кнопка регистрации"),
+            for: .normal
+        )
         button.setBackgroundImage(image, for: .normal)
         button.addTarget(self, action: #selector(didTapSignUpButton), for: .touchUpInside)
         

@@ -30,6 +30,7 @@ final class ProfileViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        title = NSLocalizedString("profile_title", comment: "Заголовок экрана профиля")
         view.backgroundColor = .appBackground
         setupNavigationBar()
         setupTableView()
@@ -44,7 +45,7 @@ final class ProfileViewController: UIViewController {
     
     private func setupNavigationBar() {
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            title: "Выйти",
+            title: NSLocalizedString("profile_logout_button", comment: "Кнопка выхода из профиля"),
             style: .plain,
             target: self,
             action: #selector(logoutTapped)
