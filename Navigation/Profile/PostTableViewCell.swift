@@ -33,7 +33,7 @@ final class PostTableViewCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 20.0, weight: .bold)
-        label.textColor = .black
+        label.textColor = .appPrimaryText
         label.numberOfLines = 2
         
         return label
@@ -56,7 +56,7 @@ final class PostTableViewCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 14.0, weight: .regular)
-        label.textColor = .systemGray
+        label.textColor = .appSecondaryText
         label.numberOfLines = 0
         
         return label
@@ -66,7 +66,7 @@ final class PostTableViewCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 16.0, weight: .regular)
-        label.textColor = .black
+        label.textColor = .appPrimaryText
 
         return label
     }()
@@ -75,14 +75,15 @@ final class PostTableViewCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 16.0, weight: .regular)
-        label.textColor = .black
+        label.textColor = .appPrimaryText 
         
         return label
     }()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-       
+        backgroundColor = .clear
+        contentView.backgroundColor = .appSecondaryBackground
         addSubViews()
         setupConstraints()
         setupDoubleTapGesture()

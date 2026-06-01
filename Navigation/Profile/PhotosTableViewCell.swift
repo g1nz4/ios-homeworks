@@ -15,7 +15,7 @@ final class PhotosTableViewCell: UITableViewCell {
         let label = UILabel()
         label.font = .systemFont(ofSize: 24.0, weight: .bold)
         label.text = "Photos"
-        label.textColor = .black
+        label.textColor = .appPrimaryText
         label.translatesAutoresizingMaskIntoConstraints = false
         
         return label
@@ -24,7 +24,7 @@ final class PhotosTableViewCell: UITableViewCell {
     private lazy var symbol: UIImageView = {
         let image = UIImageView()
         image.image = UIImage(systemName: "arrowshape.right")
-        image.tintColor = .black
+        image.tintColor = .appSecondaryText
         image.translatesAutoresizingMaskIntoConstraints = false
         
         return image
@@ -46,13 +46,14 @@ final class PhotosTableViewCell: UITableViewCell {
         collectionView.delegate = self
         collectionView.dataSource = self
         collectionView.showsHorizontalScrollIndicator = false
+        collectionView.backgroundColor = .clear
         
         return collectionView
     }()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        contentView.backgroundColor = .systemBackground
+        contentView.backgroundColor = .appSecondaryBackground
         addSubViews()
         setupView()
     }

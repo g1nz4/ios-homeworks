@@ -37,7 +37,7 @@ final class LogInViewController: UIViewController {
     
     private lazy var divider: UIView = {
         let view = UIView()
-        view.backgroundColor = .lightGray
+        view.backgroundColor = .appSeparator
         view.translatesAutoresizingMaskIntoConstraints = false
         
         return view
@@ -53,38 +53,47 @@ final class LogInViewController: UIViewController {
     
     private lazy var emailTextField: UITextField = { [unowned self] in
         let textField = UITextField()
-        textField.textColor = .black
+        textField.textColor = .appPrimaryText
         textField.font = UIFont.systemFont(ofSize: 16.0)
-        textField.placeholder = "Email of phone"
-        textField.tintColor = .tintColor
+        textField.tintColor = .appAccent
         textField.autocapitalizationType = .none
-        textField.keyboardType = UIKeyboardType.default
-        textField.returnKeyType = UIReturnKeyType.done
-        textField.backgroundColor = .systemGray6
+        textField.keyboardType = .default
+        textField.returnKeyType = .done
+        textField.backgroundColor = .appTextFieldBackground
         textField.borderStyle = .none
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.addTarget(self, action: #selector(textFieldsDidChange), for: .editingChanged)
         textField.delegate = self
+        
+        textField.attributedPlaceholder = NSAttributedString(
+            string: "Email or phone",
+            attributes: [.foregroundColor: UIColor.appSecondaryText]
+        )
         
         return textField
     }()
     
     private lazy var passwordTextField: UITextField = { [unowned self] in
         let textField = UITextField()
-        textField.textColor = .black
+        textField.textColor = .appPrimaryText
         textField.font = UIFont.systemFont(ofSize: 16.0)
         textField.placeholder = "Password"
-        textField.tintColor = .tintColor
+        textField.tintColor = .appAccent
         textField.autocapitalizationType = .none
-        textField.keyboardType = UIKeyboardType.default
-        textField.returnKeyType = UIReturnKeyType.done
-        textField.backgroundColor = .systemGray6
+        textField.keyboardType = .default
+        textField.returnKeyType = .done
+        textField.backgroundColor = .appTextFieldBackground
         textField.isSecureTextEntry = true
         textField.borderStyle = .none
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.addTarget(self, action: #selector(textFieldsDidChange), for: .editingChanged)
         textField.delegate = self
         
+        textField.attributedPlaceholder = NSAttributedString(
+            string: "Password",
+            attributes: [.foregroundColor: UIColor.appSecondaryText]
+        )
+
         return textField
     }()
     
@@ -92,7 +101,7 @@ final class LogInViewController: UIViewController {
         let button = UIButton()
         let image = UIImage(named: "blue_pixel.png")
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitleColor(.white, for: .normal)
+        button.setTitleColor(.appButtonText, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16.0)
         button.layer.cornerRadius = 10.0
         button.setTitle("Войти", for: .normal)
@@ -114,7 +123,7 @@ final class LogInViewController: UIViewController {
         let button = UIButton()
         let image = UIImage(named: "blue_pixel.png")
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitleColor(.white, for: .normal)
+        button.setTitleColor(.appButtonText, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16.0)
         button.layer.cornerRadius = 10.0
         button.setTitle("Зарегистрироваться", for: .normal)
@@ -133,8 +142,9 @@ final class LogInViewController: UIViewController {
         stackView.alignment = .center
         stackView.spacing = 0.0
         stackView.layer.cornerRadius = 10.0
-        stackView.layer.borderColor = UIColor.lightGray.cgColor
+        stackView.layer.borderColor = UIColor.appSeparator.cgColor
         stackView.layer.borderWidth = 0.5
+        stackView.backgroundColor = .appSecondaryBackground
         
         stackView.addArrangedSubview(self.emailTextField)
         stackView.addArrangedSubview(self.passwordTextField)
@@ -176,7 +186,7 @@ final class LogInViewController: UIViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .appBackground
         navigationController?.navigationBar.isHidden = true
     }
     

@@ -6,7 +6,7 @@ final class MainCoordinator: Coordinator, ProfileCoordinatorDelegate {
    
     var controller: UIViewController
     var children: [Coordinator] = []
-
+    
     private let feedCoordinator: FeedCoordinator
     private let musicCoordinator: MusicCoordinator
     private let mapCoordinator: MapCoordinator
@@ -28,7 +28,7 @@ final class MainCoordinator: Coordinator, ProfileCoordinatorDelegate {
             profileCoordinator.controller,
             favoritesCoordinator.controller
         ]
-        tabBar.selectedIndex = 2
+        tabBar.selectedIndex = 3
         controller = tabBar
         children = [feedCoordinator, musicCoordinator, mapCoordinator, profileCoordinator, favoritesCoordinator]
         

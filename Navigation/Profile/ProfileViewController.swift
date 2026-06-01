@@ -30,6 +30,7 @@ final class ProfileViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .appBackground
         setupNavigationBar()
         setupTableView()
         tuneTableView()
@@ -39,11 +40,6 @@ final class ProfileViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
             super.viewDidAppear(animated)
-        #if DEBUG
-            view.backgroundColor = UIColor.systemYellow
-        #else
-            view.backgroundColor = UIColor.systemCyan
-        #endif
     }
     
     private func setupNavigationBar() {
@@ -53,6 +49,16 @@ final class ProfileViewController: UIViewController {
             target: self,
             action: #selector(logoutTapped)
         )
+        
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .appBackground
+        appearance.titleTextAttributes = [
+            .foregroundColor: UIColor.appPrimaryText
+        ]
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.tintColor = .appAccent
     }
 
     private func setupTableView() {
@@ -85,7 +91,8 @@ final class ProfileViewController: UIViewController {
            PhotosTableViewCell.self,
            forCellReuseIdentifier: PhotosTableViewCell.reuseId
        )
-       tableView.backgroundColor = UIColor(named: "Color")
+       tableView.backgroundColor = .appBackground
+       tableView.separatorColor = .appSeparator
        tableView.dataSource = self
        tableView.delegate = self
     
