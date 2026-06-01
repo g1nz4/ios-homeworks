@@ -38,6 +38,8 @@ final class PhotosViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title =  "Photo Gallery"
+        view.backgroundColor = .appBackground
+        photoGallery.backgroundColor = .appBackground
         view.addSubview(photoGallery)
         setupConstraints()
         setupBarButton()
@@ -67,6 +69,16 @@ final class PhotosViewController: UIViewController {
             target: self,
             action: #selector(runExperiments)
         )
+        
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .appBackground
+        appearance.titleTextAttributes = [
+            .foregroundColor: UIColor.appPrimaryText
+        ]
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.tintColor = .appAccent
     }
     
     private func setupConstraints() {

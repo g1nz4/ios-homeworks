@@ -4,13 +4,17 @@ final class ProfileHeaderView: UIView {
     
     private lazy var contentView: UIView = {
         let view = UIView()
+        view.backgroundColor = .clear
         
         return view
     }()
     
     private lazy var backgroundView: UIView = {
         let view = UIView()
-        view.backgroundColor = .black
+        view.backgroundColor = UIColor.createColor(
+            lightMode: UIColor(white: 0, alpha: 0.7),
+            darkMode: UIColor(white: 0, alpha: 0.8)
+        )
         view.alpha = 0.0
        
         return view
@@ -19,7 +23,7 @@ final class ProfileHeaderView: UIView {
     private lazy var closeSymbol: UIImageView = {
         let symbol = UIImageView()
         symbol.image = UIImage(systemName: "xmark.circle")
-        symbol.tintColor = .black
+        symbol.tintColor = .appPrimaryText
         symbol.alpha = 0.0
         symbol.isUserInteractionEnabled = true
         let tapSymbol = UITapGestureRecognizer(
@@ -33,7 +37,10 @@ final class ProfileHeaderView: UIView {
     private lazy var avatarImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.layer.borderWidth = 3.0
-        imageView.layer.borderColor = (UIColor(white: 242.0/255.0, alpha: 1.0)).cgColor
+        imageView.layer.borderColor = UIColor.createColor(
+            lightMode: UIColor(white: 242.0/255.0, alpha: 1.0),
+            darkMode: UIColor(white: 1.0, alpha: 0.8)
+        ).cgColor
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 60.0
@@ -55,7 +62,7 @@ final class ProfileHeaderView: UIView {
         let label = UILabel()
         label.textColor = .black
         label.font = UIFont.systemFont(ofSize: 18.0, weight: .bold)
-        label.textColor = .black
+        label.textColor = .appPrimaryText
         
         return label
     }()
@@ -63,7 +70,7 @@ final class ProfileHeaderView: UIView {
     private lazy var statusLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14.0, weight: .regular)
-        label.textColor = .systemGray
+        label.textColor = .appSecondaryText
         
         return label
     }()
@@ -77,18 +84,22 @@ final class ProfileHeaderView: UIView {
     
     private lazy var statusTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = " Введите..."
-        textField.layer.backgroundColor = UIColor.white.cgColor
+        textField.layer.backgroundColor = UIColor.appTextFieldBackground.cgColor
         textField.layer.borderWidth = 1.0
-        textField.layer.borderColor = UIColor.black.cgColor
+        textField.layer.borderColor = UIColor.appSeparator.cgColor
         textField.layer.cornerRadius = 12.0
         textField.font = UIFont.systemFont(ofSize: 15.0, weight: .regular)
-        textField.textColor = .black
+        textField.textColor = .appPrimaryText
         textField.clearButtonMode = .whileEditing
         textField.addTarget(
             self,
             action: #selector (statusTextChanged(_ :)),
             for: .editingChanged
+        )
+        
+        textField.attributedPlaceholder = NSAttributedString(
+            string: " Введите...",
+            attributes: [.foregroundColor: UIColor.appSecondaryText]
         )
         
         return textField
@@ -99,7 +110,7 @@ final class ProfileHeaderView: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-       
+        backgroundColor = .appBackground
         addSubviews()
         setupConstraints()
     }
