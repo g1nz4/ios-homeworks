@@ -1,6 +1,7 @@
 import Foundation
 import StorageService
 import CoreData
+import UIKit
 
 protocol CoreDataFavoritesPostProtocol {
     func save(post: MyPost) async throws
@@ -46,7 +47,7 @@ final class CoreDataManager: CoreDataFavoritesPostProtocol {
             let favorite = FavoritePost(context: context)
             favorite.id = id
             favorite.author = author
-            favorite.image = image
+            favorite.image = image.pngData()
             favorite.postDescription = description
             favorite.likes = Int64(likes)
             favorite.views = Int64(views)
@@ -90,8 +91,9 @@ final class CoreDataManager: CoreDataFavoritesPostProtocol {
         guard
             let id = obj.id,
             let author = obj.author,
-            let image = obj.image,
-            let description = obj.postDescription
+            let data = obj.image,
+            let description = obj.postDescription,
+            let image = UIImage(data: data)
         else { return nil }
         
         return MyPost(

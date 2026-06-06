@@ -97,6 +97,10 @@ final class ProfileViewController: UIViewController {
        tableView.dataSource = self
        tableView.delegate = self
     
+        tableView.dragInteractionEnabled = true
+        tableView.dragDelegate = self
+        tableView.dropDelegate = self
+        
        headerView.frame = CGRect(
         x: 0,
         y: 0,
@@ -207,5 +211,117 @@ extension ProfileViewController: PostTableViewCellDelegate {
         else { return }
         
         viewModel.didDoubleTap(post: post)
+    }
+}
+
+extension ProfileViewController: UITableViewDragDelegate {
+
+    func tableView(
+        _ tableView: UITableView,
+        itemsForBeginning session: UIDragSession,
+        at indexPath: IndexPath
+    ) -> [UIDragItem] {
+
+        guard viewModel.cellType(for: indexPath.section) == .posts,
+              let post = viewModel.post(section: indexPath.section, row: indexPath.row)
+        else { return [] }
+
+        let imageProvider = NSItemProvider(object: post.image)
+        let imageItem = UIDragItem(itemProvider: imageProvider)
+        imageItem.localObject = post
+
+        let description = post.description as NSString
+        let textProvider = NSItemProvider(object: description)
+        let textItem = UIDragItem(itemProvider: textProvider)
+
+        return [imageItem, textItem]
+    }
+}
+
+extension ProfileViewController: UITableViewDropDelegate {
+    
+    func tableView(
+        _ tableView: UITableView,
+        canHandle session: UIDropSession
+    ) -> Bool {
+        let canLoadImage = session.canLoadObjects(ofClass: UIImage.self)
+        let canLoadText  = session.canLoadObjects(ofClass: NSString.self)
+        
+        return canLoadImage || canLoadText
+    }
+    
+    func tableView(
+        _ tableView: UITableView,
+        dropSessionDidUpdate session: UIDropSession,
+        withDestinationIndexPath destinationIndexPath: IndexPath?
+    ) -> UITableViewDropProposal {
+        let operation: UIDropOperation = (session.localDragSession == nil) ? .copy : .move
+        
+        let intent: UITableViewDropProposal.Intent = destinationIndexPath == nil ? .unspecified : .insertAtDestinationIndexPath
+        
+        return UITableViewDropProposal(operation: operation, intent: intent)
+    }
+    
+    func tableView(
+        _ tableView: UITableView,
+        performDropWith coordinator: UITableViewDropCoordinator
+    ) {
+        let postsSection = sectionIndexForPosts()
+        
+        let destinationIndexPath: IndexPath = {
+            if let indexPath = coordinator.destinationIndexPath {
+                let row = min(max(indexPath.row, 0), viewModel.numberOfRows(in: postsSection))
+                return IndexPath(row: row, section: postsSection)
+            } else {
+                let rows = viewModel.numberOfRows(in: postsSection)
+                return IndexPath(row: rows, section: postsSection)
+            }
+        }()
+        
+        let session = coordinator.session
+        
+        session.loadObjects(ofClass: UIImage.self) { [weak self] imagesAny in
+            guard let self else { return }
+            
+            let images = imagesAny as? [UIImage] ?? []
+            
+        session.loadObjects(ofClass: NSString.self) { [weak self] stringsAny in
+            guard let self else { return }
+            
+            let strings = stringsAny as? [NSString] ?? []
+        
+            if images.isEmpty && strings.isEmpty { return }
+            
+                let image: UIImage = images.first ?? UIImage()
+                let description: String = (strings.first as String?) ?? "Drag & Drop post"
+                let newPost = MyPost(
+                    id: UUID().uuidString,
+                    author: "Drag&Drop",
+                    image: image,
+                    description: description,
+                    likes: 0,
+                    views: 0
+                )
+                
+                DispatchQueue.main.async {
+                    self.viewModel.insert(post: newPost, at: destinationIndexPath.row)
+                    self.tableView.scrollToRow(
+                        at: destinationIndexPath,
+                        at: .middle,
+                        animated: true
+                    )
+                }
+            }
+        }
+    }
+    
+    private func sectionIndexForPosts() -> Int {
+        let sections = viewModel.numberOfSections()
+        
+        for section in 0..<sections {
+            if viewModel.cellType(for: section) == .posts { return section }
+        }
+        
+        return 2
     }
 }

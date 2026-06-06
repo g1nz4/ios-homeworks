@@ -24,10 +24,11 @@ final class LocalAuthorizationService {
         
         
         switch context.biometryType {
-        case .none:    return .none
-        case .touchID: return .touchID
-        case .faceID:  return .faceID
-        @unknown default: return .none
+            case .none:    return .none
+            case .touchID: return .touchID
+            case .faceID:  return .faceID
+            case .opticID: return .none
+            @unknown default: return .none
         }
     }
 
