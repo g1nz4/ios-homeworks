@@ -6,6 +6,7 @@ protocol ProfileViewModelInput {
     func didSelectRow(section: Int, row: Int)
     func updateStatus(_ text: String)
     func didDoubleTap(post: MyPost)
+    func insert(post: MyPost, at row: Int)
 }
 
 protocol ProfileViewModelOutput {
@@ -192,5 +193,11 @@ final class ProfileViewModel: ProfileViewModelInput, ProfileViewModelOutput {
                 }
             }
         }
+    }
+    
+    func insert(post: MyPost, at row: Int) {
+        let index = min(max(row, 0), posts.count)
+        posts.insert(post, at: index)
+        updatePosts?()
     }
 }

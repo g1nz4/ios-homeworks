@@ -186,7 +186,6 @@ final class LogInViewController: UIViewController {
            button.isEnabled = false
         }
         button.setTitle(nil, for: .normal)
-        button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
         button.addTarget(self,
                         action: #selector(didTapBiometricButton),
                         for: .touchUpInside)

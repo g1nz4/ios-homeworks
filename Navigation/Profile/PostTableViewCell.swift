@@ -94,7 +94,7 @@ final class PostTableViewCell: UITableViewCell {
     }
     
     func setupCell(post: MyPost, isFavorite: Bool) {
-        postCellImage.image = UIImage(named: post.image)
+        postCellImage.image = post.image
         postCellAuthor.text = post.author
         postCellDescription.text = post.description
         postCellLikes.text = "Likes: \(post.likes)"
