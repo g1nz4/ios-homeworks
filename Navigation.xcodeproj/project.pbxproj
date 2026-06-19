@@ -7,10 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		EA6137472FE429510097D8A5 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = EA6137462FE429510097D8A5 /* Auth */; };
+		EA6137492FE429510097D8A5 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = EA6137482FE429510097D8A5 /* Functions */; };
+		EA61374B2FE429510097D8A5 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = EA61374A2FE429510097D8A5 /* PostgREST */; };
+		EA61374D2FE429510097D8A5 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = EA61374C2FE429510097D8A5 /* Realtime */; };
+		EA61374F2FE429510097D8A5 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = EA61374E2FE429510097D8A5 /* Storage */; };
+		EA6137512FE429510097D8A5 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = EA6137502FE429510097D8A5 /* Supabase */; };
 		EA7FBE6B2F72FE8F00DCB41A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EA7FBE6A2F72FE8F00DCB41A /* GoogleService-Info.plist */; };
-		EA7FBE762F73058E00DCB41A /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = EA7FBE752F73058E00DCB41A /* FirebaseAuth */; };
-		EA7FBE782F73059300DCB41A /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = EA7FBE772F73059300DCB41A /* FirebaseFirestore */; };
-		EA7FBE7A2F73059B00DCB41A /* FirebaseFirestoreSwift in Frameworks */ = {isa = PBXBuildFile; productRef = EA7FBE792F73059B00DCB41A /* FirebaseFirestoreSwift */; };
 		EA8FAB142F3E630000F68431 /* iOSIntPackage in Frameworks */ = {isa = PBXBuildFile; productRef = EA8FAB132F3E630000F68431 /* iOSIntPackage */; };
 		EA9CC2A62F30DE9700D2B0A5 /* StorageService.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EA9CC29E2F30DE9600D2B0A5 /* StorageService.framework */; };
 		EA9CC2A72F30DE9700D2B0A5 /* StorageService.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = EA9CC29E2F30DE9600D2B0A5 /* StorageService.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -90,10 +93,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EA7FBE7A2F73059B00DCB41A /* FirebaseFirestoreSwift in Frameworks */,
+				EA6137512FE429510097D8A5 /* Supabase in Frameworks */,
+				EA61374D2FE429510097D8A5 /* Realtime in Frameworks */,
 				EA9CC2A62F30DE9700D2B0A5 /* StorageService.framework in Frameworks */,
-				EA7FBE782F73059300DCB41A /* FirebaseFirestore in Frameworks */,
-				EA7FBE762F73058E00DCB41A /* FirebaseAuth in Frameworks */,
+				EA6137472FE429510097D8A5 /* Auth in Frameworks */,
+				EA61374B2FE429510097D8A5 /* PostgREST in Frameworks */,
+				EA6137492FE429510097D8A5 /* Functions in Frameworks */,
+				EA61374F2FE429510097D8A5 /* Storage in Frameworks */,
 				EA8FAB142F3E630000F68431 /* iOSIntPackage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -177,9 +183,12 @@
 			name = Navigation;
 			packageProductDependencies = (
 				EA8FAB132F3E630000F68431 /* iOSIntPackage */,
-				EA7FBE752F73058E00DCB41A /* FirebaseAuth */,
-				EA7FBE772F73059300DCB41A /* FirebaseFirestore */,
-				EA7FBE792F73059B00DCB41A /* FirebaseFirestoreSwift */,
+				EA6137462FE429510097D8A5 /* Auth */,
+				EA6137482FE429510097D8A5 /* Functions */,
+				EA61374A2FE429510097D8A5 /* PostgREST */,
+				EA61374C2FE429510097D8A5 /* Realtime */,
+				EA61374E2FE429510097D8A5 /* Storage */,
+				EA6137502FE429510097D8A5 /* Supabase */,
 			);
 			productName = Navigation;
 			productReference = EA83E2C62EC8D5610050B4EE /* Navigation.app */;
@@ -265,7 +274,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				EA8FAB122F3E630000F68431 /* XCRemoteSwiftPackageReference "iOSIntPackage" */,
-				EA7FBE742F73057600DCB41A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				EA6137452FE429510097D8A5 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EA83E2C72EC8D5610050B4EE /* Products */;
@@ -351,10 +360,13 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Navigation/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				"INFOPLIST_KEY_CFBundleDisplayName[sdk=iphoneos*]" = VK;
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Используется для авторизации по Face ID";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Ваше местоположение используется для построения маршрутов.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -386,10 +398,12 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Navigation/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = VK;
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Используется для авторизации по Face ID";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Ваше местоположение используется для построения маршрутов.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -705,12 +719,12 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		EA7FBE742F73057600DCB41A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+		EA6137452FE429510097D8A5 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			repositoryURL = "https://github.com/supabase-community/supabase-swift";
 			requirement = {
-				kind = exactVersion;
-				version = 10.18.0;
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
 			};
 		};
 		EA8FAB122F3E630000F68431 /* XCRemoteSwiftPackageReference "iOSIntPackage" */ = {
@@ -724,20 +738,35 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		EA7FBE752F73058E00DCB41A /* FirebaseAuth */ = {
+		EA6137462FE429510097D8A5 /* Auth */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = EA7FBE742F73057600DCB41A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAuth;
+			package = EA6137452FE429510097D8A5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
 		};
-		EA7FBE772F73059300DCB41A /* FirebaseFirestore */ = {
+		EA6137482FE429510097D8A5 /* Functions */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = EA7FBE742F73057600DCB41A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseFirestore;
+			package = EA6137452FE429510097D8A5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
 		};
-		EA7FBE792F73059B00DCB41A /* FirebaseFirestoreSwift */ = {
+		EA61374A2FE429510097D8A5 /* PostgREST */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = EA7FBE742F73057600DCB41A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseFirestoreSwift;
+			package = EA6137452FE429510097D8A5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		EA61374C2FE429510097D8A5 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EA6137452FE429510097D8A5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		EA61374E2FE429510097D8A5 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EA6137452FE429510097D8A5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		EA6137502FE429510097D8A5 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EA6137452FE429510097D8A5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
 		};
 		EA8FAB132F3E630000F68431 /* iOSIntPackage */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -1,6 +1,5 @@
 import UIKit
 import StorageService
-import FirebaseAuth
 
 protocol ProfileCoordinatorDelegate: AnyObject {
     func didLogout()
@@ -54,11 +53,11 @@ final class ProfileCoordinator: Coordinator {
     }
     
     func didTapLogout() {
-        do {
-            try Auth.auth().signOut()
-        } catch {
-            print("Ошибка:", error.localizedDescription)
-        }
+//        do {
+//            try 
+//        } catch {
+//            print("Ошибка:", error.localizedDescription)
+//        }
         delegate?.didLogout()
     }
 }

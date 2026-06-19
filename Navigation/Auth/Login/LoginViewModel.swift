@@ -1,68 +1,64 @@
 import Foundation
 
-protocol LoginViewModelProtocol {
-    var email: String { get set }
-    var password: String { get set }
-    
-    var isLoading: Observable<Bool> { get }
-    var errorText: Observable<String?> { get }
-    
-    var onSuccess: ((User) -> Void)? { get set }
-    
-    func login()
-}
-
-final class LoginViewModel: LoginViewModelProtocol {
-    
-    private weak var loginDelegate: LogInViewControllerDelegate?
+/// ViewModel экрана входа по email / паролю.
+@MainActor
+final class LoginViewModel {
+    // Делегат, который ходит в реальный слой логики (LoginInspector / сервисы...)
+    private weak var delegate: LoginDelegateProtocol?
     
     var email: String = ""
     var password: String = ""
     
+    /// Флаг загрузки (используется для кнопки и блокировки UI).
     let isLoading: Observable<Bool> = Observable(false)
+    /// Текст ошибки для показа алерта.
     let errorText: Observable<String?> = Observable(nil)
-    
+    /// Коллбэк об успешном входе: отдаём наверх доменную модель пользователя.
     var onSuccess: ((User) -> Void)?
     
-    init(loginDelegate: LogInViewControllerDelegate){
-        self.loginDelegate = loginDelegate
+    init(delegate: LoginDelegateProtocol){
+        self.delegate = delegate
     }
     
+    /// Запускает сценарий входа по email / паролю.
     func login() {
-        guard !email.isEmpty, !password.isEmpty else {
-            errorText.value = NavigationError.emptyCredentials.rawValue
-            return
-        }
-        
-        guard email.contains("@"), email.contains(".") else {
-            errorText.value = NavigationError.invalidEmail.rawValue
-            return
-        }
-        
-        guard password.count >= 6 else {
-            errorText.value = NavigationError.weakPassword.rawValue
-            return
-        }
-        
-        isLoading.value = true
-        errorText.value = nil
-        
-        loginDelegate?.checkCredentials(
-            email: email,
-            password: password
-        ) { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self else { return }
+        Task { [weak self] in
+            guard let self, let delegate = self.delegate else { return }
+            
+            // Убираем пробелы/переводы строк с краёв email
+            let emailTrimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Базовая проверка: поля не пустые
+            guard !emailTrimmed.isEmpty, !password.isEmpty else {
+                errorText.value = NavigationError.emptyCredentials.rawValue
+                return
+            }
+            // Валидация формата email (для UX)
+            guard email.contains("@"), email.contains(".") else {
+                errorText.value = NavigationError.invalidEmail.rawValue
+                return
+            }
+            // Проверка длины пароля (минимум 6 символов)
+            guard password.count >= 6 else {
+                errorText.value = NavigationError.weakPassword.rawValue
+                return
+            }
+            
+            isLoading.value = true
+            errorText.value = nil
+            defer { isLoading.value = false }
+            
+            do {
+                // Проверка credentials через Supabase Auth
+                try await delegate.checkCredentials(email: emailTrimmed, password: password)
                 
-                self.isLoading.value = false
+                // Загрузка профиля пользователя
+                let user = try await delegate.loadCurrentUserProfile()
                 
-                switch result {
-                case .success:
-                    let user = TestUserService().user
-                    self.onSuccess?(user)
-                case .failure:
-                    self.errorText.value = NavigationError.invalidCredentials.rawValue
-                }
+                // Сообщаем координатору/контроллеру об успешном входе
+                onSuccess?(user)
+            } catch {
+                errorText.value = error.localizedDescription
             }
         }
     }

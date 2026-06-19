@@ -1,6 +1,5 @@
 import UIKit
 import StorageService
-import FirebaseAuth
 
 final class MainCoordinator: Coordinator, ProfileCoordinatorDelegate {
    
@@ -42,7 +41,9 @@ final class MainCoordinator: Coordinator, ProfileCoordinatorDelegate {
     }
     
     private func showLogin() {
-        let loginCoordinator = LoginCoordinator()
+        let factory = MyLoginFactory()
+        let loginCoordinator = LoginCoordinator(factory: factory)
+        loginCoordinator.setup()
         children = [loginCoordinator]
         
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,

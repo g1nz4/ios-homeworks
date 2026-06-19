@@ -11,17 +11,22 @@ final class CoreDataStack {
     }
     
     private init() {
-        persistentContainer = NSPersistentContainer(name: "FavoritesModel")
+        persistentContainer = NSPersistentContainer(name: "UserCache")
         persistentContainer.loadPersistentStores { _, error in
             if let error = error {
                 fatalError("Unresolved error \(error)")
             }
         }
         persistentContainer.viewContext.automaticallyMergesChangesFromParent = true
+        
+        persistentContainer.viewContext.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
     }
     
     func newBackgroundContext() -> NSManagedObjectContext {
-        persistentContainer.newBackgroundContext()
+        let context = persistentContainer.newBackgroundContext()
+        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        
+        return context
     }
 }
 

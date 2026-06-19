@@ -1,6 +1,6 @@
 import UIKit
-import FirebaseAuth
 
+/// Точка входа для сцены. Отвечает за создание окна и стартового координатора.
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
@@ -16,29 +16,35 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let scene = (scene as? UIWindowScene) else { return }
            
         let window = UIWindow(windowScene: scene)
-        
-        let loginCoordinator = LoginCoordinator()
-        self.loginCoordinator = loginCoordinator
-        
-        notificationsService.registerForLatestUpdatesIfPossible()
-        
-        window.rootViewController = loginCoordinator.controller
-        window.makeKeyAndVisible()
-                
+        // Запрос разрешения на локальные уведомления
+        self.notificationsService.registerForLatestUpdatesIfPossible()
+       
         self.window = window
+                
+        Task { @MainActor in
+            let factory = MyLoginFactory()
+            // Корневой координатор авторизации
+            let сoordinator = LoginCoordinator(factory: factory)
+            сoordinator.setup()
+            self.loginCoordinator = сoordinator
+            
+            window.rootViewController = сoordinator.controller
+            window.makeKeyAndVisible()
+        }
     }
     
     func sceneDidDisconnect(_ scene: UIScene) {
-        do {
-            try Auth.auth().signOut()
-        } catch {
-            print("Ошибка:", error.localizedDescription)
-        }
+       
     }
     
     func sceneDidBecomeActive(_ scene: UIScene) {
         notificationsService.refreshAuthorizationStatus()
-        UIApplication.shared.applicationIconBadgeNumber = 0
+        if #available(iOS 17.0, *) {
+           UNUserNotificationCenter.current()
+               .setBadgeCount(0, withCompletionHandler: { _ in })
+       } else {
+           UIApplication.shared.applicationIconBadgeNumber = 0
+       }
     }
 }
 

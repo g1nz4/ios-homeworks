@@ -261,8 +261,8 @@ final class ProfileHeaderView: UIView {
     }
     
     func configureUI(user: User) {
-        avatarImageView.image = user.avatar
-        fullNameLabel.text = user.fullName
+       // avatarImageView.image = user.avatarURL.flatMap(UIImage.init(data:))
+        fullNameLabel.text = user.name.displayName
         statusLabel.text = user.status
     }
     
