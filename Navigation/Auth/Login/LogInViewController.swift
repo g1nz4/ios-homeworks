@@ -15,28 +15,28 @@ protocol LoginDelegateProtocol: AnyObject {
 final class LogInViewController: BaseScrollViewController {
     
     weak var coordinator: LoginCoordinator?
-   
+    
     private let viewModel: LoginViewModel
     
     private lazy var label: UILabel = {
-       let label = UILabel()
-       label.text = "С возвращением"
-       label.textColor = .appPrimaryText
-       label.font = UIFont.systemFont(ofSize: 18.0, weight: .bold)
-       
-       return label
-   }()
-   
-   private lazy var descriptionLabel: UILabel = {
-       let label = UILabel()
-       label.text = "Введите email и пароль для входа в приложение"
-       label.numberOfLines = 0
-       label.textColor = .appPrimaryText
-       label.font = UIFont.systemFont(ofSize: 14.0, weight: .medium)
-       label.textAlignment = .center
-       
-       return label
-   }()
+        let label = UILabel()
+        label.text = NSLocalizedString("login_welcome_back", comment: "Строка: С возвращением")
+        label.textColor = .appPrimaryText
+        label.font = UIFont.systemFont(ofSize: 18.0, weight: .bold)
+        
+        return label
+    }()
+    
+    private lazy var descriptionLabel: UILabel = {
+        let label = UILabel()
+        label.text = NSLocalizedString("login_form_description", comment: "Строка: Введите email и пароль для входа в приложение")
+        label.numberOfLines = 0
+        label.textColor = .appPrimaryText
+        label.font = UIFont.systemFont(ofSize: 14.0, weight: .medium)
+        label.textAlignment = .center
+        
+        return label
+    }()
     
     private lazy var divider: UIView = {
         let view = UIView()
@@ -59,7 +59,7 @@ final class LogInViewController: BaseScrollViewController {
         textField.delegate = self
         
         textField.attributedPlaceholder = NSAttributedString(
-            string: "Email",
+            string: NSLocalizedString("login_email_placeholder", comment: "Плейсхолдер текстового поля ввода электронной почты"),
             attributes: [.foregroundColor: UIColor.appSecondaryText]
         )
         
@@ -70,7 +70,7 @@ final class LogInViewController: BaseScrollViewController {
         let textField = UITextField()
         textField.textColor = .appPrimaryText
         textField.font = UIFont.systemFont(ofSize: 16.0)
-        textField.tintColor = .appAccent
+        textField.tintColor = .appSecondaryText
         textField.autocapitalizationType = .none
         textField.keyboardType = .default
         textField.returnKeyType = .done
@@ -81,10 +81,10 @@ final class LogInViewController: BaseScrollViewController {
         textField.delegate = self
         
         textField.attributedPlaceholder = NSAttributedString(
-            string: "Password",
+            string: NSLocalizedString("login_password_placeholder", comment: "Плейсхолдер текстового поля ввода пароля"),
             attributes: [.foregroundColor: UIColor.appSecondaryText]
         )
-
+        
         return textField
     }()
     
@@ -102,24 +102,26 @@ final class LogInViewController: BaseScrollViewController {
         
         stackView.addArrangedSubview(self.emailTextField)
         stackView.addArrangedSubview(self.passwordTextField)
-        stackView.addSubview(self.divider)
         
         return stackView
     }()
     
     private lazy var loginButton = PrimaryActionButton(
-       title: NSLocalizedString("login_button_title", comment: "Кнопка входа")
-   )
-   
-   private lazy var loginByPhoneTextButton: UIButton = {
-       let button = UIButton(type: .system)
-       button.setTitle("Войти по номеру телефона", for: .normal)
-       button.titleLabel?.font = UIFont.systemFont(ofSize: 14.0, weight: .medium)
-       button.tintColor = .appAccent
-       button.addTarget(self, action: #selector(didTapLoginByPhone), for: .touchUpInside)
-       
-       return button
-   }()
+        title: NSLocalizedString("login_button_title", comment: "Кнопка входа")
+    )
+    
+    private lazy var loginByPhoneTextButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle(
+            NSLocalizedString("login_phone_button_title",comment: "Текстовая кнопка: войти по номеру телефона"),
+            for: .normal
+        )
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 14.0, weight: .medium)
+        button.tintColor = .appAccent
+        button.addTarget(self, action: #selector(didTapLoginByPhone), for: .touchUpInside)
+        
+        return button
+    }()
     
     init(delegate: LoginDelegateProtocol) {
         self.viewModel = LoginViewModel(delegate: delegate)
@@ -135,7 +137,7 @@ final class LogInViewController: BaseScrollViewController {
         
         view.backgroundColor = .appBackground
         navigationController?.navigationBar.isHidden = true
-
+        
         setupLoginButton()
         bindViewModel()
         autofill()
@@ -146,6 +148,7 @@ final class LogInViewController: BaseScrollViewController {
         [label,
          descriptionLabel,
          logInStackView,
+         divider,
          loginButton,
          loginByPhoneTextButton].forEach() {
             $0.translatesAutoresizingMaskIntoConstraints = false
@@ -190,11 +193,11 @@ final class LogInViewController: BaseScrollViewController {
             loginByPhoneTextButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16.0)
         ])
     }
-  
+    
     private func setupLoginButton() {
-       loginButton.setAction { [weak self] in
-           self?.didTapLoginButton()
-       }
+        loginButton.setAction { [weak self] in
+            self?.didTapLoginButton()
+        }
     }
     
     private func bindViewModel() {
@@ -203,7 +206,7 @@ final class LogInViewController: BaseScrollViewController {
             self.loginButton.isLoading = isLoading
             self.updateStateLoginButton(isLoading: isLoading)
         }
-
+        
         viewModel.errorText.binding { [weak self] text in
             guard let self, let text, !text.isEmpty else { return }
             self.showAlert(message: text)
@@ -215,46 +218,39 @@ final class LogInViewController: BaseScrollViewController {
     }
     
     private func autofill() {
-           #if DEBUG
-           emailTextField.text = "developer@test.ru"
-           passwordTextField.text = "qwe123!"
-           #endif
-       }
-       
-       private func updateStateLoginButton(isLoading: Bool? = nil) {
-           let email = (emailTextField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-           let password = passwordTextField.text ?? ""
-           
-           let hasEmail = !email.isEmpty
-           let hasPassword = !password.isEmpty
-           let isLoadingNow = isLoading ?? viewModel.isLoading.value
-           
-           loginButton.isEnabled = hasEmail && hasPassword && !isLoadingNow
-       }
-       
-       private func showAlert(message: String) {
-           let alert = UIAlertController(
-               title: "Ошибка",
-               message: message,
-               preferredStyle: .alert
-           )
-           alert.addAction(UIAlertAction(title: "OK", style: .default))
-           present(alert, animated: true)
-       }
-       
-       @objc private func didTapLoginButton() {
-           viewModel.email = emailTextField.text ?? ""
-           viewModel.password = passwordTextField.text ?? ""
-           viewModel.login()
-       }
-       
-       @objc private func didTapLoginByPhone() {
-           coordinator?.present(.phoneLogin)
-       }
-       
-       @objc private func textFieldsDidChange(_ textField: UITextField) {
-           updateStateLoginButton()
-       }
+        #if DEBUG
+        emailTextField.text = "developer@test.ru"
+        passwordTextField.text = "qwe123!"
+        #endif
+    }
+    
+    private func updateStateLoginButton(isLoading: Bool? = nil) {
+        let email = (emailTextField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let password = passwordTextField.text ?? ""
+        
+        let hasEmail = !email.isEmpty
+        let hasPassword = !password.isEmpty
+        let isLoadingNow = isLoading ?? viewModel.isLoading.value
+        
+        loginButton.isEnabled = hasEmail && hasPassword && !isLoadingNow
+    }
+    
+    @objc private func didTapLoginButton() {
+        viewModel.email = emailTextField.text ?? ""
+        viewModel.password = passwordTextField.text ?? ""
+        Task { [weak self] in
+            guard let self else { return }
+            await self.viewModel.login()
+        }
+    }
+    
+    @objc private func didTapLoginByPhone() {
+        coordinator?.present(.phoneLogin)
+    }
+    
+    @objc private func textFieldsDidChange(_ textField: UITextField) {
+        updateStateLoginButton()
+    }
 }
    
 extension LogInViewController: UITextFieldDelegate {

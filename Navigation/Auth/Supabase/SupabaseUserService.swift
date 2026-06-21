@@ -1,7 +1,14 @@
 import Foundation
 
+/// Протокол сервиса работы с профилями пользователей (для тестов).
+protocol UserServiceProtocol: AnyObject {
+    func createProfile(for user: User) async throws
+    func fetchProfile(userID: String) async throws -> User
+    func fetchProfile(phone: String) async throws -> User
+}
+
 /// Сервис для работы с таблицей profiles в Supabase.
-final class SupabaseUserService {
+final class SupabaseUserService: UserServiceProtocol {
     
     private let client = SupabaseRESTClient()
     private let cacheStore = UserCacheStore()
@@ -36,11 +43,7 @@ final class SupabaseUserService {
         
         let dtos: [UserProfileDTO] = try await client.perform(request)
         guard let dto = dtos.first else {
-            throw NSError(
-                domain: "Profiles",
-                code: 404,
-                userInfo: [NSLocalizedDescriptionKey: "Профиль не найден"]
-            )
+            throw AppError.profileNotFound
         }
         
         let user = dto.toDomain()
@@ -75,11 +78,7 @@ final class SupabaseUserService {
         
         let dtos: [UserProfileDTO] = try await client.perform(request)
         guard let dto = dtos.first else {
-            throw NSError(
-                domain: "Profiles",
-                code: 404,
-                userInfo: [NSLocalizedDescriptionKey: "Профиль для этого номера не найден"]
-            )
+            throw AppError.profileNotFound
         }
         
         let user = dto.toDomain()

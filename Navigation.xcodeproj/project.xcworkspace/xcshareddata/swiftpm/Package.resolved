@@ -1,5 +1,5 @@
 {
-  "originHash" : "6023a9c85f7116b29e71aa06271bfc2288b48a8100cab8a97724cf124478dedb",
+  "originHash" : "25d22fb34f5ba40f9beda3703ad3b215d696f3f1a065cec77ce2dcbf36da1d99",
   "pins" : [
     {
       "identity" : "iosintpackage",
@@ -8,6 +8,15 @@
       "state" : {
         "branch" : "imagepublisher",
         "revision" : "e1cc0e1b76d7cb8f770d903d85ae9ed91ae026bd"
+      }
+    },
+    {
+      "identity" : "keychainaccess",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kishikawakatsumi/KeychainAccess.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "e0c7eebc5a4465a3c4680764f26b7a61f567cdaf"
       }
     },
     {

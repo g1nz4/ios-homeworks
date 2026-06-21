@@ -13,7 +13,7 @@
 		EA61374D2FE429510097D8A5 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = EA61374C2FE429510097D8A5 /* Realtime */; };
 		EA61374F2FE429510097D8A5 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = EA61374E2FE429510097D8A5 /* Storage */; };
 		EA6137512FE429510097D8A5 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = EA6137502FE429510097D8A5 /* Supabase */; };
-		EA7FBE6B2F72FE8F00DCB41A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EA7FBE6A2F72FE8F00DCB41A /* GoogleService-Info.plist */; };
+		EA6142602FE869CE00B3B0CA /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = EA61425F2FE869CE00B3B0CA /* KeychainAccess */; };
 		EA8FAB142F3E630000F68431 /* iOSIntPackage in Frameworks */ = {isa = PBXBuildFile; productRef = EA8FAB132F3E630000F68431 /* iOSIntPackage */; };
 		EA9CC2A62F30DE9700D2B0A5 /* StorageService.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EA9CC29E2F30DE9600D2B0A5 /* StorageService.framework */; };
 		EA9CC2A72F30DE9700D2B0A5 /* StorageService.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = EA9CC29E2F30DE9600D2B0A5 /* StorageService.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -51,7 +51,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		EA7FBE6A2F72FE8F00DCB41A /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		EA83E2C62EC8D5610050B4EE /* Navigation.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Navigation.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA9CC29E2F30DE9600D2B0A5 /* StorageService.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = StorageService.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA9E4ECB2FB26333009C62C4 /* NavigationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NavigationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -95,6 +94,7 @@
 			files = (
 				EA6137512FE429510097D8A5 /* Supabase in Frameworks */,
 				EA61374D2FE429510097D8A5 /* Realtime in Frameworks */,
+				EA6142602FE869CE00B3B0CA /* KeychainAccess in Frameworks */,
 				EA9CC2A62F30DE9700D2B0A5 /* StorageService.framework in Frameworks */,
 				EA6137472FE429510097D8A5 /* Auth in Frameworks */,
 				EA61374B2FE429510097D8A5 /* PostgREST in Frameworks */,
@@ -135,7 +135,6 @@
 				EA9CC29F2F30DE9700D2B0A5 /* StorageService */,
 				EA9E4ECC2FB26333009C62C4 /* NavigationTests */,
 				EA83E2C72EC8D5610050B4EE /* Products */,
-				EA7FBE6A2F72FE8F00DCB41A /* GoogleService-Info.plist */,
 				EA7FBE712F7300EC00DCB41A /* Frameworks */,
 			);
 			sourceTree = "<group>";
@@ -189,6 +188,7 @@
 				EA61374C2FE429510097D8A5 /* Realtime */,
 				EA61374E2FE429510097D8A5 /* Storage */,
 				EA6137502FE429510097D8A5 /* Supabase */,
+				EA61425F2FE869CE00B3B0CA /* KeychainAccess */,
 			);
 			productName = Navigation;
 			productReference = EA83E2C62EC8D5610050B4EE /* Navigation.app */;
@@ -275,6 +275,7 @@
 			packageReferences = (
 				EA8FAB122F3E630000F68431 /* XCRemoteSwiftPackageReference "iOSIntPackage" */,
 				EA6137452FE429510097D8A5 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				EA61425E2FE869CE00B3B0CA /* XCRemoteSwiftPackageReference "KeychainAccess" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EA83E2C72EC8D5610050B4EE /* Products */;
@@ -293,7 +294,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EA7FBE6B2F72FE8F00DCB41A /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -358,6 +358,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 99VK66Z6KN;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Navigation/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "";
@@ -396,6 +397,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 99VK66Z6KN;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Navigation/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = VK;
@@ -727,6 +729,14 @@
 				minimumVersion = 2.5.1;
 			};
 		};
+		EA61425E2FE869CE00B3B0CA /* XCRemoteSwiftPackageReference "KeychainAccess" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kishikawakatsumi/KeychainAccess.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 		EA8FAB122F3E630000F68431 /* XCRemoteSwiftPackageReference "iOSIntPackage" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/TrueMax/iOSIntPackage";
@@ -767,6 +777,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = EA6137452FE429510097D8A5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		EA61425F2FE869CE00B3B0CA /* KeychainAccess */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EA61425E2FE869CE00B3B0CA /* XCRemoteSwiftPackageReference "KeychainAccess" */;
+			productName = KeychainAccess;
 		};
 		EA8FAB132F3E630000F68431 /* iOSIntPackage */ = {
 			isa = XCSwiftPackageProductDependency;

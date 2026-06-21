@@ -43,59 +43,51 @@ final class SignUpViewModel {
     }
     
     /// Старт процесса регистрации: локальная валидация полей - > отправка SMS-кода на телефон  - > переход к экрану ввода кода.
-    func signUp() {
-        Task { [weak self] in
-            guard let self, let delegate = self.delegate else { return }
-            
-            // Базовая валидация полей
-            guard !email.isEmpty,
-                  !password.isEmpty,
-                  !repeatPassword.isEmpty else {
-                errorText.value = NavigationError.emptyCredentials.rawValue
-                return
-            }
-            
-            guard email.contains("@"), email.contains(".") else {
-                errorText.value = NavigationError.invalidEmail.rawValue
-                return
-            }
-            
-            guard password.count >= 6 && repeatPassword.count >= 6 else {
-                errorText.value = NavigationError.weakPassword.rawValue
-                return
-            }
-            
-            guard password == repeatPassword else {
-                errorText.value = NavigationError.passwordsDoNotMatch.rawValue
-                return
-            }
-            
-            guard isPhoneValid else {
-                errorText.value = "Введите корректный номер телефона"
-                return
-            }
-            
-            errorText.value = nil
-            isLoading.value = true
-            defer { isLoading.value = false }
-            
-            do {
-                let data = SignUpData(
-                    email: email,
-                    password: password,
-                    firstName: firstName,
-                    lastName: lastName,
-                    city: city,
-                    phone: phone,
-                    birthDate: birthDate
-                )
-                // Отправить код на указанный номер
-                let verificationID = try await delegate.sendSMSCode(to: phone)
-                onSMSCodeSent?(data, verificationID)
-            } catch {
-                errorText.value = error.localizedDescription
-            }
+    func signUp() async {
+        guard let delegate = self.delegate else { return }
+        
+        // Убираем пробелы/переводы строк с краёв email
+        let emailTrimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard emailTrimmed.contains("@"), emailTrimmed.contains(".") else {
+            errorText.value = AppError.invalidEmail.localizedDescription
+            return
         }
         
+        guard password.count >= 6 && repeatPassword.count >= 6 else {
+            errorText.value = AppError.weakPassword.localizedDescription
+            return
+        }
+        
+        guard password == repeatPassword else {
+            errorText.value = AppError.passwordsDoNotMatch.localizedDescription
+            return
+        }
+        
+        guard isPhoneValid else {
+            errorText.value = AppError.errorPhoneInvalid.localizedDescription
+            return
+        }
+        
+        errorText.value = nil
+        isLoading.value = true
+        defer { isLoading.value = false }
+        
+        do {
+            let data = SignUpData(
+                email: emailTrimmed,
+                password: password,
+                firstName: firstName,
+                lastName: lastName,
+                city: city,
+                phone: phone,
+                birthDate: birthDate
+            )
+            // Отправить код на указанный номер
+            let verificationID = try await delegate.sendSMSCode(to: phone)
+            onSMSCodeSent?(data, verificationID)
+        } catch {
+            errorText.value = error.localizedDescription
+        }
     }
 }

@@ -70,91 +70,83 @@ final class PhoneLoginViewModel {
         }
     }
     
-    deinit {
-        timer?.invalidate()
-    }
-    
     /// Вызывается после ввода полного кода (6 цифр).
     /// Проверяет код через Supabase и либо логинит, либо регистрирует пользователя. В случае неуспеха показывает ошибку и возвращает экран к вводу номера телефона.
-    func verify() {
-        Task { [weak self] in
-            guard let self, let delegate = self.delegate else { return }
+    func verify() async {
+        guard  let delegate = self.delegate else { return }
+        
+        let code = self.code.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard let id = self.verificationID else {
+            self.errorText.value = AppError.errorOtpNoVerificationID.localizedDescription
+            return
+        }
+        // Остановить таймер, как только начали проверку кода
+        self.timer?.invalidate()
+        self.timer = nil
+        self.secondsLeft.value = nil
+        self.canResend.value = false
+        self.isLoading.value = true
+        self.errorText.value = nil
+        defer { self.isLoading.value = false }
+        
+        do {
+            AppLogger.debug("VERIFY phone: \( id), code: \(code)")
+            try await delegate.verifySMSCode(verificationID: id, code: code)
+            AppLogger.debug("verifySMSCode OK")
             
-            let code = self.code.trimmingCharacters(in: .whitespacesAndNewlines)
-            
-            guard let id = self.verificationID else {
-                self.errorText.value = "Не удалось получить код подтверждения"
-                return
+            let user: User
+            switch self.mode {
+            case .login:
+                user = try await delegate.loginByPhone(self.phone)
+            case .signUp(let data):
+                user = try await delegate.signUp(data)
             }
-            // Остановить таймер, как только начали проверку кода
+            
+            self.onSuccess?(user)
+        } catch {
+            // неверный/просроченный код
+            self.errorText.value = AppError.errorOtpWrongCodeRetry.localizedDescription
+            
+            // Сброс verificationID и таймера
+            self.verificationID = nil
             self.timer?.invalidate()
             self.timer = nil
             self.secondsLeft.value = nil
             self.canResend.value = false
-            self.isLoading.value = true
-            self.errorText.value = nil
-            defer { self.isLoading.value = false }
             
-            do {
-                AppLogger.debug("VERIFY phone: \( id), code: \(code)")
-                try await delegate.verifySMSCode(verificationID: id, code: code)
-                AppLogger.debug("verifySMSCode OK")
-                
-                let user: User
-                switch self.mode {
-                case .login:
-                    user = try await delegate.loginByPhone(self.phone)
-                case .signUp(let data):
-                    user = try await delegate.signUp(data)
-                }
-                
-                self.onSuccess?(user)
-            } catch {
-                // неверный/просроченный код
-                self.errorText.value = "Неверный код подтверждения. Попробуйте ещё раз."
-                
-                // Сброс verificationID и таймера
-                self.verificationID = nil
-                self.timer?.invalidate()
-                self.timer = nil
-                self.secondsLeft.value = nil
-                self.canResend.value = false
-                
-                // Вернуться на экран ввода номера
-                self.state.value = .enterPhone
-                return
-            }
-        }
-    }
-
-    /// Отправка SMS‑кода на номер телефона.
-    func sendCode() {
-        Task { [weak self] in
-            guard let self, let delegate = self.delegate else { return }
-            
-            guard isPhoneValid else {
-                errorText.value = "Введите корректный номер телефона"
-                return
-            }
-            
-            let number = self.phone
-            
-            isLoading.value = true
-            errorText.value = nil
-            defer { isLoading.value = false }
-            
-            do {
-                // В Supabase verificationID = номер телефона
-                let id = try await delegate.sendSMSCode(to: number)
-                self.verificationID = id
-                state.value = .enterCode
-                startTimer()
-            } catch {
-                errorText.value = error.localizedDescription
-            }
+            // Вернуться на экран ввода номера
+            self.state.value = .enterPhone
+            return
         }
     }
     
+    /// Отправка SMS‑кода на номер телефона.
+    func sendCode() async  {
+        guard let delegate = self.delegate else { return }
+        
+        guard isPhoneValid else {
+            errorText.value = AppError.errorPhoneInvalid.localizedDescription
+            return
+        }
+        
+        let number = self.phone
+        
+        isLoading.value = true
+        errorText.value = nil
+        defer { isLoading.value = false }
+        
+        do {
+            // В Supabase verificationID = номер телефона
+            let id = try await delegate.sendSMSCode(to: number)
+            self.verificationID = id
+            state.value = .enterCode
+            startTimer()
+        } catch {
+            errorText.value = error.localizedDescription
+        }
+    }
+
     /// Запускает/перезапускает таймер до повторной отправки кода.
     func startTimer() {
         timer?.invalidate()
@@ -172,30 +164,28 @@ final class PhoneLoginViewModel {
     }
     
     /// Повторная отправка кода после окончания таймера.
-    func resendCode() {
+    func resendCode() async {
         guard canResend.value else { return }
         
-        Task { [weak self] in
-            guard let self, let delegate = self.delegate else { return }
-           
-            guard isPhoneValid else {
-                errorText.value = "Введите корректный номер телефона"
-                return
-            }
-                    
-            let number = self.phone
-            
-            isLoading.value = true
-            errorText.value = nil
-            defer { isLoading.value = false }
-            
-            do {
-                let id = try await delegate.sendSMSCode(to: number)
-                self.verificationID = id
-                startTimer()
-            } catch {
-                errorText.value = error.localizedDescription
-            }
+        guard let delegate = self.delegate else { return }
+        
+        guard isPhoneValid else {
+            errorText.value = AppError.errorPhoneInvalid.localizedDescription
+            return
+        }
+        
+        let number = self.phone
+        
+        isLoading.value = true
+        errorText.value = nil
+        defer { isLoading.value = false }
+        
+        do {
+            let id = try await delegate.sendSMSCode(to: number)
+            self.verificationID = id
+            startTimer()
+        } catch {
+            errorText.value = error.localizedDescription
         }
     }
     
@@ -212,5 +202,9 @@ final class PhoneLoginViewModel {
         } else {
             secondsLeft.value = newValue
         }
+    }
+    
+    deinit {
+        timer?.invalidate()
     }
 }

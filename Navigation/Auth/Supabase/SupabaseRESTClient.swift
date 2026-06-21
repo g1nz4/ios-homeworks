@@ -1,6 +1,6 @@
 import Foundation
+
 /// Клиент для REST‑запросов в Supabase (rest/v1/…).
-/// Auth теперь делает официальный Supabase SDK, поэтому Auth‑часть отсюда убрали.
 final class SupabaseRESTClient {
     /// JSON‑кодировщик для тела запросов
     private let encoder: JSONEncoder = {
@@ -102,24 +102,30 @@ final class SupabaseRESTClient {
     
     /// Выполнить запрос без ожидания тела ответа (например, INSERT/UPDATE).
     func performVoid(_ request: URLRequest) async throws {
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let http = response as? HTTPURLResponse,
-              200..<300 ~= http.statusCode else {
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
             
-            let status = (response as? HTTPURLResponse)?.statusCode ?? -1
-            let bodyString = String(data: data, encoding: .utf8) ?? "<no body>"
-            
-            // generic‑ошибка Supabase с телом ответа для отладки
-            throw NSError(
-                domain: "Supabase",
-                code: status,
-                userInfo: [
-                    NSLocalizedDescriptionKey: "Supabase error",
-                    "status": status,
-                    "body": bodyString
-                ]
-            )
+            guard let http = response as? HTTPURLResponse,
+                  200..<300 ~= http.statusCode else {
+                
+                let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+                let bodyString = String(data: data, encoding: .utf8) ?? "<no body>"
+                
+                AppLogger.error(
+                """
+                Supabase REST error (void)
+                Status: \(status)
+                Body: \(bodyString)
+                """
+                )
+                
+                throw AppError.supabase(status: status, message: bodyString)
+            }
+        } catch let error as AppError {
+            throw error
+        } catch {
+            AppLogger.error("URLSession error (void): \(error)")
+            throw AppError.network(underlying: error)
         }
     }
     
@@ -146,15 +152,15 @@ final class SupabaseRESTClient {
                 let status = (response as? HTTPURLResponse)?.statusCode ?? -1
                 let bodyString = String(data: data, encoding: .utf8) ?? "<no body>"
                 
-                throw NSError(
-                    domain: "Supabase",
-                    code: status,
-                    userInfo: [
-                        NSLocalizedDescriptionKey: "Supabase error",
-                        "status": status,
-                        "body": bodyString
-                    ]
+                AppLogger.error(
+                    """
+                    Supabase REST error
+                    Status: \(status)
+                    Body: \(bodyString)
+                    """
                 )
+                                
+                throw AppError.supabase(status: status, message: bodyString)
             }
             
             do {
@@ -171,8 +177,10 @@ final class SupabaseRESTClient {
                     """
                 )
                 
-                throw error
+                throw AppError.decoding(underlying: error)
             }
+        } catch let error as AppError {
+            throw error
         } catch {
             AppLogger.error(
                     """
@@ -182,7 +190,7 @@ final class SupabaseRESTClient {
                     ============================
                     """
             )
-            throw error
+            throw AppError.network(underlying: error)
         }
     }
 }

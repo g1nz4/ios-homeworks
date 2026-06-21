@@ -17,7 +17,6 @@ final class PhoneLoginViewController: BaseScrollViewController {
     
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Введите номер телефона для входа в приложение"
         label.numberOfLines = 0
         label.textColor = .appPrimaryText
         label.font = UIFont.systemFont(ofSize: 14.0, weight: .medium)
@@ -52,8 +51,7 @@ final class PhoneLoginViewController: BaseScrollViewController {
         return stack
     }()
     
-    /// Лейбл, в котором отображается таймер повторной отправки кода.
-    /// После истечения таймера превращается в «Запросить код» и кликабелен.
+    /// Лейбл, в котором отображается таймер повторной отправки кода. После истечения таймера превращается в «Запросить код» и кликабелен.
     private lazy var timerLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
@@ -71,7 +69,8 @@ final class PhoneLoginViewController: BaseScrollViewController {
     
     /// Кнопка запроса кода для введенного номера.
     private lazy var sendCodeButton = PrimaryActionButton(
-        title: "Запросить код"
+        title: NSLocalizedString("phone_login_send_code_button_title", comment: "Кнопка запросить код"
+        )
     )
     
     private lazy var activityIndicator: UIActivityIndicatorView = {
@@ -205,7 +204,7 @@ final class PhoneLoginViewController: BaseScrollViewController {
                     self.activityIndicator.isHidden = false
                     self.activityIndicator.startAnimating()
                 } else {
-                    // Проверка закончилась — индикатор скрывается, появляется таймер, если ещё остались секунды
+                    // Проверка закончилась — индикатор скрывается
                     self.activityIndicator.stopAnimating()
                     self.activityIndicator.isHidden = true
                     self.timerLabel.isHidden = (self.viewModel.secondsLeft.value == nil)
@@ -238,7 +237,7 @@ final class PhoneLoginViewController: BaseScrollViewController {
                 let sec = seconds % 60
                 self.timerLabel.text = String(format: "%02d:%02d", minutes, sec)
             } else {
-                self.timerLabel.text = "Запросить код"
+                self.timerLabel.text = NSLocalizedString("phone_login_send_code_button_title", comment: "Текстовая кнопка повторного запроса кода")
             }
         }
         
@@ -259,7 +258,7 @@ final class PhoneLoginViewController: BaseScrollViewController {
     private func updateUI(for state: PhoneLoginViewModel.State) {
         switch state {
         case .enterPhone:
-            titleLabel.text = "Введите номер телефона"
+            titleLabel.text = NSLocalizedString("phone_login_form_description", comment: "Строка: Введите номер телефона")
             
             phoneTextField.isHidden = false
             sendCodeButton.isHidden = false
@@ -271,7 +270,7 @@ final class PhoneLoginViewController: BaseScrollViewController {
             phoneTextField.becomeFirstResponder()
             
         case .enterCode:
-            titleLabel.text = "Введите код из SMS"
+            titleLabel.text = NSLocalizedString("enter_code_from_SMS", comment: "Строка: Введите код из SMS")
            
             phoneTextField.isHidden = true
             sendCodeButton.isHidden = true
@@ -284,16 +283,6 @@ final class PhoneLoginViewController: BaseScrollViewController {
             codeFields.forEach { $0.text = "" }
             codeFields.first?.becomeFirstResponder()
         }
-    }
-    
-    private func showAlert(message: String) {
-        let alert = UIAlertController(
-            title: "Ошибка",
-            message: message,
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
     }
     
     /// Автоподстановка тестового номера в DEBUG‑сборкe.
@@ -313,18 +302,25 @@ final class PhoneLoginViewController: BaseScrollViewController {
         
         guard code.count == codeLength else { return }
         viewModel.code = code
-        viewModel.verify()
+        
+        Task { [weak self] in
+            await self?.viewModel.verify()
+        }
     }
     
     /// Нажатие на кнопку «Получить код».
     @objc private func didTapSendCode() {
-        viewModel.sendCode()
+        Task { [weak self] in
+            await self?.viewModel.sendCode()
+        }
     }
     
     /// Нажатие по лейблу таймера (когда он показывает «Запросить код»).
     @objc private func didTapTimerLabel() {
-        if viewModel.canResend.value {
-            viewModel.resendCode()
+        guard viewModel.canResend.value else { return }
+        
+        Task { [weak self] in
+            await self?.viewModel.resendCode()
         }
     }
     

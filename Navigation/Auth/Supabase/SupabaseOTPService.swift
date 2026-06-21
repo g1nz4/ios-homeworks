@@ -72,41 +72,25 @@ final class SupabaseOTPService {
         let records: [OTPRecord] = try await client.perform(request)
         
         guard let record = records.first else {
-            throw NSError(
-                domain: "OTP",
-                code: 404,
-                userInfo: [NSLocalizedDescriptionKey: "Код не найден"]
-            )
+            throw AppError.otpNotFound
         }
         
         let trimmedCode = code.trimmingCharacters(in: .whitespacesAndNewlines)
         
         // Сравниваем введённый код с сохранённым
         guard record.code == trimmedCode else {
-            throw NSError(
-                domain: "OTP",
-                code: 400,
-                userInfo: [NSLocalizedDescriptionKey: "Неверный код"]
-            )
+            throw AppError.otpInvalid
         }
         
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime]
         
         guard let exp = iso.date(from: record.expiresAt) else {
-            throw NSError(
-                domain: "OTP",
-                code: 500,
-                userInfo: [NSLocalizedDescriptionKey: "Ошибка формата даты"]
-            )
+            throw AppError.otpInvalidDate
         }
         
         guard exp > Date() else {
-            throw NSError(
-                domain: "OTP",
-                code: 410,
-                userInfo: [NSLocalizedDescriptionKey: "Срок действия кода истёк"]
-            )
+            throw AppError.otpExpired
         }
         
         AppLogger.debug("🎉🎉🎉 OK 🎉🎉🎉")

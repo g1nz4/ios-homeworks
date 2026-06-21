@@ -1,8 +1,14 @@
 import CoreData
 import Foundation
 
+/// Протокол кеш‑хранилища пользователя (для тестов).
+protocol UserCacheStoreProtocol: AnyObject {
+    func save(_ user: User) throws
+    func load(userID: String) throws -> User?
+}
+
 /// Сервис для кеширования доменной модели `User` в Core Data.
-final class UserCacheStore {
+final class UserCacheStore: UserCacheStoreProtocol {
     
     /// Core Data‑стек (общий singleton).
     private let stack: CoreDataStack
@@ -40,10 +46,8 @@ final class UserCacheStore {
                     forEntityName: entityName,
                     in: context
                 ) else {
-                    throw NSError(
-                        domain: "CoreData",
-                        code: -1,
-                        userInfo: [NSLocalizedDescriptionKey: "Не найдена сущность \(entityName)"]
+                    throw AppError.cache(
+                        message: "Entity \(entityName) not found in model"
                     )
                 }
                 cdUser = NSManagedObject(entity: entity, insertInto: context)

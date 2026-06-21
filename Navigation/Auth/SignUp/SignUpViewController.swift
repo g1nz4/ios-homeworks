@@ -14,7 +14,7 @@ final class SignUpViewController: BaseScrollViewController {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .appSecondaryText
         label.font = .systemFont(ofSize: 14.0, weight: .medium)
-        label.text = "Все поля обязательны для заполнения"
+        label.text = NSLocalizedString("signup_all_fields_required", comment: "Поясняющая строка: Все поля обязательны для заполнения")
         label.textAlignment = .left
         label.numberOfLines = 0
         
@@ -22,13 +22,13 @@ final class SignUpViewController: BaseScrollViewController {
     }()
     
     private lazy var firstNameField = LabeledTextFieldView(
-        title: "ИМЯ",
-        placeholder: "Введите имя"
+        title: NSLocalizedString("signup_first_name_title", comment: "ИМЯ"),
+        placeholder: NSLocalizedString("signup_first_name_placeholder", comment: "Введите имя")
     )
     
     private lazy var lastNameField = LabeledTextFieldView(
-        title: "ФАМИЛИЯ",
-        placeholder: "Введите фамилию"
+        title: NSLocalizedString("signup_last_name_title", comment: "ФАМИЛИЯ"),
+        placeholder: NSLocalizedString("signup_last_name_placeholder", comment: "Введите фамилию")
     )
     
     private lazy var birthDatePicker: UIDatePicker = {
@@ -44,8 +44,8 @@ final class SignUpViewController: BaseScrollViewController {
     
     private lazy var birthDateField: LabeledTextFieldView = {
         let field = LabeledTextFieldView(
-            title: "ДАТА РОЖДЕНИЯ",
-            placeholder: "дд.MM.гггг"
+            title: NSLocalizedString("signup_birthdate_title", comment: "ДАТА РОЖДЕНИЯ"),
+            placeholder: NSLocalizedString("signup_birthdate_placeholder", comment: "дд.MM.гггг")
         )
         field.textField.inputView = birthDatePicker
         field.textField.tintColor = .clear
@@ -54,36 +54,36 @@ final class SignUpViewController: BaseScrollViewController {
     }()
     
     private lazy var cityField = LabeledTextFieldView(
-        title: "ГОРОД",
-        placeholder: "Название города"
+        title: NSLocalizedString("signup_city_title", comment: "ГОРОД"),
+        placeholder: NSLocalizedString("signup_city_placeholder", comment: "Название города")
     )
     
     private lazy var phoneField = LabeledTextFieldView(
-        title: "НОМЕР ТЕЛЕФОНА",
+        title: NSLocalizedString("signup_phone_title", comment: "НОМЕР ТЕЛЕФОНА"),
         placeholder: "+7 (___) ___-__-__",
         keyboardType: .phonePad
     )
     
     private lazy var emailField = LabeledTextFieldView(
-        title: "АДРЕС ЭЛЕКТРОННОЙ ПОЧТЫ",
-        placeholder: "Введите email",
+        title: NSLocalizedString("signup_email_title", comment: "АДРЕС ЭЛЕКТРОННОЙ ПОЧТЫ"),
+        placeholder: NSLocalizedString("signup_email_placeholder", comment: "Введите email"),
         keyboardType: .emailAddress
     )
     
     private lazy var passwordField = LabeledTextFieldView(
-        title: "ПАРОЛЬ",
-        placeholder: "Минимум 6 символов",
+        title: NSLocalizedString("signup_password_title", comment: "ПАРОЛЬ"),
+        placeholder: NSLocalizedString("signup_password_placeholder", comment: "Минимум 6 символов"),
         isSecure: true
     )
     
     private lazy var repeatPasswordField = LabeledTextFieldView(
-        title: "ПОВТОРИТЕ ПАРОЛЬ",
-        placeholder: "Еще раз пароль",
+        title: NSLocalizedString("signup_repeat_password_title", comment: "ПОВТОР ПАРОЛЯ"),
+        placeholder: NSLocalizedString("signup_repeat_password_placeholder", comment: "Еще раз пароль"),
         isSecure: true
     )
     
     private lazy var signUpButton = PrimaryActionButton(
-        title: NSLocalizedString("signup_button_title", comment: "Кнопка регистрации")
+        title: NSLocalizedString("signup_button_title", comment: "Кнопка зарегистрироваться")
     )
     
     private lazy var stackView: UIStackView = {
@@ -120,7 +120,7 @@ final class SignUpViewController: BaseScrollViewController {
         super.viewDidLoad()
         
         navigationController?.navigationBar.isHidden = false
-        self.title = "Регистрация"
+        self.title = NSLocalizedString("signup_screen_title", comment: "Название экрана в навигационном баре")
         view.backgroundColor = .appBackground
         
         setupTextFields()
@@ -190,15 +190,6 @@ final class SignUpViewController: BaseScrollViewController {
         }
     }
     
-    private func showAlert(message: String) {
-        let alert = UIAlertController(
-            title: "Ошибка",
-            message: message,
-            preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
-    }
-    
     /// Пересчитывает, можно ли нажать кнопку "Зарегистрироваться".
     /// Кнопка активируется только если: все текстовые поля формы (имя, фамилия, дата рождения, город, телефон, email, пароли) непустые и сейчас не идёт сетевой запрос .
     private func updateStateSignUpButton(isLoading: Bool? = nil) {
@@ -241,8 +232,10 @@ final class SignUpViewController: BaseScrollViewController {
         viewModel.email = emailField.textField.text ?? ""
         viewModel.password = passwordField.textField.text ?? ""
         viewModel.repeatPassword = repeatPasswordField.textField.text ?? ""
-        
-        viewModel.signUp()
+       
+        Task { [weak self] in
+            await self?.viewModel.signUp()
+        }
     }
     
     /// Изменение даты рождения через UIDatePicker:  обновляет модель и отображает дату в поле в формате "дд.ММ.гггг".

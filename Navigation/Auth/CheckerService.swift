@@ -15,12 +15,12 @@ protocol CheckerServiceProtocol {
 /// Реализация CheckerServiceProtocol, оборачивает Supabase-сервисы.
 final class CheckerService: CheckerServiceProtocol {
     // Сервис аутентификации Supabase (email/пароль).
-    private let authService: SupabaseAuthService
+    private let authService: AuthServiceProtocol
     // Сервис одноразовых кодов SMS (OTP) через Supabase.
     private let otpService: SupabaseOTPService
     
     init(
-        authService: SupabaseAuthService = SupabaseAuthService.shared,
+        authService: AuthServiceProtocol = SupabaseAuthService.shared,
         otpService: SupabaseOTPService = SupabaseOTPService()
     ) {
         self.authService = authService

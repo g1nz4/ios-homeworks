@@ -4,20 +4,24 @@ import Foundation
 final class LoginInspector: LoginDelegateProtocol {
     
     private let checkerService: CheckerServiceProtocol
-    private let userService: SupabaseUserService
-    private let authService: SupabaseAuthService
-    private let userCache: UserCacheStore
+    private let userService: UserServiceProtocol
+    private let authService: AuthServiceProtocol
+    private let userCache: UserCacheStoreProtocol
+    private let networkService: NetworkStatusServiceProtocol
     
+    // Инициализатор с зависимостями (по умолчанию — реальные реализации, в тестах подменяются моками)
     init(
         checkerService: CheckerServiceProtocol = CheckerService(),
-        userService: SupabaseUserService = SupabaseUserService(),
-        authService: SupabaseAuthService = SupabaseAuthService.shared,
-        userCache: UserCacheStore = UserCacheStore()
+        userService: UserServiceProtocol = SupabaseUserService(),
+        authService: AuthServiceProtocol = SupabaseAuthService.shared,
+        userCache: UserCacheStoreProtocol = UserCacheStore(),
+        networkService: NetworkStatusServiceProtocol = NetworkStatusService.shared
     ) {
         self.checkerService = checkerService
         self.userService = userService
         self.authService = authService
         self.userCache = userCache
+        self.networkService = networkService
     }
     
     /// Вход по email / паролю через Supabase Auth.
@@ -33,7 +37,7 @@ final class LoginInspector: LoginDelegateProtocol {
         } catch {
             let ns = error as NSError
             
-            // Специальный случай: пользователь с таким email уже зарегистрирован
+            // Пользователь с таким email уже зарегистрирован
             if ns.domain == "Supabase",
                ns.code == 422,
                let body = ns.userInfo["body"] as? String,
@@ -43,10 +47,8 @@ final class LoginInspector: LoginDelegateProtocol {
                 do {
                     _ = try await authService.signIn(email: data.email, password: data.password)
                 } catch {
-                    throw NSError(
-                        domain: "Auth",
-                        code: 422,
-                        userInfo: [NSLocalizedDescriptionKey: "Пользователь с таким email уже зарегистрирован."]
+                    // Если не удалось войти — пробрасываем доменную ошибку о занятости email
+                    throw AppError.authGeneric(message: NSLocalizedString("error_auth_email_already_exists", comment: "Адрес электронной почты уже зарегистрирован")
                     )
                 }
             } else {
@@ -57,10 +59,7 @@ final class LoginInspector: LoginDelegateProtocol {
         
         // На этом этапе: пользователь только что зарегистрирован ИЛИ  успешно вошёл в существующую учётную запись
         guard let userID = authService.userID else {
-            throw NSError(
-                domain: "Auth",
-                code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Не удалось получить данные пользователя"]
+            throw AppError.authGeneric(message: NSLocalizedString("error_auth_no_user_id", comment: "Не удалось получить идентификатор пользователя")
             )
         }
         
@@ -68,6 +67,7 @@ final class LoginInspector: LoginDelegateProtocol {
         
         let fullName = Name(firstName: data.firstName, lastName: data.lastName)
         
+        // Соборка доменной модели пользователя для слоя profiles
         let user = User(
             id: userID,
             nickname: nil,
@@ -102,47 +102,64 @@ final class LoginInspector: LoginDelegateProtocol {
         try await checkerService.verifySMSCode(verificationID: verificationID, code: code)
     }
     
-    /// Вход по номеру телефона после успешной проверки OTP.
-    /// Поиск профиля пользователя по полю phone в таблице profiles.
+    /// Вход по номеру телефона после успешной проверки OTP. Поиск профиля пользователя по полю phone в таблице profiles.
     func loginByPhone(_ phone: String) async throws -> User {
+        // Найти профиль по телефону
         let user = try await userService.fetchProfile(phone: phone)
+        // Устанавить локальную "сессию" для этого userID
+        authService.setLocalSession(userID: user.id)
         
-        do {
-            try userCache.save(user)
-        } catch {
-            AppLogger.error("UserCache save error (loginByPhone): \(error)")
-        }
-        
-        return user
-    }
-    
-    
-    
-    /// Загрузка профиля текущего авторизованного пользователя. Сначала пробует взять данные из кеша (Core Data), затем — из Supabase.
-    func loadCurrentUserProfile() async throws -> User {
-        guard let userID = authService.userID else {
-            throw NSError(
-                domain: "Auth",
-                code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Не удалось получить данные пользователя"]
-            )
-        }
-        
-        // Пробуем загрузить из Core Data
-        if let cached = try? userCache.load(userID: userID) {
-            return cached
-        }
-        
-        // Если в кеше нет — загружаем из Supabase (REST)
-        let user = try await userService.fetchProfile(userID: userID)
-        
-        // Сохраняем в кеш на будущее
+        // Сохранить в кеш
         do {
             try userCache.save(user)
         } catch {
             AppLogger.error("UserCache save error: \(error)")
+            throw AppError.cacheSaveError
         }
         
         return user
+    }
+
+    /// Загрузка профиля текущего авторизованного пользователя.
+    ///
+    /// Если нет `userID` в `authService`, пользователь не авторизован, и бросаем ошибку `authGeneric`.
+    /// - **Онлайн** (`networkService.isConnected == true`):
+    ///   - пробуем получить свежий профиль из Supabase (`userService.fetchProfile(userID:)`);
+    ///   - при сетевой ошибке пытаемся подставить кешированного пользователя;
+    ///   - если кеша нет — пробросить исходную ошибку.
+    /// - **Оффлайн**:
+    ///   - пробуем загрузить пользователя из кеша;
+    ///   - если в кеше ничего нет — ошибка `networkOffline`.
+    func loadCurrentUserProfile() async throws -> User {
+        guard let userID = authService.userID else {
+            throw AppError.authGeneric(message: NSLocalizedString("error_auth_no_user_id", comment: "Cannot get user id")
+            )
+        }
+        if networkService.isConnected {
+            // ОНЛАЙН: всегда из Supabase
+            do {
+                let user = try await userService.fetchProfile(userID: userID)
+                try? userCache.save(user)
+                
+                return user
+            } catch {
+                // Если сеть упала пробуем показать кеш, чтобы пользователь хоть что‑то видел
+                if let cached = try? userCache.load(userID: userID) {
+                    AppLogger.error("Network error, falling back to cached user: \(error)")
+                    return cached
+                } else {
+                    // Ничего в кеше - пробросить ошибку
+                    throw error
+                }
+            }
+        } else {
+            // ОФФЛАЙН: только локальный кеш
+            if let cached = try? userCache.load(userID: userID) {
+                return cached
+            } else {
+                // Ни интернета, ни кеша — показываем доменную ошибку сети
+                throw AppError.networkOffline
+            }
+        }
     }
 }

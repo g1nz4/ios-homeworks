@@ -20,9 +20,14 @@ final class ProfileCoordinator: Coordinator {
     }
 
     private let user: User
+    private let authService: SupabaseAuthService
     
-    init(user: User) {
+    init(
+        user: User,
+        authService: SupabaseAuthService = SupabaseAuthService.shared
+    ) {
         self.user = user
+        self.authService = authService
         children = []
         
         let viewModel = ProfileViewModel(user: user)
@@ -53,11 +58,13 @@ final class ProfileCoordinator: Coordinator {
     }
     
     func didTapLogout() {
-//        do {
-//            try 
-//        } catch {
-//            print("Ошибка:", error.localizedDescription)
-//        }
-        delegate?.didLogout()
+        Task {
+            do {
+                try await authService.logout()
+            } catch {
+                AppLogger.debug("Logout error: \(error)")
+            }
+            delegate?.didLogout()
+        }
     }
 }

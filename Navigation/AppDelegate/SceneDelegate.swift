@@ -4,7 +4,8 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
-    private var loginCoordinator: LoginCoordinator?
+    /// Главный координатор приложения, управляет выбором стартового флоу (логин / main).
+    private var appCoordinator: AppCoordinator?
     
     let notificationsService = LocalNotificationsService()
    
@@ -16,26 +17,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let scene = (scene as? UIWindowScene) else { return }
            
         let window = UIWindow(windowScene: scene)
-        // Запрос разрешения на локальные уведомления
-        self.notificationsService.registerForLatestUpdatesIfPossible()
-       
+        
+        let appCoordinator = AppCoordinator()
+        self.appCoordinator = appCoordinator
+        appCoordinator.setup()
+        
         self.window = window
-                
-        Task { @MainActor in
-            let factory = MyLoginFactory()
-            // Корневой координатор авторизации
-            let сoordinator = LoginCoordinator(factory: factory)
-            сoordinator.setup()
-            self.loginCoordinator = сoordinator
-            
-            window.rootViewController = сoordinator.controller
-            window.makeKeyAndVisible()
-        }
+        window.rootViewController = appCoordinator.controller
+        window.makeKeyAndVisible()
     }
     
-    func sceneDidDisconnect(_ scene: UIScene) {
-       
-    }
+    func sceneDidDisconnect(_ scene: UIScene) { }
     
     func sceneDidBecomeActive(_ scene: UIScene) {
         notificationsService.refreshAuthorizationStatus()
