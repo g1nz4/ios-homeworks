@@ -14,11 +14,13 @@ final class AuthStartViewController: BaseScrollViewController {
     }()
     
     private lazy var loginButton = PrimaryActionButton(
-        title: NSLocalizedString("login_button_title", comment: "Кнопка входа")
+        title: NSLocalizedString("login_button_title", comment: "Кнопка входа"),
+        style: .inverted
     )
     
     private lazy var signUpButton = PrimaryActionButton(
-        title: NSLocalizedString("signup_button_title", comment: "Кнопка регистрации")
+        title: NSLocalizedString("signup_button_title", comment: "Кнопка регистрации"),
+        style: .inverted
     )
     
     private lazy var stackButton: UIStackView = {
@@ -33,25 +35,27 @@ final class AuthStartViewController: BaseScrollViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .appBackground
+        view.backgroundColor = .app
         navigationController?.navigationBar.isHidden = true
         
         setupButtons()
     }
     
     override func configureContent() {
+        super.configureContent()
+        
         [logo, stackButton].forEach() {
             $0.translatesAutoresizingMaskIntoConstraints = false
-            contentView.addSubview($0)
+          contentView.addSubview($0)
         }
         
         NSLayoutConstraint.activate([
-            logo.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 150.0),
-            logo.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            logo.widthAnchor.constraint(equalToConstant: 120.0),
-            logo.heightAnchor.constraint(equalToConstant: 120.0),
+            logo.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            logo.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            logo.widthAnchor.constraint(equalToConstant: 120),
+            logo.heightAnchor.constraint(equalToConstant: 120),
            
-            stackButton.topAnchor.constraint(equalTo: logo.bottomAnchor, constant: 166.0),
+            stackButton.topAnchor.constraint(equalTo: logo.bottomAnchor, constant: 150.0),
             stackButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16.0),
             stackButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16.0),
             stackButton.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -32.0)

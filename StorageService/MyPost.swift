@@ -2,26 +2,41 @@ import UIKit
 
 public struct MyPost {
     public let id: String
-    public let author: String
-    public let image: UIImage
-    public let description: String
+    public let authorId: String
+    public var author: String
+    public var image: UIImage?
+    public var description: String
     public var likes: Int
     public var views: Int
+    public var isExpanded: Bool
+    public var isLiked: Bool
+    public var isFavorite: Bool = false
+    public let createdAt: Date
     
     public init(
         id: String,
+        authorId: String,
         author: String,
-        image: UIImage,
+        image: UIImage?,
         description: String,
         likes: Int,
-        views: Int
+        views: Int,
+        isExpanded: Bool = false,
+        isLiked: Bool = false,
+        isFavorite: Bool = false,
+        createdAt: Date = Date()
     ) {
         self.id = id
         self.author = author
+        self.authorId = authorId
         self.image = image
         self.description = description
         self.likes = likes
         self.views = views
+        self.isExpanded = isExpanded
+        self.isLiked = isLiked
+        self.isFavorite = isFavorite
+        self.createdAt = createdAt
     }
 }
 
@@ -31,13 +46,16 @@ extension MyPost {
         [
             MyPost(
                 id: "season_1",
+                authorId: "1",
                 author: "user 1",
                 image: UIImage(named:"season_1") ?? UIImage(),
                 description: "В 1 сезоне сериала «Сверхъестественное» с семьей Винчестеров происходит ужасная трагедия: Мэри, мать Сэма и Дина, убивает демон и сжигает их семейный дом дотла. Джон Винчестер решает во что бы то ни стало отыскать этого демона и отомстить ему. В поисках врага и ответа на вопрос, каким образом его убить, Джон охотится на разных монстров и обучает этому ремеслу своих сыновей. Когда парни становятся взрослыми, Сэм отказывается от жизни охотника и поступает в колледж, чтобы вести обычную жизнь. Но Дин приходит к нему с просьбой помочь найти отца и продолжить семейное дело.",
                 likes: 250,
-                views: 300),
+                views: 300
+            ),
             MyPost(
                 id: "season_2",
+                authorId: "2",
                 author: "user 2",
                 image: UIImage(named:"season_2") ?? UIImage(),
                 description: "Во 2 сезоне сериала «Сверхъестественное» странствия братья Винчестеров продолжаются. Они все так же колесят по штатам на своей черной Импале, спасая простых людей от вампиров, призраков, оборотней, зомби и прочих монстров. Попутно Сэм и Дин все больше узнают о демонах и сделках, которые заключают с ними люди. Они все ближе подбираются к главному врагу — демону с желтыми глазами и к разгадке тайны способностей Сэма.",
@@ -45,6 +63,7 @@ extension MyPost {
                 views: 410),
             MyPost(
                 id: "season_3",
+                authorId: "3",
                 author: "user 3",
                 image: UIImage(named:"season_3") ?? UIImage(),
                 description: "В 3 сезоне сериала «Сверхъестественное» Винчестеры ведут обычную охоту, спасая невинных людей от различных монстров. Только сам Дин совсем скоро станет жертвой таких чудовищ, как адские псы, ведь ему остался ровно год до того, как его утянут в ад. Сэм с таким положением вещей смириться не готов и при помощи Бобби активно ведет поиски освобождения брата от контракта с демонами. Вместе с тем братья узнают, что демоны далеко не высшее зло и однажды им придется столкнуться с первым демоном — Лилит.",
@@ -52,6 +71,7 @@ extension MyPost {
                 views: 420),
             MyPost(
                 id: "season_4",
+                authorId: "4",
                 author: "user 4",
                 image: UIImage(named:"season_4") ?? UIImage(),
                 description: "В 4 сезоне сериала «Сверхъестественное» Дин неожиданно воскресает после мучительных месяцев в аду. Его чудесное спасение — дело рук настоящих ангелов, но ими движет добродетель или эгоистичные планы? Сэм тем временем слишком доверился демону Руби и стал управлять своими способностями. Винчестерам предстоит познакомиться с ангелами, вновь бороться с различной нечистью и помешать Лилит, целью которой является освобождение Люцифера из адской клетки.",

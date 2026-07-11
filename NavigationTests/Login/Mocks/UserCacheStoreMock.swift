@@ -2,7 +2,7 @@ import XCTest
 @testable import Navigation
 
 /// Мок кеша пользователя (CoreData).
-final class UserCacheStoreMock: UserCacheStoreProtocol {
+final class UserCacheStoreMock: CDUserCacheProtocol {
     
     var storage: [String: User] = [:]
     

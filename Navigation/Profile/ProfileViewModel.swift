@@ -1,203 +1,402 @@
 import Foundation
 import StorageService
 
-protocol ProfileViewModelInput {
-    func viewDidLoad()
-    func didSelectRow(section: Int, row: Int)
-    func updateStatus(_ text: String)
-    func didDoubleTap(post: MyPost)
-    func insert(post: MyPost, at row: Int)
-}
-
-protocol ProfileViewModelOutput {
-    var updateHeader: ((User) -> Void)? { get set }
-    var updatePosts: (() -> Void)? { get set }
-    var showPhotos: (() -> Void)? { get set }
-    var onError: ((NavigationError) -> Void)? { get set }
-    var onStatusChanged: ((String) -> Void)? { get set }
-    
-    func numberOfSections() -> Int
-    func numberOfRows(in section: Int) -> Int
-    func cellType(for section: Int) -> ProfileCellType
-    func post(section: Int, row: Int) -> MyPost?
-    func isFavorite(postID: String) -> Bool
-}
-
+/// Типы ячеек, которые отображатются в коллекции профиля.
 enum ProfileCellType {
-    case photos
-    case posts
-    case none
+    case friends          // капсула "Друзья"
+    case publish          // капсула "Опубликовать пост"
+    case tabs             // ячейка с табами (main / posts / photos / music)
+    case photoAlbums      // горизонтальный список альбомов
+    case photoItem        // одно фото в гриде
+    case posts            // посты пользователя
+    case emptyMessage     // универсальная заглушка (нет постов/фото/музыки)
+    case none             // ничего (ячейка не используется)
 }
 
-final class ProfileViewModel: ProfileViewModelInput, ProfileViewModelOutput {
-    
-    private var user: User
-    private var posts: [MyPost] = []
-    private var favoriteIDs: Set<String> = []
-    private let postsLoader: () -> [MyPost]
-    private let favoritesStorage: CoreDataFavoritesPostProtocol
-    
+/// Вкладки профиля.
+enum ProfileTab {
+    case main       // главная лента (посты добавленные из ленты новостей + посты пользователя)
+    case posts      // посты только текущего пользователя
+    case photos     // альбомы + фотографии
+    case music      // пока заглушка
+}
+
+/// ViewModel экрана профиля.
+/// Собирает в себе: 1) headerVM (аватар, имя,  инфо, сторис), 2) postsVM (посты и избранное), 3) photosVM (альбомы и фото),  и предоставляет API для контроллера/handler’а.
+@MainActor
+final class ProfileViewModel {
+
+    let headerVM: ProfileHeaderViewModel
+    let postsVM: ProfilePostsViewModel
+    let photosVM: PhotosViewModel
+    // let musicVM: MusicViewModel //  позже
+
+    /// Чтобы не грузить фото на каждый заход во вкладку photos повторно, отмечаем, что начальная загрузка уже была.
+    private var didInitialPhotosLoad = false
+
+    /// Текущий пользователь (данные для header’а и т.п.).
+    private(set) var user: User
+
+    /// Текущий выбранный таб.
+    private(set) var selectedTab: ProfileTab = .main
+
+    var hasStory: Bool { headerVM.hasStory }
+    var headerUser: User? { user }
+    var currentUser: User { headerVM.user }
+    var currentTab: ProfileTab { selectedTab }
+
+
+    /// Старт/стоп pull‑to‑refresh.
+    var onRefreshingChanged: ((Bool) -> Void)?
+    /// Обновление header’а (шапки профиля).
     var updateHeader: ((User) -> Void)?
-    var updatePosts: (() -> Void)?
-    var showPhotos: (() -> Void)?
-    var onError: ((NavigationError) -> Void)?
-    var onStatusChanged: ((String) -> Void)?
-    
+    /// Смена таба (нужно перелэйаутить коллекцию и т.п.).
+    var onTabChanged: (() -> Void)?
+    /// Ошибка.
+    var onError: ((AppError) -> Void)?
+    /// Изменение флага наличия сторис.
+    var onStoryFlagChanged: ((Bool) -> Void)?
+    /// Список избранных постов поменялся.
+    var onFavoritesChanged: (() -> Void)?
+    /// Фото/альбомы были обновлены.
+    var onPhotosChanged: (() -> Void)?
+
     init(
         user: User,
-        postsLoader: @escaping () -> [MyPost] = { MyPost.make() },
-        favoritesStorage: CoreDataFavoritesPostProtocol = CoreDataManager()
-    ){
+        userService: SupabaseUserService,
+        postService: PostServiceProtocol,
+        storyStorage: CDStoryStorageProtocol,
+        albumCoversService: AlbumCoversLoadingProtocol,
+        photosRepository: PhotosRepositoryProtocol
+    ) {
         self.user = user
-        self.postsLoader = postsLoader
-        self.favoritesStorage = favoritesStorage
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(favoritesDidChange),
-            name: .favoritesDidChange,
-            object: nil
+
+        self.headerVM = ProfileHeaderViewModel(
+            user: user,
+            userService: userService,
+            storyStorage: storyStorage
         )
+
+        self.postsVM = ProfilePostsViewModel(postService: postService)
+
+        self.photosVM = PhotosViewModel(
+            user: user,
+            photosRepository: photosRepository,
+            albumCoversService: albumCoversService,
+            mode: .main
+        )
+
+        bindSubViewModels()
     }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-    
-    func viewDidLoad() {
-        fetchProfile { [weak self] result in
-            guard let self = self else { return }
-            
-            switch result {
-            case .success(let user):
-                self.updateHeader?(user)
-            case .failure(let error):
-                self.onError?(error)
-            }
-        }
-        posts = postsLoader()
-        updatePosts?()
-        reloadFavorites()
-    }
-    
-    private func reloadFavorites() {
-        Task { [weak self] in
+
+    /// Подписки на события дочерних вьюмоделей (header/posts/photos).
+    private func bindSubViewModels() {
+        // Обновление пользователя из headerVM
+        headerVM.onUserChanged = { [weak self] user in
             guard let self else { return }
-            
-            do {
-                let favorites = try await favoritesStorage.fetchAll()
-                let ids = Set(favorites.map { $0.id })
-                
-                await MainActor.run {
-                    self.favoriteIDs = ids
-                    self.updatePosts?()
-                }
-            } catch {
-                await MainActor.run {
-                    self.onError?(.favoritesLoadingFailed)
-                }
+            self.user = user
+            self.updateHeader?(user)
+        }
+
+        // Ошибка headerVM
+        headerVM.onError = { [weak self] error in
+            self?.onError?(error)
+        }
+
+        // Флаг наличия сторис
+        headerVM.onStoryFlagChanged = { [weak self] hasStory in
+            self?.onStoryFlagChanged?(hasStory)
+        }
+
+        // Изменение избранного в постах
+        postsVM.onFavoritesChanged = { [weak self] in
+            self?.onFavoritesChanged?()
+        }
+
+        // Любое изменение фото/альбомов
+        photosVM.onChanged = { [weak self] in
+            self?.onPhotosChanged?()
+        }
+
+        // Аватар был изменён из photos‑раздела — перезагрузить header
+        photosVM.onAvatarChanged = { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                await self.headerVM.reloadProfile()
+            }
+        }
+
+        // Обложка была изменена — обновить header
+        photosVM.onCoverChanged = { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                await self.headerVM.reloadProfile()
             }
         }
     }
-    
-    @objc private func favoritesDidChange() {
-        reloadFavorites()
-    }
-    
-    private func fetchProfile(completion: @escaping (Result<User, NavigationError>) -> Void) {
-        DispatchQueue.global(qos: .background).async { [weak self] in
-            guard let self = self else { return }
-            
-            let profileUser = self.user
-            
-            let success = true
-            DispatchQueue.main.async {
-                if success {
-                    completion(.success(profileUser))
-                } else {
-                    completion(.failure(.profileLoadingFailed))
-                }
+
+    /// Полная перезагрузка профиля.
+    /// header и посты грузятся параллельно, фото — только на вкладке .photos.
+    func reloadProfile(isPullToRefresh: Bool = false) async {
+        if isPullToRefresh {
+            onRefreshingChanged?(true)
+        }
+
+        defer {
+            if isPullToRefresh {
+                onRefreshingChanged?(false)
             }
         }
-    }
-    
-    func updateStatus(_ text: String) {
-        let statusText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !statusText.isEmpty else {
-            onError?(.statusUpdateFailed)
-            return
+
+        async let headerTask: Void = headerVM.reloadProfile()
+        async let postsTask: Void  = postsVM.loadPosts()
+
+        if selectedTab == .photos {
+            async let photosTask: Void = photosVM.load()
+            _ = await (headerTask, postsTask, photosTask)
+        } else {
+            _ = await (headerTask, postsTask)
         }
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            
-            self.user.status = statusText
-            DispatchQueue.main.async {
-                self.onStatusChanged?(statusText)
-                self.updateHeader?(self.user)
+
+        onStoryFlagChanged?(headerVM.hasStory)
+    }
+
+    /// Фасад для координатора: взять обновлённые пользовательские данные и перезагрузить профиль.
+    func applyUpdatedUserAndReload(_ updatedUser: User, isPullToRefresh: Bool = false) async {
+        await applyUpdatedUser(updatedUser)
+        await reloadProfile(isPullToRefresh: isPullToRefresh)
+    }
+
+    /// Обновляет локального `user` и headerVM без перезагрузки всего профиля.
+    func applyUpdatedUser(_ user: User) async {
+        self.user = user
+        headerVM.update(with: user)
+    }
+
+    /// Принудительно перезагружает только фото/альбомы.
+    func reloadPhotos() async {
+        await photosVM.load()
+    }
+
+    /// Переключение вкладки (main/posts/photos/music).
+    func selectTab(_ tab: ProfileTab) async {
+        guard tab != selectedTab else { return }
+
+        selectedTab = tab
+
+        if tab == .photos {
+            if !didInitialPhotosLoad {
+                didInitialPhotosLoad = true
             }
+            onTabChanged?()
+            await photosVM.load()
+        } else {
+            onTabChanged?()
         }
     }
-    
-    func didSelectRow(section: Int, row: Int) {
-        if section == 1 && row == 0 {
-            showPhotos?()
-        }
-    }
-    
+
+    /// Количество секций в коллекции.
     func numberOfSections() -> Int {
-        3
+        switch selectedTab {
+        case .photos:
+            // 0: профиль, 1: табы+посты/заглушка, 2: альбомы, 3: фото
+            return 4
+        default:
+            // 0: профиль, 1: табы+посты/заглушка
+            return 2
+        }
     }
-    
+
+    /// Количество строк (item’ов) в секции.
     func numberOfRows(in section: Int) -> Int {
         switch section {
-        case 0: return 0
-        case 1: return 1
-        case 2: return posts.count
-        default: return 0
+        case 0:
+            // 0 секция: friends + publish
+            return 2
+
+        case 1:
+            switch selectedTab {
+            case .main, .posts:
+                let postsCount = postsVM.count
+                // tabs + (посты или одна заглушка)
+                return 1 + max(postsCount, 1)
+
+            case .music:
+                // tabs + заглушка
+                return 2
+
+            case .photos:
+                let hasAnyPhotos = !photosVM.albums.isEmpty || !photosVM.photos.isEmpty
+                // tabs + (если пусто – заглушка, если нет – ничего)
+                return 1 + (hasAnyPhotos ? 0 : 1)
+            }
+
+        case 2:
+            // Альбомы (только во вкладке .photos и если есть хоть какие-то данные)
+            guard selectedTab == .photos else { return 0 }
+            guard !photosVM.albums.isEmpty || !photosVM.photos.isEmpty else { return 0 }
+            return photosVM.albums.count
+
+        case 3:
+            // Фотографии (только во вкладке .photos)
+            guard selectedTab == .photos else { return 0 }
+            guard !photosVM.albums.isEmpty || !photosVM.photos.isEmpty else { return 0 }
+            return photosVM.photos.count
+
+        default:
+            return 0
         }
     }
-    
-    func cellType(for section: Int) -> ProfileCellType {
+
+    /// Тип ячейки для конкретной позиции.
+    func cellType(for section: Int, item: Int) -> ProfileCellType {
         switch section {
-        case 1: return .photos
-        case 2: return .posts
-        default: return .none
-        }
-    }
-    
-    func post(section: Int, row: Int) -> MyPost? {
-        guard section == 2, posts.indices.contains(row) else {
-            return nil
-        }
-        return posts[row]
-    }
-    
-    func isFavorite(postID: String) -> Bool {
-        favoriteIDs.contains(postID)
-    }
-    
-    func didDoubleTap(post: MyPost) {
-        Task { [weak self] in
-            guard let self else { return }
-           
-            do {
-                try await favoritesStorage.save(post: post)
-                
-                await MainActor.run {
-                    self.favoriteIDs.insert(post.id)
-                    self.updatePosts?()
-                }
-            } catch {
-                await MainActor.run {
-                    self.onError?(.favoritesSavingFailed)
+
+        case 0:
+            // 0: friends, 1: publish
+            return item == 0 ? .friends : .publish
+
+        case 1:
+            if item == 0 {
+                return .tabs
+            } else {
+                switch selectedTab {
+                case .main, .posts:
+                    // если постов нет — заглушка
+                    return postsVM.count == 0 ? .emptyMessage : .posts
+
+                case .music:
+                    // пока всегда заглушка после tabs
+                    return .emptyMessage
+
+                case .photos:
+                    // если нет ни альбомов, ни фото — заглушка
+                    let hasAnyPhotos = !photosVM.albums.isEmpty || !photosVM.photos.isEmpty
+                    return hasAnyPhotos ? .none : .emptyMessage
                 }
             }
+
+        case 2:
+            return selectedTab == .photos ? .photoAlbums : .none
+
+        case 3:
+            return selectedTab == .photos ? .photoItem : .none
+
+        default:
+            return .none
         }
     }
+
+    // MARK: - Фото/альбомы (мост к photosVM)
+
+    func album(at index: Int) -> PhotoAlbum? {
+        guard photosVM.albums.indices.contains(index) else { return nil }
+        return photosVM.albums[index]
+    }
+
+    func coverURL(forAlbumAt index: Int) -> URL? {
+        photosVM.coverURL(forAlbumAt: index)
+    }
+
+    func photoItem(at index: Int) -> Photo? {
+        guard photosVM.photos.indices.contains(index) else { return nil }
+        return photosVM.photos[index]
+    }
+
+    func allPhotos() -> [Photo] {
+        photosVM.allPhotos()
+    }
+
+    func delete(photo: Photo) async {
+        await photosVM.delete(photo: photo)
+    }
+
+    func addToSaved(photo: Photo) async {
+        await photosVM.addToSaved(photo: photo)
+    }
+
+    // MARK: - Посты (мост к postsVM)
+
+    func post(section: Int, item: Int) -> MyPost? {
+        guard section == 1 else { return nil }
+        let index = item - 1
+        return postsVM.post(at: index)
+    }
+
+    func update(post: MyPost) async {
+        await postsVM.update(post)
+    }
+
+    func indexOfPost(with id: String) -> Int? {
+        postsVM.indexOfPost(with: id)
+    }
+
+    func toggleExpandedForPost(at item: Int) {
+        postsVM.toggleExpanded(at: item)
+    }
+
+    @discardableResult
+    func toggleLikeForPost(at item: Int) async -> (isLiked: Bool, likes: Int)? {
+        await postsVM.toggleLike(at: item)
+    }
+
+    func incrementViewsForPost(at item: Int) async -> Int? {
+        await postsVM.incrementViews(at: item)
+    }
+
+    func addPostToFavorites(at item: Int) async {
+        await postsVM.toggleFavorite(at: item)
+    }
+
+    func deletePost(at index: Int) async {
+        await postsVM.delete(at: index)
+    }
+
+    func insert(post: MyPost, at item: Int) {
+        postsVM.insert(post, at: item)
+    }
+
+    func favoritesDidChange() async {
+        await postsVM.favoritesDidChange()
+    }
+
+    func setFavorite(_ isFavorite: Bool, forPostId id: String) {
+        postsVM.setFavorite(isFavorite, forPostId: id)
+    }
+
+    func applyUpdatedPostFromFavorites(_ post: MyPost) {
+        postsVM.applyUpdatedPostFromFavorites(post)
+    }
+
+    // MARK: - Аватар/обложка (мост к headerVM)
+
+    func setAvatar(from photo: Photo) async {
+        await headerVM.setAvatar(from: photo)
+    }
+
+    func setCover(from photo: Photo) async {
+        await headerVM.setCover(from: photo)
+    }
     
-    func insert(post: MyPost, at row: Int) {
-        let index = min(max(row, 0), posts.count)
-        posts.insert(post, at: index)
-        updatePosts?()
+    /// Загружает фото из  альбома .profile (ипользуется для просмотра фото профиля по тапу на аватар, когда нет активной story). Возвращает список фото и индекс текущего, с которого начинать просмотр.
+    func profileAlbumPhotosForAvatarTap() async -> (photos: [Photo], startIndex: Int)? {
+        do {
+            let photos = try await photosVM.loadProfileAlbumPhotos()
+            guard !photos.isEmpty else { return nil }
+
+            let avatarURL = headerVM.avatarURL
+            let startIndex: Int
+
+            if let avatarURL,
+               let idx = photos.firstIndex(where: { $0.url == avatarURL }) {
+                startIndex = idx
+            } else {
+                startIndex = 0
+            }
+            return (photos, startIndex)
+        } catch {
+            onError?(AppError.profileLoadingFailed)
+            return nil
+        }
     }
 }

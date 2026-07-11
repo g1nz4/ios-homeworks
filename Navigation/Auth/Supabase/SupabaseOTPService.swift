@@ -10,7 +10,11 @@ struct OTPRecord: Codable {
 /// Сервис для работы с одноразовыми SMS‑кодами через таблицу phone_otp.
 final class SupabaseOTPService {
     
-    private let client = SupabaseRESTClient()
+    private let client: SupabaseRESTClient
+    
+    init(client: SupabaseRESTClient) {
+        self.client = client
+    }
     
     /// Отправка "SMS": создаём запись в phone_otp и печатаем код в консоль.
     func sendCode(to rawPhone: String) async throws -> String {

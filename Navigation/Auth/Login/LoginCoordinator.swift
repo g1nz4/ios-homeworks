@@ -1,12 +1,16 @@
 import UIKit
 
+protocol LoginCoordinatorDelegate: AnyObject {
+    func loginCoordinator(_ coordinator: LoginCoordinator, didLogin user: User)
+}
+
 /// Координатор, отвечает за все экраны авторизации: старт, логин по email, логин по телефону, регистрация.
 final class LoginCoordinator: Coordinator {
     
     var controller: UIViewController
     var children: [Coordinator]
-    /// Ссылка на основной координатор приложения, создаётся после успешной авторизации.
-    private var mainCoordinator: MainCoordinator?
+    
+    weak var delegate: LoginCoordinatorDelegate?
     
     private let navController: UINavigationController
     private let loginInspector: LoginInspector
@@ -104,17 +108,8 @@ final class LoginCoordinator: Coordinator {
         navController.popToRootViewController(animated: true)
     }
     
-    /// Обработчик успешной авторизации. Создаёт основной координатор и подменяет rootViewController окна.
+    /// Обработчик успешной авторизации.
     func didLogin(user: User) {
-        let mainCoordinator = MainCoordinator(user: user)
-        self.mainCoordinator = mainCoordinator
-        children = [mainCoordinator]
-        
-        // Находим главное окно и переключаем корневой контроллер на основной флоу.
-        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = scene.windows.first {
-            window.rootViewController = mainCoordinator.controller
-            window.makeKeyAndVisible()
-        }
+        delegate?.loginCoordinator(self, didLogin: user)
     }
 }

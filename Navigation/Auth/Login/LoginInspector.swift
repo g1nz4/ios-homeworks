@@ -6,16 +6,15 @@ final class LoginInspector: LoginDelegateProtocol {
     private let checkerService: CheckerServiceProtocol
     private let userService: UserServiceProtocol
     private let authService: AuthServiceProtocol
-    private let userCache: UserCacheStoreProtocol
+    private let userCache: CDUserCacheProtocol
     private let networkService: NetworkStatusServiceProtocol
     
-    // Инициализатор с зависимостями (по умолчанию — реальные реализации, в тестах подменяются моками)
     init(
-        checkerService: CheckerServiceProtocol = CheckerService(),
-        userService: UserServiceProtocol = SupabaseUserService(),
-        authService: AuthServiceProtocol = SupabaseAuthService.shared,
-        userCache: UserCacheStoreProtocol = UserCacheStore(),
-        networkService: NetworkStatusServiceProtocol = NetworkStatusService.shared
+        checkerService: CheckerServiceProtocol,
+        userService: UserServiceProtocol,
+        authService: AuthServiceProtocol,
+        userCache: CDUserCacheProtocol,
+        networkService: NetworkStatusServiceProtocol
     ) {
         self.checkerService = checkerService
         self.userService = userService
@@ -84,7 +83,7 @@ final class LoginInspector: LoginDelegateProtocol {
         
         // Кешируем в Core Data (ошибку кеша не считаем фатальной)
         do {
-            try userCache.save(user)
+            try await userCache.save(user)
         } catch {
             AppLogger.error("UserCache save error: \(error)")
         }
@@ -111,7 +110,7 @@ final class LoginInspector: LoginDelegateProtocol {
         
         // Сохранить в кеш
         do {
-            try userCache.save(user)
+            try await userCache.save(user)
         } catch {
             AppLogger.error("UserCache save error: \(error)")
             throw AppError.cacheSaveError
@@ -139,12 +138,12 @@ final class LoginInspector: LoginDelegateProtocol {
             // ОНЛАЙН: всегда из Supabase
             do {
                 let user = try await userService.fetchProfile(userID: userID)
-                try? userCache.save(user)
+                try? await userCache.save(user)
                 
                 return user
             } catch {
                 // Если сеть упала пробуем показать кеш, чтобы пользователь хоть что‑то видел
-                if let cached = try? userCache.load(userID: userID) {
+                if let cached = try? await userCache.load(userID: userID) {
                     AppLogger.error("Network error, falling back to cached user: \(error)")
                     return cached
                 } else {
@@ -154,7 +153,7 @@ final class LoginInspector: LoginDelegateProtocol {
             }
         } else {
             // ОФФЛАЙН: только локальный кеш
-            if let cached = try? userCache.load(userID: userID) {
+            if let cached = try? await userCache.load(userID: userID) {
                 return cached
             } else {
                 // Ни интернета, ни кеша — показываем доменную ошибку сети

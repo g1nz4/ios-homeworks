@@ -1,5 +1,4 @@
 import Foundation
-import UIKit
 
 struct Name: Equatable {
     let firstName: String
@@ -18,14 +17,14 @@ final class User: Identifiable, Equatable {
     var email: String?
     var phone: String?
     var city: String?
-    let birthDate: Date?
+    var birthDate: Date?
     var status: String?
-    
-    /// Ссылка на аватар на сервере (Supabase Storage)
+    var about: String?
     var avatarURL: URL?
-    
-    /// Локальный аватар, который юзер только что установил
-    var localAvatarImage: UIImage?
+    var coverURL: URL? = nil
+    var subscribersCount: Int?
+    var friendsCount: Int?
+    var followingCount: Int?
     
     init(
         id: String,
@@ -36,8 +35,12 @@ final class User: Identifiable, Equatable {
         city: String? = nil,
         birthDate: Date? = nil,
         status: String? = nil,
+        about: String? = nil,
         avatarURL: URL? = nil,
-        localAvatarImage: UIImage? = nil
+        coverURL: URL? = nil,
+        subscribersCount: Int? = nil,
+        friendsCount: Int? = nil,
+        followingCount: Int? = nil
     ) {
         self.id = id
         self.nickname = nickname
@@ -47,17 +50,38 @@ final class User: Identifiable, Equatable {
         self.city = city
         self.birthDate = birthDate
         self.status = status
+        self.about = about
         self.avatarURL = avatarURL
-        self.localAvatarImage = localAvatarImage
+        self.coverURL = coverURL
+        self.subscribersCount = subscribersCount
+        self.friendsCount = friendsCount
+        self.followingCount = followingCount
     }
     
     static func == (lhs: User, rhs: User) -> Bool {
-        lhs.id == rhs.id
+        lhs.id == rhs.id &&
+        lhs.nickname == rhs.nickname &&
+        lhs.name == rhs.name &&
+        lhs.email == rhs.email &&
+        lhs.phone == rhs.phone &&
+        lhs.city == rhs.city &&
+        lhs.birthDate == rhs.birthDate &&
+        lhs.status == rhs.status &&
+        lhs.about == rhs.about &&
+        lhs.avatarURL == rhs.avatarURL &&
+        lhs.coverURL == rhs.coverURL &&
+        lhs.subscribersCount == rhs.subscribersCount &&
+        lhs.friendsCount == rhs.friendsCount &&
+        lhs.followingCount == rhs.followingCount
     }
 }
 
 extension User {
     convenience init(from dto: UserProfileDTO) {
+        
+        let avatarURL = dto.avatarUrl.flatMap { URL(string: $0) }
+        let coverURL  = dto.coverUrl.flatMap { URL(string: $0) }
+        
         self.init(
             id: dto.id,
             nickname: nil,
@@ -70,7 +94,12 @@ extension User {
             city: dto.city,
             birthDate: dto.birthDate,
             status: dto.status,
-            avatarURL: dto.avatarURL
+            about: dto.about,
+            avatarURL: avatarURL,
+            coverURL: coverURL,
+            subscribersCount: dto.subscribersCount,
+            friendsCount: dto.friendsCount,
+            followingCount: dto.followingCount
         )
     }
 }

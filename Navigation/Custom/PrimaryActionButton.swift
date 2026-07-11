@@ -4,8 +4,15 @@ import UIKit
 /// Поддерживает состояние загрузки (индикатор вместо текста) и callback по нажатию.
 final class PrimaryActionButton: UIButton {
    
+    enum Style {
+        case primary      // синяя кнопка с белым текстом
+        case inverted     // белая кнопка с синим текстом
+    }
+    
     // Индикатор активности, показывается поверх кнопки во время загрузки
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
+    
+    private let style: Style
    
     // Замыкание, вызываемое при нажатии на кнопку
     private var tapAction: (() -> Void)?
@@ -30,11 +37,14 @@ final class PrimaryActionButton: UIButton {
     
     init(
         title: String,
+        style: Style = .primary,
         tapAction: (() -> Void)? = nil
     ) {
+        self.style = style
         self.tapAction = tapAction
         super.init(frame: .zero)
         configureAppearance()
+        
         setTitle(title, for: .normal)
     }
     
@@ -51,11 +61,24 @@ final class PrimaryActionButton: UIButton {
     private func configureAppearance() {
         translatesAutoresizingMaskIntoConstraints = false
         
-        let image = UIImage(named: "blue_pixel.png")
-        setBackgroundImage(image, for: .normal)
-        
-        setTitleColor(.appButtonText, for: .normal)
         titleLabel?.font = UIFont.preferredFont(forTextStyle: .footnote).withSize(16.0)
+        
+        switch style {
+        case .primary:
+            // синяя картинка + белый текст
+            if let image = UIImage(named: "blue_pixel.png") {
+                setBackgroundImage(image, for: .normal)
+            } else {
+                backgroundColor = .app
+            }
+            setTitleColor(.appBtn, for: .normal)
+            
+        case .inverted:
+            // белый фон + синий текст
+            setBackgroundImage(nil, for: .normal)
+            backgroundColor = .appBtn
+            setTitleColor(.app, for: .normal)
+        }
         
         layer.cornerRadius = 10.0
         clipsToBounds = true

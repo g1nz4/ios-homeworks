@@ -145,6 +145,8 @@ final class LogInViewController: BaseScrollViewController {
     }
     
     override func configureContent() {
+        super.configureContent()
+        
         [label,
          descriptionLabel,
          logInStackView,
@@ -156,7 +158,7 @@ final class LogInViewController: BaseScrollViewController {
         }
         
         NSLayoutConstraint.activate([
-            label.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 210),
+            label.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 224),
             label.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             
             descriptionLabel.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 20.0),

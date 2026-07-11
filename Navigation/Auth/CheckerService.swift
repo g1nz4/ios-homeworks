@@ -20,8 +20,8 @@ final class CheckerService: CheckerServiceProtocol {
     private let otpService: SupabaseOTPService
     
     init(
-        authService: AuthServiceProtocol = SupabaseAuthService.shared,
-        otpService: SupabaseOTPService = SupabaseOTPService()
+        authService: AuthServiceProtocol,
+        otpService: SupabaseOTPService
     ) {
         self.authService = authService
         self.otpService = otpService

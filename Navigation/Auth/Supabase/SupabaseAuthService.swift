@@ -17,9 +17,15 @@ protocol AuthServiceProtocol: AnyObject {
     /// Устанавливает локальную «сессию» без реального логина через Supabase Auth.
     /// Используется для входа по телефону после успешного OTP: присваивает userID, сохраняет данные в Keychain,  даёт приложению понять, что есть авторизованный пользователь.
     func setLocalSession(userID: String)
+    
+    /// Вернуть актуальный accessToken (после возможного рефреша).
+    func getValidAccessToken() async throws -> String?
+    
+    /// Принудительно обновить сессию через Supabase SDK.
+    func refreshSession() async throws
 }
 
-/// Модель пользователя, которую возвращает Supabase Auth (упрощённая).
+/// Модель пользователя, которую возвращает Supabase Auth.
 struct SupabaseAuthUser: Decodable {
     let id: String
     let email: String?
@@ -27,14 +33,16 @@ struct SupabaseAuthUser: Decodable {
 
 /// Сервис для работы с Supabase Auth (email / пароль), использует официальный Supabase SDK + fallback на тестового пользователя в DEBUG.
 final class SupabaseAuthService: AuthServiceProtocol {
-    /// Синглтон для удобного доступа по всему приложению.
-    static let shared = SupabaseAuthService()
     
     /// Клиент Supabase SDK.
     private let client = SupabaseSDK.client
     
     /// Последний полученный access‑token.
     private(set) var accessToken: String?
+    
+    var currentAccessToken: String? {
+        accessToken
+    }
     
     /// Текущий userID (uuid пользователя из Supabase).
     private(set) var userID: String?
@@ -45,7 +53,7 @@ final class SupabaseAuthService: AuthServiceProtocol {
     /// Ключ для accessToken в Keychain.
     private let accessTokenKey = "auth.accessToken"
     
-    private init() {
+    init() {
         // Пытаемся восстановить сохранённую сессию из Keychain
         self.accessToken = keychain.get(accessTokenKey)
         self.userID = keychain.get(userIDKey)
@@ -179,6 +187,42 @@ final class SupabaseAuthService: AuthServiceProtocol {
         AppLogger.debug("AUTH setLocalSession: userID = \(userID)")
     }
     
+    /// Возвращает валидный токен для REST‑клиента.
+    func getValidAccessToken() async throws -> String? {
+        // Взять токен из текущей сессии SDK
+        do {
+            let session = try await client.auth.session
+            let token = session.accessToken
+            
+            self.accessToken = token
+            self.userID = session.user.id.uuidString
+            
+            keychain.set(self.userID, forKey: userIDKey)
+            keychain.set(self.accessToken, forKey: accessTokenKey)
+            
+            return token
+        } catch {
+            // если по какой‑то причине session получить не удалось
+            AppLogger.error("getValidAccessToken: failed to get session from SDK: \(error)")
+        }
+        
+        // Фолбэк на локально сохранённый токен
+        return accessToken
+    }
+    
+    /// Обновляет сессию через Supabase SDK и сохраняет новый accessToken/userID.
+    func refreshSession() async throws {
+       let session = try await client.auth.refreshSession()
+       
+       self.accessToken = session.accessToken
+       self.userID = session.user.id.uuidString
+       
+       keychain.set(self.userID, forKey: userIDKey)
+       keychain.set(self.accessToken, forKey: accessTokenKey)
+       
+       AppLogger.debug("AUTH refreshSession: new userID = \(self.userID ?? "nil")")
+   }
+        
     /// Маппинг ошибок Supabase Auth в доменные AppError для UI (400/401/403: неверный логин или пароль, остальное:  общая ошибка авторизации).
     private func mapAuthError(_ error: NSError) -> AppError {
         switch error.code {

@@ -1,11 +1,18 @@
 import Foundation
 
-protocol LoginFactory {
+protocol LoginFactoryProtocol {
     func makeLoginInspector() -> LoginInspector
 }
 
-struct MyLoginFactory: LoginFactory {
+struct LoginFactory: LoginFactoryProtocol {
+    
+    private let loginInspector: LoginInspector
+   
+   init(loginInspector: LoginInspector) {
+       self.loginInspector = loginInspector
+   }
+
     func makeLoginInspector() -> LoginInspector {
-        return LoginInspector()
+        return loginInspector
     }
 }

@@ -1,55 +1,116 @@
 import UIKit
 import StorageService
 
+/// Сообщает `AppCoordinator`, что пользователь вышел из аккаунта.
+protocol MainCoordinatorDelegate: AnyObject {
+    func mainCoordinatorDidRequestLogout(_ coordinator: MainCoordinator)
+}
+
+/// Главный координатор основного (залогиненного) флоу.
+///
+/// Отвечает за:
+/// - настройку всех главных модулей (лента, музыка, профиль, меню)
+/// - создание и конфигурацию `RootTabContainerController` с табами
+/// - обработку событий профиля (logout / popToRoot и т.д.)
 final class MainCoordinator: Coordinator, ProfileCoordinatorDelegate {
-   
+    
+    /// Корневой контроллер этого координатора(`RootTabContainerController` с таббаром).
     var controller: UIViewController
+    /// Дочерние координаторы (каждый управляет своим флоу).
     var children: [Coordinator] = []
     
-    private let feedCoordinator: FeedCoordinator
-    private let musicCoordinator: MusicCoordinator
-    private let mapCoordinator: MapCoordinator
-    private let profileCoordinator: ProfileCoordinator
-    private let favoritesCoordinator: FavoritesCoordinator
+    weak var delegate: MainCoordinatorDelegate?
     
-    init(user: User) {
+    /// Текущий пользователь.
+    private let user: User
+    /// Сервис аутентификации (логин/логаут, хранение userID...)
+    private let authService: SupabaseAuthService
+    /// Сервис работы с профилями пользователей (загрузка/обновление и т.п.).
+    private let userService: SupabaseUserService
+    /// Сервис загрузки обложек альбомов(фото)..
+    private let albumCoversService: AlbumCoversLoadingProtocol
+    /// Хранилище / репозиторий фотографий пользователя (supabase).
+    private let photosRepository: PhotosRepositoryProtocol
+    /// Сервис работы с постами (лентой) текущего пользователя.
+    private let postService: PostServiceProtocol
+   
+    /// Координатор главной ленты (feed).
+    private let feedCoordinator: FeedCoordinator
+    /// Координатор раздела музыка.
+    private let musicCoordinator: MusicCoordinator
+    /// Координатор профиля пользователя.
+    private let profileCoordinator: ProfileCoordinator
+    /// Координатор меню приложения.
+    private let menuCoordinator: MenuCoordinator
+    /// Корневой контроллер с таббаром и pageVC.
+    private let rootTabController: RootTabContainerController
+    
+    init(
+        user: User,
+        authService: SupabaseAuthService,
+        userService: SupabaseUserService
+    ) {
+        self.user = user
+        self.authService = authService
+        self.userService = userService
+       
+        self.controller = UIViewController()
+        
+        self.albumCoversService = AlbumCoversService(userService: userService)
+        self.photosRepository = SupabasePhotosRepository(userService: userService)
+        self.postService = PostService(currentUser: user)
+        
         feedCoordinator = FeedCoordinator()
         musicCoordinator = MusicCoordinator()
-        mapCoordinator = MapCoordinator()
-        profileCoordinator = ProfileCoordinator(user: user)
-        favoritesCoordinator = FavoritesCoordinator()
+        menuCoordinator = MenuCoordinator()
+        profileCoordinator = ProfileCoordinator(
+            user: user,
+            authService: authService,
+            userService: userService,
+            albumCoversService: albumCoversService,
+            photosRepository: photosRepository,
+            postService: postService
+        )
         
-        let tabBar = UITabBarController()
-        tabBar.viewControllers = [
+        let items = [
+            TabItem(title: "", systemImageName: "house.fill"),
+            TabItem(title: "", systemImageName: "music.note"),
+            TabItem(title: "", systemImageName: "person.fill"),
+            TabItem(title: "", systemImageName: "square.grid.2x2")
+            
+        ]
+        
+        
+        rootTabController = RootTabContainerController(controllers: [
             feedCoordinator.controller,
             musicCoordinator.controller,
-            mapCoordinator.controller,
             profileCoordinator.controller,
-            favoritesCoordinator.controller
-        ]
-        tabBar.selectedIndex = 3
-        controller = tabBar
-        children = [feedCoordinator, musicCoordinator, mapCoordinator, profileCoordinator, favoritesCoordinator]
-        
+            menuCoordinator.controller,
+        ],
+        items: items
+        )
+        // делегат для обработки событий таббара
+        rootTabController.delegate = self
+        controller = rootTabController
+        children = [feedCoordinator, musicCoordinator, profileCoordinator, menuCoordinator]
+        // Делегат профиля (для события logout) — MainCoordinator
         profileCoordinator.delegate = self
     }
-
-    func setup() {}
     
-    func didLogout() {
-        showLogin()
+    func setup() {
+        
     }
     
-    private func showLogin() {
-        let factory = MyLoginFactory()
-        let loginCoordinator = LoginCoordinator(factory: factory)
-        loginCoordinator.setup()
-        children = [loginCoordinator]
-        
-        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = scene.windows.first {
-            window.rootViewController = loginCoordinator.controller
-            window.makeKeyAndVisible()
+    func didLogout() {
+        delegate?.mainCoordinatorDidRequestLogout(self)
+    }
+}
+
+extension MainCoordinator: RootTabContainerControllerDelegate {
+    
+    func tabWasReselected(index: Int) {
+        if index == 2 { 
+            profileCoordinator.popToRoot()
         }
     }
 }

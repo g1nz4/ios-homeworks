@@ -4,6 +4,8 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="24743"/>
+        <capability name="Named colors" minToolsVersion="9.0"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -23,7 +25,9 @@
                                 </constraints>
                             </imageView>
                         </subviews>
-                        <color key="backgroundColor" red="0.3596191406" green="0.5" blue="0.703125" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                        <viewLayoutGuide key="safeArea" id="eqv-iY-pnH"/>
+                        <color key="backgroundColor" name="app"/>
+                        <color key="tintColor" name="app"/>
                         <constraints>
                             <constraint firstItem="F5l-4d-LIc" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="B6f-hg-uo1"/>
                             <constraint firstItem="F5l-4d-LIc" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="aT7-j0-UgP"/>
@@ -37,5 +41,8 @@
     </scenes>
     <resources>
         <image name="logo" width="1024" height="1024"/>
+        <namedColor name="app">
+            <color red="0.3598632812" green="0.5004882812" blue="0.7036132812" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+        </namedColor>
     </resources>
 </document>

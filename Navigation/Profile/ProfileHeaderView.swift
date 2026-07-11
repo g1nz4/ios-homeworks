@@ -1,364 +1,303 @@
 import UIKit
 
-final class ProfileHeaderView: UIView {
+/// Хедер профиля.  Содержит: обложку (cover); аватар, частично перекрывающий обложку; индикатор онлайн‑статуса; имя, статус / город;  кнопку "Подробная информация";
+final class ProfileHeaderView: UICollectionReusableView {
     
-    private lazy var contentView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .clear
-        
-        return view
-    }()
+    static let reuseId = "ProfileHeaderView"
     
-    private lazy var backgroundView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor.createColor(
-            lightMode: UIColor(white: 0, alpha: 0.7),
-            darkMode: UIColor(white: 0, alpha: 0.8)
-        )
-        view.alpha = 0.0
-       
-        return view
-    }()
+    /// Тап по "Подробная информация".
+    var onTapMore: (() -> Void)?
+    /// Тап по аватару, если есть сториc.
+    var onTapStory: (() -> Void)?
+    /// Тап по аватару, если сториc нет.
+    var onTapAvatar: (() -> Void)?
     
-    private lazy var closeSymbol: UIImageView = {
-        let symbol = UIImageView()
-        symbol.image = UIImage(systemName: "xmark.circle")
-        symbol.tintColor = .appPrimaryText
-        symbol.alpha = 0.0
-        symbol.isUserInteractionEnabled = true
-        let tapSymbol = UITapGestureRecognizer(
-            target: self,
-            action: #selector(didTapOnCloseSymbol))
-        symbol.addGestureRecognizer(tapSymbol)
-        
-        return symbol
-    }()
+    /// Флаг наличия сториc у пользователя (влияет на бордер колор аватара и поведение тапа).
+    private var hasStory: Bool = false
+    /// Базовая высота обложки без оверскролла.
+    private let coverHeight: CGFloat = 105.0
+    /// Размер аватарки (ширина/высота).
+    private let avatarSize: CGFloat = 120.0
+    private let overScrollExtra: CGFloat = 80.0
     
-    private lazy var avatarImageView: UIImageView = {
+    private var coverTopConstraint: NSLayoutConstraint!
+    private var coverHeightConstraint: NSLayoutConstraint!
+    /// Кэш последнего URL аватара, чтобы не грузить повторно.
+    private var currentAvatarURL: URL?
+    /// Кэш последнего URL обложки.
+    private var currentCoverURL: URL?
+    
+    
+    /// Обложка — тянется на всю ширину сверху, обрезается по краям.
+    private lazy var coverImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.layer.borderWidth = 3.0
-        imageView.layer.borderColor = UIColor.createColor(
-            lightMode: UIColor(white: 242.0/255.0, alpha: 1.0),
-            darkMode: UIColor(white: 1.0, alpha: 0.8)
-        ).cgColor
-        imageView.contentMode = .scaleAspectFit
+        imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = 60.0
-        imageView.alpha = 1.0
-        imageView.isUserInteractionEnabled = true
-        imageView.layer.isOpaque = true
-        let tapImage = UITapGestureRecognizer(
-            target: self,
-            action: #selector(didTapOnAvatar)
-        )
-        tapImage.numberOfTapsRequired = 1
-        imageView.addGestureRecognizer(tapImage)
-        
+        imageView.backgroundColor = .systemGray5
         
         return imageView
     }()
     
-    private lazy var fullNameLabel: UILabel = {
+    /// Нижний контейнер с основным контентом (аватар, имя, статус/город, кнопка инфо).
+    private lazy var infoContainer: UIView = {
+        let view = UIView()
+        view.backgroundColor = .appBackground
+        view.layer.cornerRadius = 22
+        view.clipsToBounds = false
+
+        return view
+    }()
+    
+    /// Аватарка - выступает наполовину вверх над infoContainer.
+    private var avatarImageView: UIImageView = {
+        let avatar = UIImageView()
+        avatar.layer.borderWidth = 3.5
+        avatar.layer.cornerRadius = 60.0
+        avatar.contentMode = .scaleAspectFill
+        avatar.clipsToBounds = true
+        avatar.isUserInteractionEnabled = true
+        
+        return avatar
+    }()
+    
+    /// Индикатор онлайна — маленький кружок внизу/справа от аватара.
+    private let onlineIndicator: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemGreen
+        view.isHidden = false
+        view.layer.cornerRadius = 8.0
+        view.layer.borderWidth = 2.0
+        
+        return view
+    }()
+    
+    /// Имя пользователя.
+    private lazy var nameLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .black
-        label.font = UIFont.systemFont(ofSize: 18.0, weight: .bold)
         label.textColor = .appPrimaryText
+        label.font = .systemFont(ofSize: 22.0, weight: .bold)
+        label.textAlignment = .center
         
         return label
     }()
     
+    /// Статус или город (тонкий текст под именем).
     private lazy var statusLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14.0, weight: .regular)
-        label.textColor = .appSecondaryText
+        label.font = .systemFont(ofSize: 14.0, weight: .regular)
+        label.textColor = .appPrimaryText
+        label.textAlignment = .center
+        label.numberOfLines = 2
         
         return label
     }()
     
-    private lazy var setStatusButton = CustomButton(
-        title: "Show status",
-        cornerRadius: 4.0
-    ){ [weak self] in
-        self?.buttonTaped()
-    }
-    
-    private lazy var statusTextField: UITextField = {
-        let textField = UITextField()
-        textField.layer.backgroundColor = UIColor.appTextFieldBackground.cgColor
-        textField.layer.borderWidth = 1.0
-        textField.layer.borderColor = UIColor.appSeparator.cgColor
-        textField.layer.cornerRadius = 12.0
-        textField.font = UIFont.systemFont(ofSize: 15.0, weight: .regular)
-        textField.textColor = .appPrimaryText
-        textField.clearButtonMode = .whileEditing
-        textField.addTarget(
-            self,
-            action: #selector (statusTextChanged(_ :)),
-            for: .editingChanged
-        )
+    /// Иконка "i" в кружке слева от "Подробная информация"
+    private lazy var infoIconView: UIImageView = {
+        let view = UIImageView()
+        view.image = UIImage(systemName: "info.circle")
+        view.tintColor = .appAccent
+        view.contentMode = .scaleAspectFit
+        view.setContentHuggingPriority(.required, for: .horizontal)
+        view.setContentCompressionResistancePriority(.required, for: .horizontal)
         
-        textField.attributedPlaceholder = NSAttributedString(
-            string: " Введите...",
-            attributes: [.foregroundColor: UIColor.appSecondaryText]
-        )
-        
-        return textField
+        return view
     }()
     
-    private var statusText: String = ""
-    var onStatusChangeTap: ((String) -> Void)?
+    /// Текстовая кнопка  "Подробная информация" — с жестом тап.
+    private lazy var moreInfoLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14.0, weight: .regular)
+        label.textColor = .appAccent
+        label.text = "Подробная информация"
+        label.textAlignment = .center
+        
+        return label
+    }()
+    
+    /// Горизонтальный стек: [иконка] [Подробная информация]
+    private lazy var moreInfoStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [infoIconView, moreInfoLabel])
+        stack.axis = .horizontal
+        stack.spacing = 4
+        stack.alignment = .center
+        stack.isUserInteractionEnabled = true
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(didTapMore))
+        stack.addGestureRecognizer(tap)
+        
+        return stack
+    }()
+    
+    /// Вертикальный стек: [имя] [статус/город] [Подробная информация].
+    private lazy var stack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [nameLabel, statusLabel, moreInfoStack])
+        stack.axis = .vertical
+        stack.spacing = 4
+        stack.alignment = .center
+        stack.distribution = .fillProportionally
+        
+        return stack
+    }()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = .appBackground
-        addSubviews()
-        setupConstraints()
+        
+        
+        configureUI()
+        updateBorderColorsForCurrentTheme()
     }
     
     required init?(coder: NSCoder) {
-        fatalError()
+        fatalError("init(coder:) has not been implemented")
     }
     
-    private func addSubviews() {
-        [contentView, fullNameLabel, statusLabel, setStatusButton, statusTextField, avatarImageView, backgroundView, closeSymbol].forEach() {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-           addSubview($0)
-        }
-    }
-    
-    private func setupConstraints() {
-        let safeAreaGuide = self.safeAreaLayoutGuide
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        // Обновить цвета бордеров, когда меняется тема
+        guard previousTraitCollection?.userInterfaceStyle != traitCollection.userInterfaceStyle else { return }
+        updateBorderColorsForCurrentTheme()
         
-        NSLayoutConstraint.activate(
-            [
-                contentView.leadingAnchor.constraint(
-                    equalTo: safeAreaGuide.leadingAnchor
-                ),
-                contentView.trailingAnchor.constraint(
-                    equalTo: safeAreaGuide.trailingAnchor
-                ),
-                contentView.topAnchor.constraint(
-                    equalTo: safeAreaGuide.topAnchor
-                ),
-                contentView.bottomAnchor.constraint(
-                    equalTo: safeAreaGuide.bottomAnchor
-                ),
-                avatarImageView.topAnchor.constraint(
-                    equalTo:  contentView.topAnchor,
-                    constant: 16.0
-                ),
-                avatarImageView.leadingAnchor.constraint(
-                    equalTo:  contentView.leadingAnchor,
-                    constant: 16.0
-                ),
-                avatarImageView.heightAnchor.constraint(
-                    equalToConstant: 120.0
-                ),
-                avatarImageView.widthAnchor.constraint(
-                    equalToConstant: 120.0
-                ),
-                fullNameLabel.topAnchor.constraint(
-                    equalTo: contentView.topAnchor,
-                    constant: 27.0
-                ),
-                fullNameLabel.leadingAnchor.constraint(
-                    equalTo: contentView.leadingAnchor,
-                    constant: 152.0
-                ),
-                fullNameLabel.trailingAnchor.constraint(
-                    equalTo: contentView.trailingAnchor,
-                    constant: -16.0
-                ),
-                fullNameLabel.heightAnchor.constraint(
-                    equalToConstant: 20.0
-                ),
-                fullNameLabel.widthAnchor.constraint(
-                    equalToConstant: 220.0
-                ),
-                statusLabel.topAnchor.constraint(
-                    equalTo: contentView.topAnchor,
-                    constant: 70.0
-                ),
-                statusLabel.leadingAnchor.constraint(
-                    equalTo: contentView.leadingAnchor,
-                    constant: 152.0
-                ),
-                statusLabel.trailingAnchor.constraint(
-                    equalTo: contentView.trailingAnchor,
-                    constant: -16.0
-                ),
-                statusLabel.heightAnchor.constraint(
-                    equalToConstant: 20.0
-                ),
-                statusLabel.widthAnchor.constraint(
-                    equalToConstant: 220.0
-                ),
-                statusTextField.topAnchor.constraint(
-                    equalTo: contentView.topAnchor,
-                    constant: 100.0
-                ),
-                statusTextField.leadingAnchor.constraint(
-                    equalTo: contentView.leadingAnchor,
-                    constant: 152.0
-                ),
-                statusTextField.trailingAnchor.constraint(
-                    equalTo: contentView.trailingAnchor,
-                    constant: -16.0
-                ),
-                statusTextField.heightAnchor.constraint(
-                    equalToConstant: 40.0
-                ),
-                statusTextField.widthAnchor.constraint(
-                    equalToConstant: 220.0
-                ),
-                setStatusButton.topAnchor.constraint(
-                    equalTo: contentView.topAnchor,
-                    constant: 152.0
-                ),
-                setStatusButton.leadingAnchor.constraint(
-                    equalTo: contentView.leadingAnchor,
-                    constant: 16.0
-                ),
-                setStatusButton.trailingAnchor.constraint(
-                    equalTo: contentView.trailingAnchor,
-                    constant: -16.0
-                ),
-                setStatusButton.heightAnchor.constraint(
-                    equalToConstant: 50.0
-                ),
-                setStatusButton.bottomAnchor.constraint(
-                    equalTo: contentView.bottomAnchor,
-                    constant: -16.0
-                ),
-                backgroundView.leadingAnchor.constraint(
-                    equalTo: contentView.leadingAnchor
-                ),
-                backgroundView.trailingAnchor.constraint(
-                    equalTo: contentView.trailingAnchor
-                ),
-                backgroundView.topAnchor.constraint(
-                    equalTo: contentView.topAnchor
-                ),
-                backgroundView.heightAnchor.constraint(
-                    equalToConstant: 800.0
-                ),
-                closeSymbol.topAnchor.constraint(
-                    equalTo: backgroundView.topAnchor,
-                    constant: 16.0
-                ),
-                closeSymbol.trailingAnchor.constraint(
-                    equalTo: backgroundView.trailingAnchor,
-                    constant: -16.0
-                ),
-                closeSymbol.widthAnchor.constraint(
-                    equalToConstant: 50.0
-                ),
-                closeSymbol.heightAnchor.constraint(
-                    equalToConstant: 50.0
-                )
-            ]
-        )
     }
     
-    func configureUI(user: User) {
-       // avatarImageView.image = user.avatarURL.flatMap(UIImage.init(data:))
-        fullNameLabel.text = user.name.displayName
-        statusLabel.text = user.status
-    }
-    
-    func setStatusLabelText(_ text: String) {
-        statusLabel.text = text
-    }
-    
-    private func launchAnimation() {
-        let centerOrigin = avatarImageView.center
-
-        UIView.animate(
-            withDuration: 0.5,
-            delay: 0.1,
-            options: .curveLinear
-        ) {
-            self.avatarImageView.layer.borderWidth = 0.0
-            self.avatarImageView.layer.cornerRadius = 0.0
-           
-            self.layer.insertSublayer(
-                self.backgroundView.layer,
-                below: self.avatarImageView.layer
-            )
-            self.backgroundView.alpha = 0.7
+    private func configureUI() {
+        backgroundColor = .appSecondaryBackground
+        
+        [coverImageView, infoContainer].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            addSubview($0)
+        }
+        
+        [avatarImageView, onlineIndicator, stack].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            infoContainer.addSubview($0)
+        }
+        
+        coverTopConstraint = coverImageView.topAnchor.constraint(equalTo: topAnchor)
+        coverHeightConstraint = coverImageView.heightAnchor.constraint(equalToConstant: coverHeight)
+        
+        NSLayoutConstraint.activate([
+            coverTopConstraint,
+            coverImageView.leadingAnchor.constraint(equalTo: leadingAnchor),
             
-            self.avatarImageView.center = CGPoint(
-                x: centerOrigin.x * 2.65,
-                y: centerOrigin.y * 4.75
-            )
-            self.avatarImageView.transform = CGAffineTransform(
-                scaleX: 3.4,
-                y: 3.4
-            )
+            coverImageView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            coverHeightConstraint,
+            infoContainer.topAnchor.constraint(equalTo: coverImageView.bottomAnchor, constant: -25),
+            infoContainer.leadingAnchor.constraint(equalTo: leadingAnchor),
+            infoContainer.trailingAnchor.constraint(equalTo: trailingAnchor),
             
-            UIView.animate(
-                withDuration: 0.3,
-                delay: 0.0,
-                options: .curveLinear
-            ) {
-                self.closeSymbol.alpha = 1.0
+            infoContainer.heightAnchor.constraint(equalToConstant: 160.0),
+            
+            avatarImageView.widthAnchor.constraint(equalToConstant: avatarSize),
+            avatarImageView.heightAnchor.constraint(equalToConstant: avatarSize),
+            avatarImageView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            avatarImageView.centerYAnchor.constraint(equalTo: infoContainer.topAnchor),
+            
+            onlineIndicator.centerXAnchor.constraint(equalTo: avatarImageView.centerXAnchor, constant: 42.0),
+            onlineIndicator.centerYAnchor.constraint(equalTo: avatarImageView.centerYAnchor, constant: 44.0),
+            onlineIndicator.heightAnchor.constraint(equalToConstant: 16.0),
+            onlineIndicator.widthAnchor.constraint(equalToConstant: 16.0),
+            
+            stack.topAnchor.constraint(equalTo: infoContainer.topAnchor, constant: 60.0),
+            stack.leadingAnchor.constraint(equalTo: infoContainer.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: infoContainer.trailingAnchor),
+            stack.bottomAnchor.constraint(equalTo: infoContainer.bottomAnchor, constant: -12.0)
+        ])
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(didTapAvatar))
+        avatarImageView.addGestureRecognizer(tap)
+    }
+    
+    func setTopInset(_ inset: CGFloat) {
+        coverTopConstraint.constant = -inset
+        coverHeightConstraint.constant = coverHeight + inset
+        layoutIfNeeded()
+    }
+    
+    
+    func configureHeader(with user: User, imageLoader: ImageLoader = .shared) {
+        nameLabel.text = user.name.displayName
+        
+        if let status = user.status, !status.isEmpty {
+            statusLabel.isHidden = false
+            statusLabel.text = status
+        } else if let city = user.city, !city.isEmpty {
+            statusLabel.isHidden = false
+            statusLabel.text = city
+        } else {
+            statusLabel.isHidden = true
+        }
+        
+        // Аватар
+        if let avatarURL = user.avatarURL {
+            if avatarURL != currentAvatarURL || avatarImageView.image == nil {
+                currentAvatarURL = avatarURL
+                Task { [weak self] in
+                    guard let self else { return }
+                    if let image = await imageLoader.loadImage(from: avatarURL) {
+                        await MainActor.run {
+                            self.avatarImageView.image = image
+                        }
+                    }
+                }
+            }
+        } else if avatarImageView.image == nil {
+            avatarImageView.image = UIImage(systemName: "person.crop.circle")
+        }
+        
+        // Обложка
+        if let coverURL = user.coverURL {
+            if coverURL != currentCoverURL || coverImageView.image == nil {
+                currentCoverURL = coverURL
+                Task { [weak self] in
+                    guard let self else { return }
+                    if let image = await imageLoader.loadImage(from: coverURL) {
+                        await MainActor.run {
+                            self.coverImageView.image = image
+                        }
+                    }
+                }
             }
         }
     }
     
-    private func reverseAnimation() {
-        let centerOrigin = avatarImageView.center
-       
-        UIView.animate(
-            withDuration: 0.3,
-            delay: 0.0,
-            options: .curveLinear
-        ) {
-            self.closeSymbol.alpha = 0.0
-        }
-        
-        UIView.animate(
-            withDuration: 0.5,
-            delay: 0.0,
-            options: .curveLinear
-        ) {
-            self.avatarImageView.transform = CGAffineTransform(
-                translationX: -3.4,
-                y: -3.4
-            )
-            self.avatarImageView.center = CGPoint(
-                x: centerOrigin.x / 2.65,
-                y: centerOrigin.y / 4.75
-            )
-            self.avatarImageView.layer.borderWidth = 3.0
-            self.avatarImageView.layer.cornerRadius = 60
-            self.backgroundView.alpha = 0.0
-        }
+    /// Устанавливат флаг наличия сториз (меняет бордер аватара и обработчик тапа).
+    func setHasStory(_ value: Bool) {
+        hasStory = value
+        updateBorderColorsForCurrentTheme()
     }
     
-    private func changeTitleButton() {
-        if statusTextField.hasText == true {
-            setStatusButton.setTitle("Set status", for: .normal)
+    /// Обновляет цвет бордера аватара и индикатора в зависимости от темы и флага hasStory.
+    private func updateBorderColorsForCurrentTheme() {
+        let avatarBorderColor: UIColor = {
+            if hasStory {
+                return UIColor.appAccent
+            } else {
+                return UIColor { trait in
+                    trait.userInterfaceStyle == .dark ? .black : .white
+                }
+            }
+        }()
+        
+        let indicatorBorderColor = UIColor { trait in
+            trait.userInterfaceStyle == .dark ? .black : .white
+        }
+        
+        avatarImageView.layer.borderColor = avatarBorderColor.cgColor
+        onlineIndicator.layer.borderColor = indicatorBorderColor.cgColor
+    }
+    
+    /// Тап по "Подробная информация".
+    @objc private func didTapMore() {
+        onTapMore?()
+    }
+    
+    /// Тап по аватару: если есть сториз - открыть сторис, иначе - октрывается фото вьювер с текущим фото пользователя..
+    @objc private func didTapAvatar() {
+        if hasStory {
+            onTapStory?()
         } else {
-            setStatusButton.setTitle("Show status", for: .normal)
+            onTapAvatar?()
         }
-    }
-    
-    private func buttonTaped() {
-        statusTextChanged(statusTextField)
-        onStatusChangeTap?(statusText)
-    }
-        
-    @objc func statusTextChanged(_ statusTextField: UITextField) {
-        changeTitleButton()
-        self.statusText = statusTextField.text!
-    }
-    
-    @objc func didTapOnAvatar() {
-        launchAnimation()
-    }
-    
-    @objc func didTapOnCloseSymbol() {
-        reverseAnimation()
     }
 }

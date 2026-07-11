@@ -129,6 +129,8 @@ final class SignUpViewController: BaseScrollViewController {
     }
     
     override func configureContent() {
+        super.configureContent()
+        
         contentView.addSubview(stackView)
         
         // По умолчанию кнопка недоступна, пока пользователь не заполнил все поля и не идёт загрузка

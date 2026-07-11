@@ -105,6 +105,8 @@ final class PhoneLoginViewController: BaseScrollViewController {
     }
     
     override func configureContent() {
+        super.configureContent()
+        
         [titleLabel,
          phoneTextField,
          sendCodeButton,
@@ -116,7 +118,7 @@ final class PhoneLoginViewController: BaseScrollViewController {
         }
         
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 318.0),
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 332.0),
             titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             titleLabel.widthAnchor.constraint(equalToConstant: 220.0),
             

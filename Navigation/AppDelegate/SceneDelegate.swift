@@ -7,7 +7,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     /// Главный координатор приложения, управляет выбором стартового флоу (логин / main).
     private var appCoordinator: AppCoordinator?
     
-    let notificationsService = LocalNotificationsService()
+    private let notificationsService = LocalNotificationsService()
    
     func scene(
         _ scene: UIScene,
@@ -18,7 +18,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
            
         let window = UIWindow(windowScene: scene)
         
-        let appCoordinator = AppCoordinator()
+        let appCoordinator = AppCoordinator(window: window)
         self.appCoordinator = appCoordinator
         appCoordinator.setup()
         
@@ -34,9 +34,33 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         if #available(iOS 17.0, *) {
            UNUserNotificationCenter.current()
                .setBadgeCount(0, withCompletionHandler: { _ in })
-       } else {
+        } else {
            UIApplication.shared.applicationIconBadgeNumber = 0
-       }
+        }
+
+       // updateLastSeenIfNeeded()
     }
+    
+    func sceneWillEnterForeground(_ scene: UIScene) {
+      //  updateLastSeenIfNeeded()
+    }
+    
+//    private func updateLastSeenIfNeeded() {
+//        guard let userId = authService.userID else {
+//            AppLogger.debug("updateLastSeenIfNeeded: userID == nil")
+//            return
+//        }
+//
+//        AppLogger.debug("updateLastSeenIfNeeded: userId = \(userId)")
+//
+//        Task {
+//            do {
+//                try await userService.updateLastSeen(userId: userId)
+//                AppLogger.debug("updateLastSeen: OK")
+//            } catch {
+//                AppLogger.debug("updateLastSeen error: \(error)")
+//            }
+//        }
+//    }
 }
 
