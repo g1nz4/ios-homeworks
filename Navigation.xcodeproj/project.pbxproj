@@ -75,11 +75,6 @@
 			path = Navigation;
 			sourceTree = "<group>";
 		};
-		EA9CC29F2F30DE9700D2B0A5 /* StorageService */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = StorageService;
-			sourceTree = "<group>";
-		};
 		EA9E4ECC2FB26333009C62C4 /* NavigationTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = NavigationTests;
@@ -132,7 +127,6 @@
 			isa = PBXGroup;
 			children = (
 				EA83E2C82EC8D5610050B4EE /* Navigation */,
-				EA9CC29F2F30DE9700D2B0A5 /* StorageService */,
 				EA9E4ECC2FB26333009C62C4 /* NavigationTests */,
 				EA83E2C72EC8D5610050B4EE /* Products */,
 				EA7FBE712F7300EC00DCB41A /* Frameworks */,
@@ -206,9 +200,6 @@
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				EA9CC29F2F30DE9700D2B0A5 /* StorageService */,
 			);
 			name = StorageService;
 			packageProductDependencies = (

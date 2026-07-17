@@ -1,5 +1,4 @@
 import Foundation
-import StorageService
 
 /// ViewModel для хедера профиля: данные пользователя, аватар, обложка, наличие сторис и т.п.
 @MainActor

@@ -1,5 +1,6 @@
 import UIKit
 
+/// Делегат корневого контейнера табов.
 protocol RootTabContainerControllerDelegate: AnyObject {
     /// Вызывается при повторном тапе по уже выбранной вкладке.
     func tabWasReselected(index: Int)
@@ -14,6 +15,7 @@ struct TabItem {
 /// Контейнер, реализующий корневую навигацию с помощью: кастомного таббара снизу (`CustomTabBarView`) и `UIPageViewController` для свайпов между вкладками.
 final class RootTabContainerController: UIViewController {
     
+    /// Делегат для событий контейнера.
     weak var delegate: RootTabContainerControllerDelegate?
     
     /// Текущий индекс выбранной вкладки.
@@ -25,6 +27,15 @@ final class RootTabContainerController: UIViewController {
             switchTo(index: selectedIndex, animated: true)
         }
     }
+    
+    /// Текущий дочерний контроллер.
+    var currentChild: UIViewController? {
+        guard selectedIndex >= 0, selectedIndex < controllers.count else { return nil }
+        return controllers[selectedIndex]
+    }
+    
+    /// Высота мини‑плеера.
+    private var miniPlayerHeight: CGFloat { 60 }
     
     /// Контроллеры для каждой вкладки.
     private let controllers: [UIViewController]
@@ -48,6 +59,21 @@ final class RootTabContainerController: UIViewController {
         
         return view
     }()
+    
+    /// Мини‑плеер, расположенный над таббаром.
+    private lazy var miniPlayerView: MiniPlayerView = {
+        let view = MiniPlayerView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        view.alpha = 0
+        
+        return view
+    }()
+
+    /// Констрейнт: низ мини‑плеера привязан к верхнему краю таббара. Используется, когда таббар показан.
+    private var miniPlayerBottomToTabBar: NSLayoutConstraint!
+    /// Констрейнт: низ мини‑плеера привязан к нижней safe‑area экрана. Используется, когда таббар скрыт.
+    private var miniPlayerBottomToSafeArea: NSLayoutConstraint!
     
     /// `pageViewController` для перелистывания вкладок свайпом.
     private let pageViewController: UIPageViewController = {
@@ -86,9 +112,9 @@ final class RootTabContainerController: UIViewController {
     }
     
     private func setupUI() {
-        view.backgroundColor = .appBackground
+        view.backgroundColor = .appTabBarBackground
         
-        [contentContainer, tabBarView].forEach {
+        [contentContainer, tabBarView, miniPlayerView].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
@@ -96,6 +122,15 @@ final class RootTabContainerController: UIViewController {
         addChild(pageViewController)
         contentContainer.addSubview(pageViewController.view)
         pageViewController.view.translatesAutoresizingMaskIntoConstraints = false
+        
+        // mini‑плеер: два констрейнта низа
+        miniPlayerBottomToTabBar = miniPlayerView.bottomAnchor.constraint(
+            equalTo: tabBarView.topAnchor
+        )
+        miniPlayerBottomToSafeArea = miniPlayerView.bottomAnchor.constraint(
+            equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        
+        miniPlayerBottomToSafeArea.isActive = false   // по умолчанию над таббаром
         
         NSLayoutConstraint.activate([
             pageViewController.view.topAnchor.constraint(equalTo: contentContainer.topAnchor),
@@ -115,6 +150,10 @@ final class RootTabContainerController: UIViewController {
             tabBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tabBarView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             tabBarView.heightAnchor.constraint(equalToConstant: 40),
+            
+            miniPlayerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            miniPlayerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            miniPlayerBottomToTabBar,
 
             contentContainer.topAnchor.constraint(equalTo: view.topAnchor),
             contentContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -158,16 +197,90 @@ final class RootTabContainerController: UIViewController {
         contentBottomToTabBar.isActive = !hidden
         contentBottomToView.isActive = hidden
         
+        // mini‑плеер: над таббаром или у низа экрана
+        miniPlayerBottomToTabBar.isActive = !hidden
+        miniPlayerBottomToSafeArea.isActive = hidden
+        
         let changes = {
             self.tabBarView.alpha = hidden ? 0.0 : 1.0
             self.tabBarView.isUserInteractionEnabled = !hidden
+            self.miniPlayerView.alpha = hidden ? 0.0 : 1.0
+            self.miniPlayerView.isUserInteractionEnabled = !hidden
             self.view.layoutIfNeeded()
         }
         
         if animated {
-            UIView.animate(withDuration: 0.25, animations: changes)
+            UIView.animate(withDuration: 0.10, animations: changes)
         } else {
             changes()
+        }
+    }
+    
+    /// Включить/выключить свайпы между вкладками.
+    func setTabsSwipeEnabled(_ isEnabled: Bool) {
+        // отключаем именно скролл внутреннего scrollView у UIPageViewController
+        if let scrollView = pageViewController.view.subviews
+            .compactMap({ $0 as? UIScrollView })
+            .first {
+            scrollView.isScrollEnabled = isEnabled
+        }
+
+        pageViewController.dataSource = isEnabled ? self : nil
+    }
+    
+    /// Обновляет нижние safe area отступы у всех дочерних контроллеров, чтобы их контент не пересекался с мини‑плеером.
+    private func updateSafeAreaInsets(bottom: CGFloat) {
+        controllers.forEach { vc in
+            vc.additionalSafeAreaInsets.bottom = bottom
+        }
+        view.setNeedsLayout()
+    }
+    
+    /// Обновить конфиг мини‑плеера и замыкания‑обработчики. Если мини‑плеер был скрыт — показать его.
+    func updateMiniPlayer(
+        config: MiniPlayerConfig,
+        onPlayPause: @escaping () -> Void,
+        onAddOrRemove: @escaping () -> Void,
+        onClose: @escaping () -> Void,
+        onPrev: @escaping () -> Void,
+        onNext: @escaping () -> Void,
+        onSeek: @escaping (Double) -> Void,
+        onToggleRepeat: @escaping () -> Void
+    ) {
+        // Проброс событий во view
+        miniPlayerView.onPlayPause = onPlayPause
+        miniPlayerView.onAddOrRemove = onAddOrRemove
+        miniPlayerView.onClose = { [weak self] in
+            onClose()              // остановить плеер
+            self?.hideMiniPlayer() // скрыть мини‑плеер
+        }
+        miniPlayerView.onPrev = onPrev
+        miniPlayerView.onNext = onNext
+        miniPlayerView.onSeek = onSeek
+        miniPlayerView.onToggleRepeatMode = onToggleRepeat
+        miniPlayerView.configure(config)
+        showMiniPlayerIfNeeded()
+        
+        updateSafeAreaInsets(bottom: miniPlayerHeight)
+    }
+
+    /// Скрыть мини‑плеер с анимацией и сбросить дополнительные safe area.
+    func hideMiniPlayer() {
+        UIView.animate(withDuration: 0.25) {
+            self.miniPlayerView.alpha = 0
+        } completion: { _ in
+            self.miniPlayerView.isHidden = true
+        }
+        updateSafeAreaInsets(bottom: 0)
+    }
+
+    /// Показать мини‑плеер.
+    private func showMiniPlayerIfNeeded() {
+        guard miniPlayerView.isHidden else { return }
+        miniPlayerView.isHidden = false
+        miniPlayerView.alpha = 0
+        UIView.animate(withDuration: 0.25) {
+            self.miniPlayerView.alpha = 1
         }
     }
     

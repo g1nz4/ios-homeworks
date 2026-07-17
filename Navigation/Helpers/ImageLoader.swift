@@ -33,4 +33,38 @@ final class ImageLoader {
             return nil
         }
     }
+    
+    /// Параллельно загружает изображения для всех `story.items`  и возвращает массив JPEG‑данных успешно загруженных картинок.
+    func loadImages(for story: FeedStory) async -> [Data] {
+        await withTaskGroup(of: (Int, Data?).self) { group in
+            for (index, item) in story.items.enumerated() {
+                group.addTask { [self] in
+                    guard let url = URL(string: item.imageURL) else {
+                        return (index, nil)
+                    }
+                    let img = await self.loadImage(from: url)
+                    return (index, img?.jpegData(compressionQuality: 0.9))
+                }
+            }
+
+            var tmp: [Int: Data] = [:]
+
+            for await (index, data) in group {
+                if let data {
+                    tmp[index] = data
+                }
+            }
+
+            // Восстановить массив в порядке индексов items
+            var result: [Data] = []
+            result.reserveCapacity(story.items.count)
+            for i in 0..<story.items.count {
+                if let data = tmp[i] {
+                    result.append(data)
+                }
+            }
+
+            return result
+        }
+    }
 }

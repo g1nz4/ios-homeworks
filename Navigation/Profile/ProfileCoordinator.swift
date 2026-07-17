@@ -1,6 +1,6 @@
 import UIKit
-import StorageService
 
+/// Делегат координатора профиля. Сейчас используется только для уведомления о logout (обратно в MainCoordinator).
 protocol ProfileCoordinatorDelegate: AnyObject {
     /// Пользователь выполнил logout.
     func didLogout()
@@ -10,7 +10,9 @@ protocol ProfileCoordinatorDelegate: AnyObject {
 final class ProfileCoordinator: Coordinator {
     
     weak var delegate: ProfileCoordinatorDelegate?
-  
+    /// Коллбэк изменения темы приложения, пробрасываемый из MainCoordinator.
+    private let onThemeChanged: (AppTheme) -> Void
+    
     /// Ссылка на текущий контроллер профиля.
     private weak var profileVC: ProfileViewController?
     /// ViewModel профиля, чтобы из координатора дергать обновления (reload и т.п.).
@@ -18,8 +20,10 @@ final class ProfileCoordinator: Coordinator {
     
     var controller: UIViewController
     var children: [Coordinator]
-
     let navController: UINavigationController
+
+    /// Коллбэк для переключения свайпа табов (пробрасывается в MainCoordinator).
+    var onTabSwipeChanged: ((Bool) -> Void)?
 
     enum Presentation {
         case profile              // основной экран профиля
@@ -28,20 +32,28 @@ final class ProfileCoordinator: Coordinator {
         case publishPost          // создание нового поста
         case editPost(MyPost)     // редактирование существующего поста
         case photos               // экран фото
+        case music                // экран музыка
         case favorites            // избранное
         case createStory          // создание истории
         case storyViewer          // просмотр историй
         case editProfile(User)    // редактирование профиля
         case settings             // экран настроек приложения
+        
+        case themeSelection(SettingsViewModel)       // экран выбора темы прриложения
+        case languageSelection(SettingsViewModel)    // выбор языка приложения
     }
 
     private let user: User
     private let authService: SupabaseAuthService
     private let userService: SupabaseUserService
-    
+   
     private let albumCoversService: AlbumCoversLoadingProtocol
     private let photosRepository: PhotosRepositoryProtocol
     private let postService: PostServiceProtocol
+    private let storyViewerFactory: StoryViewerFactory
+    private let settingsStorage: UserSettingsStorage
+    private let notificationsService: LocalNotificationsService
+    private let musicViewModel: MusicViewModel
     
     init(
         user: User,
@@ -50,6 +62,11 @@ final class ProfileCoordinator: Coordinator {
         albumCoversService: AlbumCoversLoadingProtocol,
         photosRepository: PhotosRepositoryProtocol,
         postService: PostServiceProtocol,
+        storyViewerFactory: StoryViewerFactory,
+        settingsStorage: UserSettingsStorage,
+        notificationsService: LocalNotificationsService,
+        musicViewModel: MusicViewModel,
+        onThemeChanged: @escaping (AppTheme) -> Void
     ) {
         self.user = user
         self.authService = authService
@@ -57,6 +74,11 @@ final class ProfileCoordinator: Coordinator {
         self.albumCoversService = albumCoversService
         self.photosRepository = photosRepository
         self.postService = postService
+        self.storyViewerFactory = storyViewerFactory
+        self.settingsStorage = settingsStorage
+        self.notificationsService = notificationsService
+        self.musicViewModel = musicViewModel
+        self.onThemeChanged = onThemeChanged
         
         self.navController = UINavigationController()
         self.controller = navController
@@ -69,8 +91,13 @@ final class ProfileCoordinator: Coordinator {
     func setup() {
         present(.profile)
     }
-
+    /// Открыть сценарий в стандартном host (navController)
     func present(_ presentation: Presentation) {
+        present(presentation, in: navController)
+    }
+
+    /// Открыть сценарий профиля в переданном UINavigationController.
+    func present(_ presentation: Presentation, in host: UINavigationController) {
         switch presentation {
         case .profile:
             let storage = CDStoryStorage()
@@ -88,13 +115,14 @@ final class ProfileCoordinator: Coordinator {
             self.profileViewModel = vm
             self.profileVC = vc
             
-            navController.setViewControllers([vc], animated: false)
-            navController.setNavigationBarHidden(false, animated: false)
+            host.setViewControllers([vc], animated: false)
+            host.setNavigationBarHidden(false, animated: false)
             
         case .friends:
-            let vc = FriendsViewController()
+            let vm = FriendsViewModel(userService: userService, currentUser: user)
+            let vc = FriendsCollectionViewController(viewModel: vm)
             vc.coordinator = self
-            navController.pushViewController(vc, animated: true)
+            host.pushViewController(vc, animated: true)
             
         case .photos:
             let vm = PhotosViewModel(
@@ -119,32 +147,39 @@ final class ProfileCoordinator: Coordinator {
             let vc = PhotosViewController(viewModel: vm)
             vc.coordinator = self
             vc.delegate = self // чтобы при изменениях в фото обновлять профиль
-            navController.pushViewController(vc, animated: true)
+            host.pushViewController(vc, animated: true)
+            
+        case .music:
+            let vc = MusicCollectionViewController(
+                viewModel: musicViewModel,
+                presentationStyle: .pushed
+            )
+            host.pushViewController(vc, animated: true)
             
         case .publishPost:
-            let vm = PublishPostViewModel()
-            let vc = PublishPostViewController(user: user, viewModel: vm)
+            let vm = PublishPostViewModel(postService: postService as! PostService, user: user)
+            let vc = PublishPostViewController(viewModel: vm)
             vc.delegate = profileVC
             vc.coordinator = self
             
             let nav = UINavigationController(rootViewController: vc)
             nav.modalPresentationStyle = .fullScreen
-            navController.present(nav, animated: true)
+            host.present(nav, animated: true)
             
         case .editPost(let post):
-            let vm = PublishPostViewModel()
-            let vc = PublishPostViewController(user: user, viewModel: vm, editingPost: post)
+            let vm = PublishPostViewModel(postService: postService as! PostService, user: user, editingPost: post)
+            let vc = PublishPostViewController(viewModel: vm)
             vc.delegate = profileVC
             vc.coordinator = self
             let nav = UINavigationController(rootViewController: vc)
             nav.modalPresentationStyle = .fullScreen
-            navController.present(nav, animated: true)
+            host.present(nav, animated: true)
             
         case .info:
             let currentUser = profileViewModel?.currentUser ?? profileViewModel?.headerUser ?? user
             let vm = ProfileInfoViewModel(user: currentUser)
             let vc = ProfileInfoViewController(viewModel: vm)
-            navController.present(vc, animated: false)
+            host.present(vc, animated: false)
             
         case .favorites:
             let vm = FavoritesViewModel(postService: postService)
@@ -153,9 +188,8 @@ final class ProfileCoordinator: Coordinator {
                 viewModel: vm
             )
             vc.coordinator = self
-            vc.favoritesDelegate = profileVC
-            navController.setNavigationBarHidden(false, animated: false)
-            navController.pushViewController(vc, animated: true)
+            host.setNavigationBarHidden(false, animated: false)
+            host.pushViewController(vc, animated: true)
             
         case .createStory:
             let storage = CDStoryStorage()
@@ -168,28 +202,13 @@ final class ProfileCoordinator: Coordinator {
             let vc = StoryViewController(creationViewModel: vm)
             vc.delegate = self
             vc.modalPresentationStyle = .fullScreen
-            navController.present(vc, animated: true)
+            host.present(vc, animated: true)
             
         case .storyViewer:
-            let storage = CDStoryStorage()
-            let timer = StoryTimer()
-            let vm = StoryPlayerViewModel(
-                timer: timer,
-                storage: storage,
-                userId: user.id
-            )
             let currentUser = profileViewModel?.currentUser ?? profileViewModel?.headerUser ?? user
-            let name = currentUser.name.displayName
-            let avatarURLString = currentUser.avatarURL?.absoluteString
-            
-            let vc = StoryViewController(
-                playerViewModel: vm,
-                mode: .viewOnly,
-                userName: name,
-                avatarURLString: avatarURLString
-            )
+            let vc = storyViewerFactory.makeViewerForProfile(user: currentUser)
             vc.modalPresentationStyle = .fullScreen
-            navController.present(vc, animated: true)
+            host.present(vc, animated: true)
             
         case .editProfile(let user):
             let vm = ProfileEditViewModel(user: user, userService: userService)
@@ -197,30 +216,78 @@ final class ProfileCoordinator: Coordinator {
             // При успешном сохранении профиля:
             vm.onSaved = { [weak self] updated in
                 guard let self else { return }
-
+                
                 Task { [weak self] in
                     guard let self else { return }
                     // Обновить имя автора во всех локальных постах
                     await self.postService.syncCurrentUserNameInPosts()
                     // Перечитать посты профиля
-                    await self.profileViewModel?.postsVM.loadPosts()
+                    await self.profileViewModel?.postsVM.loadPosts(for: .posts)
                     // Обновить данные пользователя
                     await self.profileViewModel?.applyUpdatedUserAndReload(updated)
                 }
-              
+                
                 // Закрыть экран редактирования
-                self.closeVC()
+                host.popViewController(animated: true)
             }
             // Пользователь ничего не изменил и нажал "Сохранить"
             vm.onNoChanges = { [weak self] in
                 self?.closeVC()
             }
-            navController.pushViewController(vc, animated: true)
+            host.pushViewController(vc, animated: true)
             
         case .settings:
-            let vm = SettingsViewModel()
+            let vm = SettingsViewModel(
+                settingsStorage: settingsStorage,
+                notificationsService: notificationsService,
+                permissionService: PermissionService.shared
+            )
+            
+            // 1. Пробос изменений темы наружу (в MainCoordinator через onThemeChanged)
+            vm.outputs.onThemeChanged = { [weak self] theme in
+                self?.onThemeChanged(theme)
+            }
+            
+            // 2. Открытие ThemeSelection host, что и настройки
+            vm.outputs.onOpenThemeSelection = { [weak self, weak host] in
+                guard let self, let host else { return }
+                self.present(.themeSelection(vm), in: host)
+            }
+            
+            vm.outputs.onOpenLanguageSelection = { [weak self, weak host] in
+                guard let self, let host else { return }
+                self.present(.languageSelection(vm), in: host)
+            }
+            
+            vm.outputs.onTabSwipeChanged = { [weak self] isOn in
+                self?.onTabSwipeChanged?(isOn)
+            }
+            
             let vc = SettingsTableViewController(viewModel: vm)
-            navController.pushViewController(vc, animated: true)
+            host.pushViewController(vc, animated: true)
+            
+            
+        case .themeSelection(let settingsVM):
+            let vm = ThemeSelectionViewModel(currentTheme: settingsVM.currentTheme)
+            
+            vm.onThemeSelected = { [weak settingsVM, weak host] theme in
+                settingsVM?.didSelectTheme(theme)
+                host?.popViewController(animated: true)
+            }
+            
+            let vc = ThemeSelectionViewController(viewModel: vm)
+            host.pushViewController(vc, animated: true)
+            
+        case .languageSelection(let settingsVM):
+            let vm = LanguageSelectionViewModel(currentLanguage: settingsVM.currentLanguage)
+
+            vm.onLanguageSelected = { [weak settingsVM, weak host] language in
+                settingsVM?.didSelectLanguage(language)   // сохранить + обновить таблицу
+                host?.popViewController(animated: true)   // закрыть экран выбора языка
+            }
+
+            let vc = LanguageSelectionViewController(viewModel: vm)
+            host.pushViewController(vc, animated: true)
         }
     }
     
@@ -319,12 +386,14 @@ extension ProfileCoordinator {
         photos: [Photo],
         startIndex: Int,
         delegate: PhotoViewerViewControllerDelegate,
-        showAddToSaved: Bool = true
+        showAddToSaved: Bool = true,
+        viewInPost: Bool = false
     ) {
         let vc = PhotosViewerViewController(
             photos: photos,
             startIndex: startIndex,
-            showAddToSaved: showAddToSaved
+            showAddToSaved: showAddToSaved,
+            viewInPost: viewInPost
         )
         vc.delegate = delegate
         navController.pushViewController(vc, animated: true)
@@ -382,7 +451,7 @@ extension ProfileCoordinator: PhotosViewControllerDelegate {
     /// Вызывается из PhotosViewController при изменении фото/альбомов.
     func photosDidChange() {
         Task { [weak self] in
-            await self?.profileViewModel?.reloadPhotos()
+            await self?.profileViewModel?.reloadPhotos(force: true)
         }
     }
 }

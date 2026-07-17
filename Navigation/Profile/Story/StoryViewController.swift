@@ -423,7 +423,7 @@ final class StoryViewController: UIViewController {
         if let creationVM = creationViewModel {
             creationVM.viewDidLoad()
         } else if let playerVM = playerViewModel {
-            playerVM.viewDidLoad()
+            Task { await playerVM.viewDidLoad() }
         }
     }
 
@@ -530,7 +530,7 @@ final class StoryViewController: UIViewController {
     /// Кнопка "Опубликовать" - инициирует сохранение в storage через VM.
     @objc private func didTapPublish() {
         guard mode == .create, let creationVM = creationViewModel else { return }
-        creationVM.didTapPublish()
+        Task { await creationVM.didTapPublish() }
     }
 
     /// Тап по кнопке "Добавить" - показывает action sheet с вариантами: галерея (через PHPicker), камера (через UIImagePicker).

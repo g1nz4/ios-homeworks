@@ -1,5 +1,4 @@
 import UIKit
-import StorageService
 import PhotosUI
 
 protocol PublishPostViewControllerDelegate: AnyObject {
@@ -14,9 +13,7 @@ final class PublishPostViewController: BaseScrollViewController {
     weak var delegate: PublishPostViewControllerDelegate?
     weak var secondaryDelegate: PublishPostViewControllerDelegate?
 
-    private let user: User
     private let viewModel: PublishPostViewModel
-    private let editingPost: MyPost?
 
     private var imageViewHeightConstraint: NSLayoutConstraint!
 
@@ -145,15 +142,8 @@ final class PublishPostViewController: BaseScrollViewController {
         return view
     }()
 
-    init(
-        user: User,
-        viewModel: PublishPostViewModel,
-        editingPost: MyPost? = nil
-    ) {
-        self.user = user
+    init(viewModel: PublishPostViewModel) {
         self.viewModel = viewModel
-        self.editingPost = editingPost
-        
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -164,7 +154,7 @@ final class PublishPostViewController: BaseScrollViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        title = editingPost == nil ? "Новый пост" : "Редактировать пост"
+        title = viewModel.screenTitle
 
         setupNavigationBar()
         bindViewModel()
@@ -231,14 +221,16 @@ final class PublishPostViewController: BaseScrollViewController {
 
     /// Конфигурация для режима "редактировать пост".
     private func configureInitialState() {
-        guard let post = editingPost else { return }
-
-        textView.text = post.description
-        placeholderLabel.isHidden = !post.description.isEmpty
-        viewModel.updateText(post.description)
-
-        if let image = post.image {
-            selectedImage = image
+        if let post = viewModel.editingPost {
+            textView.text = post.description
+            placeholderLabel.isHidden = !post.description.isEmpty
+            viewModel.updateText(post.description)
+            
+            if let data = post.image, let image = UIImage(data: data) {
+                selectedImage = image
+            } else {
+                selectedImage = nil
+            }
         } else {
             selectedImage = nil
         }
@@ -249,47 +241,44 @@ final class PublishPostViewController: BaseScrollViewController {
             self?.publishBarButtonItem?.isEnabled = canPublish
         }
 
-        viewModel.onPublish = { [weak self] trimmedText in
+        viewModel.onPublish = { [weak self] post in
             guard let self else { return }
-
-            if let original = self.editingPost {
-                let updated = MyPost(
-                    id: original.id,
-                    authorId: original.authorId,
-                    author: original.author,
-                    image: self.selectedImage,
-                    description: trimmedText,
-                    likes: original.likes,
-                    views: original.views,
-                    isExpanded: original.isExpanded,
-                    isLiked: original.isLiked,
-                    isFavorite: original.isFavorite,
-                    createdAt: original.createdAt
-                )
-
-                self.delegate?.publishPostViewController(self, didEdit: updated)
-                self.secondaryDelegate?.publishPostViewController(self, didEdit: updated)
+            
+            if self.viewModel.editingPost != nil {
+                self.delegate?.publishPostViewController(self, didEdit: post)
+                self.secondaryDelegate?.publishPostViewController(self, didEdit: post)
             } else {
-                let post = MyPost(
-                    id: UUID().uuidString,
-                    authorId: user.id,
-                    author: user.name.displayName,
-                    image: selectedImage,
-                    description: trimmedText,
-                    likes: 0,
-                    views: 0
-                )
-
                 self.delegate?.publishPostViewController(self, didCreate: post)
                 self.secondaryDelegate?.publishPostViewController(self, didCreate: post)
             }
-
-            coordinator?.dismiss()
+            
+            self.coordinator?.dismiss()
         }
 
         viewModel.onError = { [weak self] message in
             self?.showAlert(message: message)
         }
+    }
+    
+    private func presentPhotoPicker() {
+        var config = PHPickerConfiguration(photoLibrary: .shared())
+        config.filter = .images
+        config.selectionLimit = 1
+
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = self
+        picker.modalPresentationStyle = .pageSheet
+        present(picker, animated: true)
+    }
+
+    private func presentCamera() {
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else { return }
+
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = self
+        picker.allowsEditing = true
+        present(picker, animated: true)
     }
     
     @objc private func didTapGallery() {
@@ -343,7 +332,14 @@ final class PublishPostViewController: BaseScrollViewController {
     }
 
     @objc private func didTapPublish() {
-        viewModel.didTapPublish()
+        let imageData: Data?
+        if let image = selectedImage {
+            imageData = image.pngData()
+        } else {
+            imageData = nil
+        }
+        
+        viewModel.didTapPublish(selectedImageData: imageData)
     }
 
     @objc private func didTapKeyboardDone() {
@@ -356,27 +352,6 @@ final class PublishPostViewController: BaseScrollViewController {
 
     @objc private func didTapClose() {
         coordinator?.dismiss()
-    }
-
-    private func presentPhotoPicker() {
-        var config = PHPickerConfiguration(photoLibrary: .shared())
-        config.filter = .images
-        config.selectionLimit = 1
-
-        let picker = PHPickerViewController(configuration: config)
-        picker.delegate = self
-        picker.modalPresentationStyle = .pageSheet
-        present(picker, animated: true)
-    }
-
-    private func presentCamera() {
-        guard UIImagePickerController.isSourceTypeAvailable(.camera) else { return }
-
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.delegate = self
-        picker.allowsEditing = true
-        present(picker, animated: true)
     }
 }
 

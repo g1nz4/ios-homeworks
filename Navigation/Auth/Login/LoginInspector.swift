@@ -71,10 +71,12 @@ final class LoginInspector: LoginDelegateProtocol {
             id: userID,
             nickname: nil,
             name: fullName,
+            gender: data.gender,
             email: data.email,
             phone: data.phone,
             city: data.city,
-            birthDate: data.birthDate
+            birthDate: data.birthDate,
+            
         )
         
         // Обновить / создать профиль в таблице profiles

@@ -66,7 +66,6 @@ final class ProfileHeaderView: UICollectionReusableView {
         view.backgroundColor = .systemGreen
         view.isHidden = false
         view.layer.cornerRadius = 8.0
-        view.layer.borderWidth = 2.0
         
         return view
     }()
@@ -142,7 +141,6 @@ final class ProfileHeaderView: UICollectionReusableView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        
         
         configureUI()
         updateBorderColorsForCurrentTheme()

@@ -5,6 +5,11 @@ import Foundation
 @MainActor
 final class StoryPlayerViewModel {
 
+    enum StorySourceType {
+        case coreData
+        case memory
+    }
+    
     /// Полное изменение стейта (список слайдов, индекс, флаг busy и т.п.).
     var onStateChange: ((StoryState) -> Void)?
 
@@ -29,8 +34,10 @@ final class StoryPlayerViewModel {
     private var state: StoryState
     private let timer: StoryTimerProtocol           // таймер для прогресса слайдов
     private let itemDuration: TimeInterval          // время показа одного слайда
-    private let storage: CDStoryStorageProtocol       // источник историй
-    private let userId: String                      // чей сторис показываем
+    private let storage: CDStoryStorageProtocol?
+
+    private let userId: String
+    private var sourceType: StorySourceType
 
     /// Отдельный таймер только для обновления надписи времени ("N сек. назад").
     private let metaTimer: StoryTimerProtocol
@@ -43,25 +50,83 @@ final class StoryPlayerViewModel {
         return relativeFormatter
     }()
 
-    init(
+    // базовый init
+    private init(
+        state: StoryState,
+        itemDuration: TimeInterval,
+        timer: StoryTimerProtocol,
+        storage: CDStoryStorageProtocol?,
+        userId: String,
+        metaTimer: StoryTimerProtocol,
+        sourceType: StorySourceType
+    ) {
+        self.state = state
+        self.itemDuration = itemDuration
+        self.timer = timer
+        self.storage = storage
+        self.userId = userId
+        self.metaTimer = metaTimer
+        self.sourceType = sourceType
+    }
+
+    /// CoreData – для профиля
+    convenience init(
         itemDuration: TimeInterval = 5.0,
         timer: StoryTimerProtocol,
         storage: CDStoryStorageProtocol,
         userId: String
     ) {
-        self.state = StoryState(items: [], currentIndex: 0, isBusy: false, createdAt: nil)
-        self.timer = timer
-        self.itemDuration = itemDuration
-        self.storage = storage
-        self.userId = userId
-        self.metaTimer = StoryTimer()
+        let emptyState = StoryState(items: [], currentIndex: 0, isBusy: false, createdAt: nil)
+        self.init(
+            state: emptyState,
+            itemDuration: itemDuration,
+            timer: timer,
+            storage: storage,
+            userId: userId,
+            metaTimer: StoryTimer(),
+            sourceType: .coreData
+        )
+    }
+
+    /// Memory – для ленты (картинки уже загружены)
+    convenience init(
+        items: [Data],
+        createdAt: Date?,
+        itemDuration: TimeInterval = 5.0,
+        timer: StoryTimerProtocol
+    ) {
+        let state = StoryState(items: items, currentIndex: 0, isBusy: false, createdAt: createdAt)
+
+        self.init(
+            state: state,
+            itemDuration: itemDuration,
+            timer: timer,
+            storage: nil,
+            userId: "",
+            metaTimer: StoryTimer(),
+            sourceType: .memory
+        )
     }
 
     /// Старт загрузки истории.
-    func viewDidLoad() {
-        Task { [weak self] in
-            guard let self else { return }
-            await self.loadStories()
+    func viewDidLoad() async {
+        switch sourceType {
+        case .coreData:
+            await loadStories()
+
+        case .memory:
+            emitState()
+            emitImages()
+            onMetaUpdated?(state.createdAt)
+
+            if let createdAt = state.createdAt {
+                startMetaTimer(createdAt: createdAt)
+            } else {
+                stopMetaTimer()
+                onRelativeTimeUpdated?(nil)
+            }
+
+            startTimerForCurrentItemIfNeeded()
         }
     }
 
@@ -75,7 +140,14 @@ final class StoryPlayerViewModel {
     private func loadStories() async {
         state.isBusy = true
         emitState()
-
+        
+        guard let storage else {
+            AppLogger.error("StoryPlayerViewModel: storage == nil in .coreData mode")
+            state.isBusy = false
+            emitState()
+            return
+        }
+        
         do {
             if let loaded = try await storage.loadLastStory(for: userId) {
                 // История найдена
@@ -83,18 +155,18 @@ final class StoryPlayerViewModel {
                 state.currentIndex = 0
                 state.createdAt = loaded.createdAt
                 state.isBusy = false
-
+                
                 emitState()
                 emitImages()
                 onMetaUpdated?(loaded.createdAt)
-
+                
                 if let createdAt = loaded.createdAt {
                     startMetaTimer(createdAt: createdAt)
                 } else {
                     stopMetaTimer()
                     onRelativeTimeUpdated?(nil)
                 }
-
+                
                 startTimerForCurrentItemIfNeeded()
             } else {
                 // Историй нет - пустой стейт
@@ -102,7 +174,7 @@ final class StoryPlayerViewModel {
                 state.currentIndex = 0
                 state.createdAt = nil
                 state.isBusy = false
-
+                
                 emitState()
                 emitImages()
                 onMetaUpdated?(nil)

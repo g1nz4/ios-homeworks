@@ -28,7 +28,7 @@ final class PhotosViewController: UICollectionViewController {
 
     private let refreshControl = UIRefreshControl()
 
-    /// Текущий выбранный таб..
+    /// Текущий выбранный таб.
     private var currentTab: Tab = .photos
 
     /// Флаг, чтобы не вызывать `viewModel.load()` каждый раз при появлении.
@@ -58,9 +58,6 @@ final class PhotosViewController: UICollectionViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-//        // Гарантируем, что навбар виден (важно, если профиль где-то его скрывает).
-//        coordinator?.navController.setNavigationBarHidden(false, animated: animated)
-
         // Первичная загрузка данных
         Task { [weak self] in
             guard let self else { return }
@@ -85,7 +82,7 @@ final class PhotosViewController: UICollectionViewController {
     private func setupNavigationBar() {
         switch viewModel.mode {
         case .main:
-            title = "Фото"
+            title = "Фотографии"
         case .album(let album):
             // Если у альбома нет названия — fallback к "Фото".
             title = album.title.isEmpty ? "Фото" : album.title
@@ -159,23 +156,24 @@ extension PhotosViewController {
         currentMode: @escaping () -> PhotosScreenMode,
         currentTab: @escaping () -> Tab
     ) -> UICollectionViewLayout {
-        UICollectionViewCompositionalLayout { sectionIndex, _ in
+            let layout = UICollectionViewCompositionalLayout { sectionIndex, _ in
+         
             let mode = currentMode()
-
+            
             switch mode {
-
+                
             // Режим .album: только фотографии, без табов и секций
             case .album:
-                // Одна секция с гридом 3xN.
+                // одна секция (фото альбома)
                 guard sectionIndex == 0 else { return nil }
-
+                
                 let itemSize = NSCollectionLayoutSize(
                     widthDimension: .fractionalWidth(1.0 / 3.0),
                     heightDimension: .fractionalWidth(1.0 / 3.0)
                 )
                 let item = NSCollectionLayoutItem(layoutSize: itemSize)
                 item.contentInsets = .init(top: 1, leading: 1, bottom: 1, trailing: 1)
-
+                
                 let groupSize = NSCollectionLayoutSize(
                     widthDimension: .fractionalWidth(1.0),
                     heightDimension: .fractionalWidth(1.0 / 3.0)
@@ -184,17 +182,18 @@ extension PhotosViewController {
                     layoutSize: groupSize,
                     subitems: [item]
                 )
-
+                
                 let section = NSCollectionLayoutSection(group: group)
-                section.contentInsets = .init(top: 0, leading: 0, bottom: 8, trailing: 0)
+                section.contentInsets = .init(top: 8, leading: 0, bottom: 8, trailing: 0)
+                
                 return section
-
-            // Режим .main: табы + контент
+                
+                // Режим .main: табы + контент
             case .main:
                 guard let section = Section(rawValue: sectionIndex) else { return nil }
-
+                
                 switch section {
-                // заголовок с табами
+                    // заголовок с табами
                 case .tabsHeader:
                     // здесь только хедер
                     let itemSize = NSCollectionLayoutSize(
@@ -202,7 +201,7 @@ extension PhotosViewController {
                         heightDimension: .absolute(1)
                     )
                     let item = NSCollectionLayoutItem(layoutSize: itemSize)
-
+                    
                     let groupSize = NSCollectionLayoutSize(
                         widthDimension: .fractionalWidth(1.0),
                         heightDimension: .absolute(1)
@@ -211,9 +210,9 @@ extension PhotosViewController {
                         layoutSize: groupSize,
                         subitems: [item]
                     )
-
+                    
                     let section = NSCollectionLayoutSection(group: group)
-
+                    
                     let headerSize = NSCollectionLayoutSize(
                         widthDimension: .fractionalWidth(1.0),
                         heightDimension: .absolute(40)
@@ -225,18 +224,18 @@ extension PhotosViewController {
                     )
                     section.boundarySupplementaryItems = [header]
                     return section
-
+                    
                 // контент (альбомы/фото)
                 case .content:
                     switch currentTab() {
-
+                        
                     // альбомы — по 2 в строку
                     case .albums:
                         let groupSize = NSCollectionLayoutSize(
                             widthDimension: .fractionalWidth(1.0),
                             heightDimension: .fractionalWidth(0.35)
                         )
-
+                        
                         // группа = 2 айтема по горизонтали
                         let group = NSCollectionLayoutGroup.horizontal(
                             layoutSize: groupSize,
@@ -250,12 +249,13 @@ extension PhotosViewController {
                             count: 2
                         )
                         group.interItemSpacing = .fixed(4)
-
+                        
                         let section = NSCollectionLayoutSection(group: group)
                         section.interGroupSpacing = 4
                         section.contentInsets = .init(top: 4, leading: 4, bottom: 4, trailing: 4)
+                        
                         return section
-
+                        
                     // фото — грид 3xN.
                     case .photos:
                         let itemSize = NSCollectionLayoutSize(
@@ -264,7 +264,7 @@ extension PhotosViewController {
                         )
                         let item = NSCollectionLayoutItem(layoutSize: itemSize)
                         item.contentInsets = .init(top: 1, leading: 1, bottom: 1, trailing: 1)
-
+                        
                         let groupSize = NSCollectionLayoutSize(
                             widthDimension: .fractionalWidth(1.0),
                             heightDimension: .fractionalWidth(1.0 / 3.0)
@@ -273,14 +273,16 @@ extension PhotosViewController {
                             layoutSize: groupSize,
                             subitems: [item]
                         )
-
+                        
                         let section = NSCollectionLayoutSection(group: group)
-                        section.contentInsets = .init(top: 1, leading: 1, bottom: 1, trailing: 1)
+                        section.contentInsets = .init(top: 8, leading: 1, bottom: 1, trailing: 1)
+                        
                         return section
                     }
                 }
             }
         }
+        return layout
     }
 
     /// Текущий layout, основанный на состоянии viewModel и активного таба.
@@ -557,7 +559,7 @@ extension PhotosViewController: PhotosViewControllerDelegate {
                     self.collectionView.reloadData()
                 }
             }
-            // Пробрасить событие наверх (в профиль)
+            // Пробросить событие наверх (в профиль)
             self.delegate?.photosDidChange()
         }
     }

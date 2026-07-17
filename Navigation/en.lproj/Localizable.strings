@@ -40,6 +40,26 @@
 "profile_logout_button" = "Log out";
 
 
+"menu_title" = "Menu";
+"language.russian" = "Russian";
+"language.english" = "English";
+"settings.notifications.title" = "Daily updates";
+"settings.notifications.footer.text" = "Notifications are disabled. To enable them, open the app settings and allow notifications.";
+"settings.permissions.camera.title" = "Camera access";
+"settings.permissions.photos.title" = "Photos access";
+"settings.permissions.footer.text" = "Camera and/or photos access is disabled. To change this, open the app settings and allow access.";
+"settings.openSettings.button" = "Open Settings";
+"settings.appearance.theme.title" = "Theme";
+"settings.language.row.title" = "Language";
+"settings.navigation.tabSwipe.title" = "Swipe between tabs";
+
+"search_header_view" = "Search...";
+"friends_title" = "Friends";
+
+"gender_male" = "Male";
+"gender_female" = "Female";
+"gender" = "GENDER";
+
 "error_phone_invalid" = "Invalid phone format.";
 "error_auth_wrong_credentials" = "Invalid email or password";
 "error_auth_generic" = "Authorization error. Try again";

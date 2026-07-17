@@ -61,6 +61,7 @@ final class ProfileEditViewModel {
             id: oldUser.id,
             nickname: newNickname,
             name: Name(firstName: normalizedFirst, lastName: normalizedLast),
+            gender: oldUser.gender,
             email: oldUser.email,
             phone: oldUser.phone,
             city: newCity,
@@ -90,6 +91,12 @@ final class ProfileEditViewModel {
                 let fresh = try await userService.updateProfile(user: updatedUser)
                 self.user = fresh
                 self.onLoadingChange?(false)
+                
+                NotificationCenter.default.post(
+                    name: .currentUserDidUpdate,
+                    object: nil,
+                    userInfo: [CurrentUserUpdateKey.user: fresh]
+                )
                 self.onSaved?(fresh)
             } catch {
                 self.onLoadingChange?(false)

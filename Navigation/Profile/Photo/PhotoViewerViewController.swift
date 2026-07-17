@@ -15,7 +15,6 @@ final class PhotosViewerViewController: UICollectionViewController {
 
     var onSetAsAvatar: ((Photo) -> Void)?
     var onSetAsCover: ((Photo) -> Void)?
-    var onAddToSaved: ((Photo) -> Void)?
 
     private var previousStandardAppearance: UINavigationBarAppearance?
     private var previousScrollEdgeAppearance: UINavigationBarAppearance?
@@ -29,10 +28,14 @@ final class PhotosViewerViewController: UICollectionViewController {
     private var currentIndex: Int
     private var didScrollToStartIndex = false
     private let showAddToSaved: Bool
-
+    private let viewInPost: Bool
    
-
-    init(photos: [Photo], startIndex: Int, showAddToSaved: Bool = true) {
+    init(
+        photos: [Photo],
+        startIndex: Int,
+        showAddToSaved: Bool = true,
+        viewInPost: Bool = false
+    ) {
         self.photos = photos
 
         // Страховка от выхода за границы
@@ -40,6 +43,7 @@ final class PhotosViewerViewController: UICollectionViewController {
         self.startIndex = safeIndex
         self.currentIndex = safeIndex
         self.showAddToSaved = showAddToSaved
+        self.viewInPost = viewInPost
 
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
@@ -70,15 +74,19 @@ final class PhotosViewerViewController: UICollectionViewController {
         super.viewWillAppear(animated)
         applyDarkTransparentNavBar()
         hideTabBarIfNeeded()
+        
+        // запретить свайпы между вкладками, пока открыт вьювер
+        rootTabContainerController?.setTabsSwipeEnabled(false)
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         restoreNavBarAppearance()
         showTabBarIfNeeded()
+        // вернуть свайпы вкладок
+        rootTabContainerController?.setTabsSwipeEnabled(true)
     }
 
-    
     private func setupCollectionView() {
         collectionView.backgroundColor = .black
         collectionView.isPagingEnabled = true
@@ -178,9 +186,32 @@ final class PhotosViewerViewController: UICollectionViewController {
         guard photos.indices.contains(currentIndex) else {
             return UIMenu(title: "", children: [])
         }
-
+        
         let photo = photos[currentIndex]
-
+        
+        // Общий экшен "Добавить в сохранённые", завязан на showAddToSaved
+        let savedAction: UIAction? = {
+            guard showAddToSaved else { return nil }
+            return UIAction(
+                title: "Добавить в сохранённые",
+                image: UIImage(systemName: "photo.badge.plus")
+            ) { [weak self] _ in
+                guard let self else { return }
+                delegate?.photoViewer(self, didAddToSaved: photo)
+            }
+        }()
+        
+        // 1. Режим "просмотр из поста"
+        if viewInPost {
+            if let savedAction {
+                return UIMenu(title: "", children: [savedAction])
+            } else {
+                return UIMenu(title: "", children: [])
+            }
+        }
+        
+        // 2. Обычный режим
+        
         let avatarAction = UIAction(
             title: "Сделать фотографией профиля",
             image: UIImage(systemName: "person.crop.circle")
@@ -189,7 +220,7 @@ final class PhotosViewerViewController: UICollectionViewController {
             delegate?.photoViewer(self, didChooseAvatarFrom: photo)
             onSetAsAvatar?(photo)
         }
-
+        
         let coverAction = UIAction(
             title: "Сделать обложкой профиля",
             image: UIImage(systemName: "photo")
@@ -198,21 +229,7 @@ final class PhotosViewerViewController: UICollectionViewController {
             delegate?.photoViewer(self, didChooseCoverFrom: photo)
             onSetAsCover?(photo)
         }
-
-        var actions: [UIAction] = [avatarAction, coverAction]
-
-        if showAddToSaved {
-            let savedAction = UIAction(
-                title: "Добавить в сохранённые",
-                image: UIImage(systemName: "photo.badge.plus")
-            ) { [weak self] _ in
-                guard let self else { return }
-                delegate?.photoViewer(self, didAddToSaved: photo)
-                onAddToSaved?(photo)
-            }
-            actions.append(savedAction)
-        }
-
+        
         let deleteAction = UIAction(
             title: "Удалить фото",
             image: UIImage(systemName: "trash"),
@@ -221,9 +238,12 @@ final class PhotosViewerViewController: UICollectionViewController {
             guard let self else { return }
             delegate?.photoViewer(self, didDelete: photo)
         }
-
+        
+        var actions: [UIAction] = [avatarAction, coverAction]
+        
+        if let savedAction { actions.append(savedAction) }
         actions.append(deleteAction)
-
+        
         return UIMenu(title: "", children: actions)
     }
 

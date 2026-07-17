@@ -2,23 +2,26 @@ import UIKit
 
 /// Точка входа для сцены. Отвечает за создание окна и стартового координатора.
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-
+    
     var window: UIWindow?
     /// Главный координатор приложения, управляет выбором стартового флоу (логин / main).
     private var appCoordinator: AppCoordinator?
     
+    private let settingsStorage = UserSettingsStorage()
     private let notificationsService = LocalNotificationsService()
-   
+    
     func scene(
         _ scene: UIScene,
         willConnectTo session: UISceneSession,
         options connectionOptions: UIScene.ConnectionOptions
     ) {
         guard let scene = (scene as? UIWindowScene) else { return }
-           
+        
         let window = UIWindow(windowScene: scene)
         
-        let appCoordinator = AppCoordinator(window: window)
+        LocalizationManager.configure(storage: settingsStorage)
+        
+        let appCoordinator = AppCoordinator(window: window, settingsStorage: settingsStorage)
         self.appCoordinator = appCoordinator
         appCoordinator.setup()
         
@@ -30,37 +33,53 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func sceneDidDisconnect(_ scene: UIScene) { }
     
     func sceneDidBecomeActive(_ scene: UIScene) {
-        notificationsService.refreshAuthorizationStatus()
-        if #available(iOS 17.0, *) {
-           UNUserNotificationCenter.current()
-               .setBadgeCount(0, withCompletionHandler: { _ in })
-        } else {
-           UIApplication.shared.applicationIconBadgeNumber = 0
+        Task { @MainActor in
+            await notificationsService.refreshAuthorizationStatus()
         }
-
-       // updateLastSeenIfNeeded()
+        if #available(iOS 17.0, *) {
+            UNUserNotificationCenter.current()
+                .setBadgeCount(0, withCompletionHandler: { _ in })
+        } else {
+            UIApplication.shared.applicationIconBadgeNumber = 0
+        }
     }
     
     func sceneWillEnterForeground(_ scene: UIScene) {
-      //  updateLastSeenIfNeeded()
+        guard let root = window?.rootViewController else { return }
+        
+        // Поиск верхнего видимого контроллера
+        _ = SceneDelegate.topViewController(from: root)
+        
     }
     
-//    private func updateLastSeenIfNeeded() {
-//        guard let userId = authService.userID else {
-//            AppLogger.debug("updateLastSeenIfNeeded: userID == nil")
-//            return
-//        }
-//
-//        AppLogger.debug("updateLastSeenIfNeeded: userId = \(userId)")
-//
-//        Task {
-//            do {
-//                try await userService.updateLastSeen(userId: userId)
-//                AppLogger.debug("updateLastSeen: OK")
-//            } catch {
-//                AppLogger.debug("updateLastSeen error: \(error)")
-//            }
-//        }
-//    }
+    static func topViewController(from root: UIViewController?) -> UIViewController? {
+        guard let root = root else { return nil }
+        
+        // presented
+        if let presented = root.presentedViewController {
+            return topViewController(from: presented)
+        }
+        
+        // navigation
+        if let nav = root as? UINavigationController {
+            return topViewController(from: nav.visibleViewController)
+        }
+    
+        // Кастомный контейнер табов
+        if let rootTabs = root as? RootTabContainerController {
+            return topViewController(from: rootTabs.currentChild)
+        }
+        
+        // Прочие контейнеры
+        for child in root.children {
+            if let top = topViewController(from: child) {
+                return top
+            }
+        }
+        
+        // Ничего не найдено – верхний root 
+        return root
+    }
 }
+
 

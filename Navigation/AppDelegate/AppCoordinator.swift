@@ -18,7 +18,7 @@ final class AppCoordinator: Coordinator {
     var controller: UIViewController
     /// Дочерние координаторы (login или main).
     var children: [Coordinator] = []
-    
+    /// Окно, в которое  устанавливается корневой контроллер.
     private weak var window: UIWindow?
     
     /// Общий REST‑клиент, использующий authService для токена/refresh.
@@ -33,6 +33,11 @@ final class AppCoordinator: Coordinator {
     private let userService: SupabaseUserService
     /// Кеш профиля пользователя.
     private let cacheStore: CDUserCache
+    /// Хранилище настроек.
+    private let settingsStorage: UserSettingsStorage
+    /// Сервис локальных уведомлений.
+    private let notificationsService: LocalNotificationsService
+    
     /// Сервис отслеживания сетевого статуса.
     private let networkService: NetworkStatusServiceProtocol
     /// Объект, инкапсулирующий логику проверки логина и загрузки профиля.
@@ -44,8 +49,9 @@ final class AppCoordinator: Coordinator {
         case main(user: User)
     }
     
-    init(window: UIWindow) {
+    init(window: UIWindow, settingsStorage: UserSettingsStorage) {
         self.window = window
+        self.settingsStorage = settingsStorage
         // 1. Auth
         self.authService = SupabaseAuthService()
         
@@ -69,6 +75,12 @@ final class AppCoordinator: Coordinator {
             client: restClient,
             cacheStore: userCache
         )
+        
+        // Применить сохранённую тему к окну
+        let savedTheme = settingsStorage.appTheme
+        ThemeManager.shared.apply(theme: savedTheme, to: window)
+        
+        self.notificationsService = LocalNotificationsService()
         
         // 6. Network service
         self.networkService = NetworkStatusService.shared
@@ -132,7 +144,14 @@ final class AppCoordinator: Coordinator {
             let mainCoordinator = MainCoordinator(
                 user: user,
                 authService: authService,
-                userService: userService
+                userService: userService,
+                restClient: restClient,
+                settingsStorage: settingsStorage,
+                notificationsService: notificationsService,
+                onThemeChanged: { [weak self] theme in
+                            guard let self, let window = self.window else { return }
+                            ThemeManager.shared.apply(theme: theme, to: window)
+                        }
             )
             mainCoordinator.delegate = self
             mainCoordinator.setup()

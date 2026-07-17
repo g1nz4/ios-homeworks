@@ -138,24 +138,21 @@ final class StoryCreationViewModel {
     }
 
     /// Пользователь нажал "Опубликовать".
-    func didTapPublish() {
+        func didTapPublish() async {
         guard !state.items.isEmpty else { return }
 
         state.isBusy = true
         emitState()
 
-        Task { [weak self] in
-            guard let self else { return }
-            do {
-                try await self.performPublish()
-                self.state.isBusy = false
-                self.emitState()
-                self.onCloseAfterPublish?()
-            } catch {
-                self.state.isBusy = false
-                self.emitState()
-                self.onError?(error)
-            }
+        do {
+            try await performPublish()
+            state.isBusy = false
+            emitState()
+            onCloseAfterPublish?()
+        } catch {
+            state.isBusy = false
+            emitState()
+            onError?(error)
         }
     }
 

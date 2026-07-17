@@ -5,6 +5,7 @@ struct UserProfileDTO: Codable {
     let id: String
     let firstName: String
     let lastName: String
+    let gender: String
     let city: String?
     let phone: String?
     let nickname: String?
@@ -18,6 +19,7 @@ struct UserProfileDTO: Codable {
     let subscribersCount: Int?
     let friendsCount: Int?
     let followingCount: Int?
+    let isOnline: Bool
     
 }
 
@@ -26,6 +28,7 @@ extension UserProfileDTO {
         self.id = user.id
         self.firstName = user.name.firstName
         self.lastName = user.name.lastName
+        self.gender = user.gender.apiValue
         self.city = user.city
         self.phone = user.phone
         self.nickname = user.nickname
@@ -39,6 +42,7 @@ extension UserProfileDTO {
         self.subscribersCount = user.subscribersCount
         self.friendsCount = user.friendsCount
         self.followingCount = user.followingCount
+        self.isOnline = user.isOnline ?? false
         
     }
     
@@ -47,11 +51,13 @@ extension UserProfileDTO {
                
        let avatarURL = avatarUrl.flatMap { URL(string: $0) }
        let coverURL  = coverUrl.flatMap { URL(string: $0) }
-       
+       let genderEnum = Gender(apiValue: gender)
+        
        return User(
            id: id,
            nickname: nickname,
            name: name,
+           gender: genderEnum,
            email: email,
            phone: phone,
            city: city,
@@ -62,7 +68,8 @@ extension UserProfileDTO {
            coverURL: coverURL,
            subscribersCount: subscribersCount,
            friendsCount: friendsCount,
-           followingCount: followingCount
+           followingCount: followingCount,
+           isOnline: isOnline
        )
         
     }

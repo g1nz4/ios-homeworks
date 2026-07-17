@@ -60,6 +60,8 @@ final class CDUserCache: CDUserCacheProtocol {
             cdUser.setValue(user.subscribersCount.map { NSNumber(value: $0) }, forKey: "subscribersCount")
             cdUser.setValue(user.friendsCount.map { NSNumber(value: $0) }, forKey: "friendsCount")
             cdUser.setValue(user.followingCount.map { NSNumber(value: $0) }, forKey: "followingCount")
+            cdUser.setValue(user.gender.rawValue, forKey: "gender")
+            cdUser.setValue(user.isOnline, forKey: "isOnline")
 
             // Сохранить изменения, если они есть
             if context.hasChanges {
@@ -72,7 +74,7 @@ final class CDUserCache: CDUserCacheProtocol {
     func load(userID: String) async throws -> User? {
         let context = stack.newBackgroundContext()
         
-        return try await context.perform {
+        return try await context.perform { () -> User? in
             // Поиск CDUser по id
             let request = NSFetchRequest<NSManagedObject>(entityName: self.entityName)
             request.predicate = NSPredicate(format: "id == %@", userID)
@@ -100,6 +102,10 @@ final class CDUserCache: CDUserCacheProtocol {
             
             let id = cd.value(forKey: "id") as? String ?? userID
             
+            let genderStr = cd.value(forKey: "gender") as? String ?? "other"
+            let isOnline = cd.value(forKey: "isOnline") as? Bool ?? false
+            let genderEnum = Gender(rawValue: genderStr) ?? .male
+            
             // Сборка доменной модели User
             let name = Name(firstName: firstName, lastName: lastName)
             
@@ -110,6 +116,7 @@ final class CDUserCache: CDUserCacheProtocol {
                 id: id,
                 nickname: nil,
                 name: name,
+                gender: genderEnum,
                 email: email,
                 phone: phone,
                 city: city,
@@ -119,7 +126,8 @@ final class CDUserCache: CDUserCacheProtocol {
                 coverURL: coverURL,
                 subscribersCount: subs,
                 friendsCount: friends,
-                followingCount: following
+                followingCount: following,
+                isOnline: isOnline
             )
             
             return user

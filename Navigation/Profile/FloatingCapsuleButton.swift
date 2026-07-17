@@ -9,10 +9,10 @@ final class FloatingCapsuleButton: UIControl {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = .appBackground
         view.layer.cornerRadius = 18
-        view.layer.borderWidth = 1
+        view.layer.borderWidth = 0.5
         view.layer.borderColor = UIColor.appSecondaryText.cgColor
-        view.layer.shadowColor = UIColor.appSecondaryText.cgColor
-        view.layer.shadowOpacity = 0.08
+        view.layer.shadowColor = UIColor.appPrimaryText.cgColor
+        view.layer.shadowOpacity = 0.18
         view.layer.shadowRadius = 8
         view.layer.shadowOffset = CGSize(width: 0, height: 2)
         view.isUserInteractionEnabled = false

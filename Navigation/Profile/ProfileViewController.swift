@@ -1,6 +1,5 @@
 import UIKit
 import PhotosUI
-import StorageService
 
 /// Основной экран профиля: хедер, капсулы: "Друзья" и "Опубликовать пост"; табы (.main/.posts/.photos/.music), посты, альбомы, фотографии, музыка, сториз, кнопка публикации...
 @MainActor
@@ -490,7 +489,14 @@ final class ProfileViewController: UICollectionViewController {
             self.showAlert(message: error.localizedDescription)
         }
         
-        // Устанавлить исходный флаг сторис
+        viewModel.onFriendsChanged = { [weak self] in
+            guard let self else { return }
+            UIView.performWithoutAnimation {
+                self.collectionView.reloadData()
+            }
+        }
+
+        // Установить исходный флаг сторис
         setHasStory(viewModel.hasStory)
         
         if let user = viewModel.headerUser {
@@ -546,6 +552,7 @@ final class ProfileViewController: UICollectionViewController {
 // MARK: - ProfileCollectionHandlerOutput
 
 extension ProfileViewController: ProfileCollectionHandlerOutput {
+   
 
     /// Скролл профиля — анимация появления никнейма в навбаре.
     func didScrollProfile(offsetY: CGFloat) {
@@ -591,21 +598,10 @@ extension ProfileViewController: ProfileCollectionHandlerOutput {
         let postsSection = 1
 
         Task { @MainActor in
-            let rowsBefore = viewModel.numberOfRows(in: postsSection)
-
             await viewModel.deletePost(at: index)
 
-            let rowsAfter = viewModel.numberOfRows(in: postsSection)
-
             UIView.performWithoutAnimation {
-                if rowsBefore == rowsAfter {
-                    let indexPath = IndexPath(item: index + 1, section: postsSection)
-                    self.collectionView.performBatchUpdates({
-                        self.collectionView.deleteItems(at: [indexPath])
-                    }, completion: nil)
-                } else {
-                    self.collectionView.reloadSections(IndexSet(integer: postsSection))
-                }
+                self.collectionView.reloadSections(IndexSet(integer: postsSection))
                 self.collectionView.layoutIfNeeded()
             }
         }
@@ -687,7 +683,21 @@ extension ProfileViewController: ProfileCollectionHandlerOutput {
             }
         }
     }
+    
+    func didTapPostImage(photo: Photo) {
+        guard let coordinator else { return }
 
+            coordinator.showPhotoViewer(
+                photos: [photo],
+                startIndex: 0,
+                delegate: coordinator,
+                showAddToSaved: true,
+                viewInPost: true
+            )
+        }
+    
+    func didTapSharePost(at index: Int) { }
+    
     func didTapMoreInfo() {
         coordinator?.present(.info)
     }
@@ -728,37 +738,36 @@ extension ProfileViewController: PublishPostViewControllerDelegate {
         let postsSection = 1
         let rowsBefore = viewModel.numberOfRows(in: postsSection)
 
-        viewModel.insert(post: post, at: 0)
+        Task { @MainActor in
+                await viewModel.publish(post: post) 
 
-        if viewModel.currentTab == .main {
-            let rowsAfter = viewModel.numberOfRows(in: postsSection)
+                if viewModel.currentTab == .main {
+                    let rowsAfter = viewModel.numberOfRows(in: postsSection)
 
-            if rowsAfter == rowsBefore + 1 {
-                // Добавился ровно 1 пост — аккуратно вставить item
-                let indexPath = IndexPath(item: 1, section: postsSection)
-                insertItemsWithoutAnimation([indexPath])
-            } else {
-                // Кол-во строк изменилось по-другому (если была заглушка)
-                UIView.performWithoutAnimation {
-                    if collectionView.numberOfSections > postsSection {
-                        collectionView.reloadSections(IndexSet(integer: postsSection))
+                    if rowsAfter == rowsBefore + 1 {
+                        let indexPath = IndexPath(item: 1, section: postsSection)
+                        self.insertItemsWithoutAnimation([indexPath])
                     } else {
-                        collectionView.reloadData()
+                        UIView.performWithoutAnimation {
+                            if self.collectionView.numberOfSections > postsSection {
+                                self.collectionView.reloadSections(IndexSet(integer: postsSection))
+                            } else {
+                                self.collectionView.reloadData()
+                            }
+                            self.collectionView.layoutIfNeeded()
+                        }
                     }
-                    collectionView.layoutIfNeeded()
-                }
-            }
-        } else {
-            // Если активен другой таб, просто обновить данные
-            UIView.performWithoutAnimation {
-                if collectionView.numberOfSections > postsSection {
-                    collectionView.reloadSections(IndexSet(integer: postsSection))
                 } else {
-                    collectionView.reloadData()
+                    UIView.performWithoutAnimation {
+                        if self.collectionView.numberOfSections > postsSection {
+                            self.collectionView.reloadSections(IndexSet(integer: postsSection))
+                        } else {
+                            self.collectionView.reloadData()
+                        }
+                        self.collectionView.layoutIfNeeded()
+                    }
                 }
-                collectionView.layoutIfNeeded()
             }
-        }
     }
 
     func publishPostViewController(_ vc: PublishPostViewController, didEdit post: MyPost) {
@@ -769,30 +778,6 @@ extension ProfileViewController: PublishPostViewControllerDelegate {
                 let indexPath = IndexPath(item: index + 1, section: 1)
                 self.reloadItemsWithoutAnimation([indexPath])
             }
-        }
-    }
-}
-
-// MARK: - FavoritesDelegate
-
-extension ProfileViewController: FavoritesDelegate {
-
-    /// Пост удален из избранного в другом экране — обновляет локальный список.
-    func favoritesDidRemoveFromFavorites(postId: String) {
-        viewModel.setFavorite(false, forPostId: postId)
-
-        if let index = viewModel.indexOfPost(with: postId) {
-            let indexPath = IndexPath(item: index + 1, section: 1)
-            reloadItemsWithoutAnimation([indexPath])
-        }
-    }
-
-    func favoritesDidUpdate(post: MyPost) {
-        viewModel.applyUpdatedPostFromFavorites(post)
-
-        if let index = viewModel.indexOfPost(with: post.id) {
-            let indexPath = IndexPath(item: index + 1, section: 1)
-            reloadItemsWithoutAnimation([indexPath])
         }
     }
 }

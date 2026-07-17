@@ -1,7 +1,5 @@
 import Foundation
-import StorageService
 import CoreData
-import UIKit
 
 protocol CDPostManagerProtocol {
     /// Upsert: обновляет существующий пост или создаёт новый, сохраняя текущее isFavorite из MyPost
@@ -44,6 +42,9 @@ final class CDPostManager: CDPostManagerProtocol {
         let isLiked = post.isLiked
         let isExpanded = post.isExpanded
         let createdAt = post.createdAt
+        let authorAvatarPath = post.authorAvatarPath
+        let imagePath = post.imagePath
+        let isOnWall = post.isOnWall
         
         try await context.perform {
             let request: NSFetchRequest<CDPost> = CDPost.fetchRequest()
@@ -67,13 +68,16 @@ final class CDPostManager: CDPostManagerProtocol {
             
             cdPost.author = author
             cdPost.authorID = authorID
-            cdPost.image = image?.pngData()
+            cdPost.image = image
             cdPost.postDescription = description
             cdPost.likes = Int64(likes)
             cdPost.views = Int64(views)
             cdPost.isFavorite = isFavorite
             cdPost.isLiked = isLiked
             cdPost.isExpanded = isExpanded
+            cdPost.authorAvatarPath = authorAvatarPath
+            cdPost.imagePath = imagePath
+            cdPost.isOnWall = isOnWall
             
             if context.hasChanges { try context.save() }
         }
@@ -103,7 +107,10 @@ final class CDPostManager: CDPostManagerProtocol {
         
         return try await context.perform {
             let request: NSFetchRequest<CDPost> = CDPost.fetchRequest()
-            request.predicate = NSPredicate(format: "ownerID == %@", ownerId)
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                NSPredicate(format: "ownerID == %@", ownerId),
+                NSPredicate(format: "isOnWall == YES")
+            ])
             request.sortDescriptors = [
                 NSSortDescriptor(key: "createdAt", ascending: false)
             ]
@@ -141,7 +148,6 @@ final class CDPostManager: CDPostManagerProtocol {
                 NSPredicate(format: "ownerID == %@", ownerId),
                 NSPredicate(format: "isFavorite == YES")
             ]
-            
             
             if let text = authorNameContains, !text.isEmpty {
                 predicates.append(NSPredicate(format: "author CONTAINS[c] %@", text))
@@ -202,26 +208,22 @@ final class CDPostManager: CDPostManagerProtocol {
             let description = obj.postDescription,
             let createdAt = obj.createdAt
         else { return nil }
-        
-        let image: UIImage?
-        if let data = obj.image {
-            image = UIImage(data: data)
-        } else {
-            image = nil
-        }
-        
+
         return MyPost(
             id: id,
             authorId: authorID,
             author: author,
-            image: image,
+            image: obj.image,
             description: description,
             likes: Int(obj.likes),
             views: Int(obj.views),
             isExpanded: obj.isExpanded,
             isLiked: obj.isLiked,
             isFavorite: obj.isFavorite,
-            createdAt: createdAt
+            createdAt: createdAt,
+            authorAvatarPath: obj.authorAvatarPath,
+            imagePath: obj.imagePath,
+            isOnWall: obj.isOnWall
         )
     }
 }

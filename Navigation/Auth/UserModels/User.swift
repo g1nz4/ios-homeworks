@@ -9,11 +9,38 @@ struct Name: Equatable {
     }
 }
 
+enum Gender: String, Codable, CaseIterable {
+    case male
+    case female
+
+    var apiValue: String { rawValue }
+
+    init(apiValue: String) {
+        switch apiValue.lowercased() {
+        case "male": self = .male
+        case "female": self = .female
+       
+        default: self = .male
+        }
+    }
+
+    /// Локализованный заголовок для UI
+    var localizedTitle: String {
+        switch self {
+        case .male:
+            return NSLocalizedString("gender_male", comment: "Мужской")
+        case .female:
+            return NSLocalizedString("gender_female", comment: "Женский")
+        }
+    }
+}
+
 final class User: Identifiable, Equatable {
     
     let id: String
     var nickname: String?
     var name: Name
+    var gender: Gender
     var email: String?
     var phone: String?
     var city: String?
@@ -25,11 +52,14 @@ final class User: Identifiable, Equatable {
     var subscribersCount: Int?
     var friendsCount: Int?
     var followingCount: Int?
+    var isOnline: Bool?
+   
     
     init(
         id: String,
         nickname: String? = nil,
         name: Name,
+        gender: Gender,
         email: String? = nil,
         phone: String? = nil,
         city: String? = nil,
@@ -40,11 +70,13 @@ final class User: Identifiable, Equatable {
         coverURL: URL? = nil,
         subscribersCount: Int? = nil,
         friendsCount: Int? = nil,
-        followingCount: Int? = nil
+        followingCount: Int? = nil,
+        isOnline: Bool? = nil
     ) {
         self.id = id
         self.nickname = nickname
         self.name = name
+        self.gender = gender
         self.email = email
         self.phone = phone
         self.city = city
@@ -56,12 +88,14 @@ final class User: Identifiable, Equatable {
         self.subscribersCount = subscribersCount
         self.friendsCount = friendsCount
         self.followingCount = followingCount
+        self.isOnline = isOnline
     }
     
     static func == (lhs: User, rhs: User) -> Bool {
         lhs.id == rhs.id &&
         lhs.nickname == rhs.nickname &&
         lhs.name == rhs.name &&
+        lhs.gender == rhs.gender &&
         lhs.email == rhs.email &&
         lhs.phone == rhs.phone &&
         lhs.city == rhs.city &&
@@ -72,7 +106,8 @@ final class User: Identifiable, Equatable {
         lhs.coverURL == rhs.coverURL &&
         lhs.subscribersCount == rhs.subscribersCount &&
         lhs.friendsCount == rhs.friendsCount &&
-        lhs.followingCount == rhs.followingCount
+        lhs.followingCount == rhs.followingCount &&
+        lhs.isOnline == rhs.isOnline
     }
 }
 
@@ -81,6 +116,7 @@ extension User {
         
         let avatarURL = dto.avatarUrl.flatMap { URL(string: $0) }
         let coverURL  = dto.coverUrl.flatMap { URL(string: $0) }
+        let genderEnum = Gender(apiValue: dto.gender)
         
         self.init(
             id: dto.id,
@@ -89,6 +125,7 @@ extension User {
                 firstName: dto.firstName,
                 lastName: dto.lastName
             ),
+            gender: genderEnum,
             email: dto.email,
             phone: dto.phone,
             city: dto.city,
@@ -99,7 +136,8 @@ extension User {
             coverURL: coverURL,
             subscribersCount: dto.subscribersCount,
             friendsCount: dto.friendsCount,
-            followingCount: dto.followingCount
+            followingCount: dto.followingCount,
+            isOnline: dto.isOnline
         )
     }
 }

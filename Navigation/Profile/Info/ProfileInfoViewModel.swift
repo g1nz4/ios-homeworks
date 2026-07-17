@@ -15,7 +15,7 @@ struct ProfileInfoViewData {
 final class ProfileInfoViewModel {
     /// Готовые к показу данные.
     let data: ProfileInfoViewData
-
+    
     init(user: User) {
         data = ProfileInfoViewData(
             status: user.status,
@@ -25,7 +25,7 @@ final class ProfileInfoViewModel {
             city: user.city,
             subscribersCount: user.subscribersCount.map { "\($0) подписчиков" },
             friendsCount: user.friendsCount.map { "\($0)" },
-            followingCount: user.followingCount.map { "\($0)" },
+            followingCount: user.followingCount.map { "\($0)" }
         )
     }
     
@@ -34,7 +34,8 @@ final class ProfileInfoViewModel {
         guard let date else { return nil }
         let df = DateFormatter()
         df.locale = Locale(identifier: "ru_RU")
-        df.dateStyle = .long    
+        df.dateStyle = .long
+        
         return df.string(from: date)
     }
 }

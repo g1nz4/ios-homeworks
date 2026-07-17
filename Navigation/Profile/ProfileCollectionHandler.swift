@@ -1,5 +1,4 @@
 import UIKit
-import StorageService
 
 /// Обратная связь от хэндлера коллекции к контроллеру профиля / координатору.
 protocol ProfileCollectionHandlerOutput: AnyObject {
@@ -20,6 +19,8 @@ protocol ProfileCollectionHandlerOutput: AnyObject {
 
     func didTapAvatarWithoutStory()
     func didTapMoreInfo()
+    func didTapPostImage(photo: Photo)
+    func didTapSharePost(at index: Int)
 }
 
 /// Отдельный объект, который реализует dataSource/delegate коллекции профиля.
@@ -85,7 +86,11 @@ extension ProfileCollectionHandler: UICollectionViewDataSource {
                 withReuseIdentifier: FriendsCollectionViewCell.reuseId,
                 for: indexPath
             ) as! FriendsCollectionViewCell
-            cell.configure(friendsCount: 123)
+            let summary = viewModel.friendsSummary()
+            cell.configure(
+                friendsCount: summary.count,
+                avatarURLs: summary.avatars
+            )
             
             return cell
 
@@ -113,16 +118,16 @@ extension ProfileCollectionHandler: UICollectionViewDataSource {
             cell.configure(with: post, user: user)
             cell.delegate = self
 
-            // В секции 1: item = 0 — это ячейка табов, поэтому индекс поста = item - 1
             let postIndex = indexPath.item - 1
-
+            let canEdit = post.authorId == user.id
+            
             cell.configureMenu(
                 isFavorite: post.isFavorite,
                 onFavorite: { [weak self, weak cell] in
                     guard let self, let cell else { return }
                     self.output?.didToggleFavorite(postIndex: postIndex, cell: cell)
                 },
-                onEdit: { [weak self] in
+                onEdit: canEdit ? { [weak self] in
                     guard
                         let self,
                         let post = self.viewModel.post(
@@ -131,11 +136,13 @@ extension ProfileCollectionHandler: UICollectionViewDataSource {
                         )
                     else { return }
                     self.output?.didTapEditPost(post)
-                },
+                } : nil,
                 onDelete: { [weak self] in
                     self?.output?.didTapDeletePost(at: postIndex)
                 }
             )
+            
+            cell.setShareButtonHidden(true)
 
             return cell
 
@@ -325,20 +332,28 @@ extension ProfileCollectionHandler: UICollectionViewDelegate {
 // MARK: - PostCollectionViewCellDelegate
 
 extension ProfileCollectionHandler: PostCollectionViewCellDelegate {
-
+    
     func postCellDidTapMore(_ cell: PostCollectionViewCell) {
         guard
             let collectionView = findCollectionView(from: cell),
             let indexPath = collectionView.indexPath(for: cell)
         else { return }
-
+        
         let postIndex = indexPath.item - 1
-
+        
         viewModel.toggleExpandedForPost(at: postIndex)
-
+        
         UIView.performWithoutAnimation {
-            collectionView.reloadItems(at: [indexPath])
-            collectionView.layoutIfNeeded()
+            collectionView.performBatchUpdates({
+                collectionView.reloadItems(at: [indexPath])
+                collectionView.layoutIfNeeded()
+            }, completion: { _ in
+                collectionView.scrollToItem(
+                    at: indexPath,
+                    at: .top,
+                    animated: false
+                )
+            })
         }
     }
 
@@ -352,6 +367,32 @@ extension ProfileCollectionHandler: PostCollectionViewCellDelegate {
         output?.toggleLikeForPost(at: postIndex, cell: cell)
     }
 
+    func postCellDidTapImage(_ cell: PostCollectionViewCell) {
+        guard
+            let collectionView = findCollectionView(from: cell),
+            let indexPath = collectionView.indexPath(for: cell),
+            let post = viewModel.post(section: indexPath.section, item: indexPath.item)
+        else { return }
+
+        // Взять URL из imagePath
+        guard
+            let path = post.imagePath,
+            !path.isEmpty,
+            let url = URL(string: path)
+        else {
+            AppLogger.debug("[PROFILE] postCellDidTapImage: no valid image url for post \(post.id)")
+            return
+        }
+
+        // Сборка Photo для вьюера
+        let photo = Photo(id: post.id, url: url, albumId: nil)
+
+        // Проброс наверх в контроллер профиля
+        output?.didTapPostImage(photo: photo)
+    }
+    
+    func postCellDidTapShare(_ cell: PostCollectionViewCell) { }
+    
     /// Ищет `UICollectionView`, к которой принадлежит ячейка.
     private func findCollectionView(from cell: UICollectionViewCell) -> UICollectionView? {
         var view: UIView? = cell.superview

@@ -1,9 +1,10 @@
 import UIKit
-import StorageService
 
 protocol PostCollectionViewCellDelegate: AnyObject {
     func postCellDidTapMore(_ cell: PostCollectionViewCell)
     func postCellDidTapLike(_ cell: PostCollectionViewCell)
+    func postCellDidTapShare(_ cell: PostCollectionViewCell)
+    func postCellDidTapImage(_ cell: PostCollectionViewCell)
 }
 
 @MainActor
@@ -14,6 +15,7 @@ final class PostCollectionViewCell: UICollectionViewCell {
     weak var delegate: PostCollectionViewCellDelegate?
 
     private var avatarTask: Task<Void, Never>?
+    private var mediaTask: Task<Void, Never>?
 
     private var isLikedState: Bool = false
     private var fullText: String = ""
@@ -41,6 +43,8 @@ final class PostCollectionViewCell: UICollectionViewCell {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
+        imageView.layer.borderWidth = 0.15
+        imageView.layer.borderColor = UIColor.appPrimaryText.cgColor
         imageView.layer.cornerRadius = 20
         imageView.backgroundColor = .appSecondaryBackground
         
@@ -50,7 +54,7 @@ final class PostCollectionViewCell: UICollectionViewCell {
     /// Имя  автора.
     private lazy var authorLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 20.0, weight: .bold)
+        label.font = .systemFont(ofSize: 18.0, weight: .bold)
         label.textColor = .appPrimaryText
         label.numberOfLines = 1
         
@@ -72,6 +76,7 @@ final class PostCollectionViewCell: UICollectionViewCell {
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         imageView.backgroundColor = .clear
+        imageView.isUserInteractionEnabled = true
         
         return imageView
     }()
@@ -93,7 +98,7 @@ final class PostCollectionViewCell: UICollectionViewCell {
     /// Текст поста (с поддержкой "Показать ещё" / "Свернуть").
     private lazy var contentDescriptionLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 12.0, weight: .medium)
+        label.font = .systemFont(ofSize: 14.0, weight: .medium)
         label.textColor = .appPrimaryText
         label.isUserInteractionEnabled = true
 
@@ -146,6 +151,7 @@ final class PostCollectionViewCell: UICollectionViewCell {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "arrowshape.turn.up.right"), for: .normal)
         button.tintColor = .appPrimaryText
+       
         button.contentHorizontalAlignment = .fill
         button.contentVerticalAlignment = .fill
         
@@ -179,32 +185,19 @@ final class PostCollectionViewCell: UICollectionViewCell {
         super.prepareForReuse()
 
         delegate = nil
+        
         avatarTask?.cancel()
         avatarTask = nil
         avatarImageView.image = nil
+        
+        mediaTask?.cancel()
+        mediaTask = nil
+        mediaImageView.image = nil
 
         fullText = ""
         isExpanded = false
         moreRange = nil
         contentDescriptionLabel.attributedText = nil
-    }
-
-    
-
-    func updateViewsCount(_ views: Int) {
-        viewsLabel.text = "\(views)"
-    }
-
-    func setMoreButtonHidden(_ hidden: Bool) {
-        moreButton.isHidden = hidden
-        moreButton.isEnabled = !hidden
-    }
-
-    func updateLikeState(isLiked: Bool, likes: Int) {
-        isLikedState = isLiked
-        likesLabel.text = "\(likes)"
-        likesImage.image = UIImage(systemName: isLiked ? "heart.fill" : "heart")
-        likesImage.tintColor = isLiked ? .systemRed : .appSecondaryText
     }
 
     private func configureUI() {
@@ -284,15 +277,15 @@ final class PostCollectionViewCell: UICollectionViewCell {
 
             shareButton.centerYAnchor.constraint(equalTo: likesImage.centerYAnchor),
             shareButton.leadingAnchor.constraint(equalTo: likesLabel.trailingAnchor, constant: 16),
-            shareButton.widthAnchor.constraint(equalToConstant: 20),
-            shareButton.heightAnchor.constraint(equalToConstant: 16),
+            shareButton.widthAnchor.constraint(equalToConstant: 22),
+            shareButton.heightAnchor.constraint(equalToConstant: 20),
 
             viewsLabel.centerYAnchor.constraint(equalTo: likesImage.centerYAnchor),
             viewsLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
 
             viewsImage.centerYAnchor.constraint(equalTo: likesImage.centerYAnchor),
             viewsImage.trailingAnchor.constraint(equalTo: viewsLabel.leadingAnchor, constant: -4),
-            viewsImage.widthAnchor.constraint(equalToConstant: 22),
+            viewsImage.widthAnchor.constraint(equalToConstant: 25),
             viewsImage.heightAnchor.constraint(equalToConstant: 20),
 
             likesImage.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12)
@@ -308,27 +301,21 @@ final class PostCollectionViewCell: UICollectionViewCell {
         fullText = post.description.trimmingCharacters(in: .whitespacesAndNewlines)
         isExpanded = post.isExpanded
 
-        authorLabel.text = user.name.displayName
+        authorLabel.text = post.author
         dateLabel.text = post.createdAt.formatted(date: .long, time: .shortened)
         viewsLabel.text = "\(post.views)"
 
         updateLikeState(isLiked: post.isLiked, likes: post.likes)
 
-        let hasImage = (post.image != nil)
+        let hasImage = (post.image != nil) ||
+                       (post.imagePath != nil && !(post.imagePath?.isEmpty ?? true))
         let hasText = !fullText.isEmpty
 
-        // Картинка
-        if let image = post.image {
-            mediaImageView.image = image
-            mediaImageView.isHidden = false
-            mediaHeightConstraint.constant = 400
-        } else {
-            mediaImageView.image = nil
-            mediaImageView.isHidden = true
-            mediaHeightConstraint.constant = 0
-        }
+        // Картинка (UIImage или imagePath)
+        configureMedia(for: post)
 
-        // Описание: откуда отступ сверху
+
+        // Отступы для текста
         if hasImage {
             contentTopToDateConstraint.isActive = false
             contentTopToMediaConstraint.isActive = hasText   // текст под картинкой
@@ -347,7 +334,7 @@ final class PostCollectionViewCell: UICollectionViewCell {
         layoutIfNeeded()
 
         // Аватар
-        loadAvatarIfNeeded(post: post, user: user)
+        configureAvatar(post: post, currentUser: user)
     }
 
     func configureMenu(
@@ -398,6 +385,27 @@ final class PostCollectionViewCell: UICollectionViewCell {
 
         moreButton.menu = UIMenu(children: actions)
     }
+    
+    func updateViewsCount(_ views: Int) {
+        viewsLabel.text = "\(views)"
+    }
+
+    func setMoreButtonHidden(_ hidden: Bool) {
+        moreButton.isHidden = hidden
+        moreButton.isEnabled = !hidden
+    }
+    
+    func setShareButtonHidden(_ hidden: Bool) {
+        shareButton.isHidden = hidden
+        shareButton.isEnabled = !hidden
+    }
+
+    func updateLikeState(isLiked: Bool, likes: Int) {
+        isLikedState = isLiked
+        likesLabel.text = "\(likes)"
+        likesImage.image = UIImage(systemName: isLiked ? "heart.fill" : "heart")
+        likesImage.tintColor = isLiked ? .systemRed : .appSecondaryText
+    }
 
     /// Настройка всех жестов.
     private func setupGestures() {
@@ -416,6 +424,11 @@ final class PostCollectionViewCell: UICollectionViewCell {
         doubleTap.delegate = self
         containerView.isUserInteractionEnabled = true
         containerView.addGestureRecognizer(doubleTap)
+        
+        shareButton.addTarget(self, action: #selector(handleShareTap), for: .touchUpInside)
+        
+        let imageTap = UITapGestureRecognizer(target: self, action: #selector(handleImageTap))
+        mediaImageView.addGestureRecognizer(imageTap)
 
         // чтобы single tap по тексту не съедал double‑tap
         if let labelTap = contentDescriptionLabel.gestureRecognizers?.first {
@@ -423,23 +436,46 @@ final class PostCollectionViewCell: UICollectionViewCell {
         }
     }
 
-    private func loadAvatarIfNeeded(post: MyPost, user: User) {
+    private func configureAvatar(post: MyPost, currentUser: User) {
         avatarTask?.cancel()
-        avatarTask = Task { [weak self] in
-            guard let self = self else { return }
+        avatarTask = nil
 
-            if post.authorId == user.id, let urlString = user.avatarURL {
-                let image = await ImageLoader.shared.loadImage(from: urlString)
-                await MainActor.run {
-                    self.avatarImageView.image = image
-                }
-                return
-            }
+        let placeholder = UIImage(systemName: "person.crop.circle")
 
-            await MainActor.run {
-                self.avatarImageView.image = UIImage(systemName: "person.crop.circle")
-            }
+        if let path = post.authorAvatarPath, !path.isEmpty {
+            avatarTask = avatarImageView.setImage(from: path, placeholder: placeholder)
+            return
         }
+
+        if post.authorId == currentUser.id, let url = currentUser.avatarURL {
+            avatarTask = avatarImageView.setImage(from: url.absoluteString, placeholder: placeholder)
+            return
+        }
+
+        avatarImageView.image = placeholder
+    }
+    
+    private func configureMedia(for post: MyPost) {
+        mediaTask?.cancel()
+        mediaTask = nil
+
+        if post.image == nil, (post.imagePath == nil || post.imagePath?.isEmpty == true) {
+            mediaImageView.image = nil
+            mediaImageView.isHidden = true
+            mediaHeightConstraint.constant = 0
+            return
+        }
+
+        mediaImageView.isHidden = false
+        mediaHeightConstraint.constant = 400
+
+        if let imageData = post.image {
+            let image = UIImage(data: imageData)
+            mediaImageView.image = image
+            return
+        }
+
+        mediaTask = mediaImageView.setImage(from: post.imagePath, placeholder: nil)
     }
 
     /// Обновляет текст лейбла с учётом состояния (свернут/развернут)
@@ -545,6 +581,15 @@ final class PostCollectionViewCell: UICollectionViewCell {
         } else {
             delegate?.postCellDidTapLike(self)
         }
+    }
+    
+    @objc private func handleShareTap() {
+        delegate?.postCellDidTapShare(self)
+    }
+    
+    @objc private func handleImageTap() {
+        guard !mediaImageView.isHidden, mediaImageView.image != nil else { return }
+        delegate?.postCellDidTapImage(self)
     }
 }
 

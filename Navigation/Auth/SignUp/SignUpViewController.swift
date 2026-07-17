@@ -31,6 +31,30 @@ final class SignUpViewController: BaseScrollViewController {
         placeholder: NSLocalizedString("signup_last_name_placeholder", comment: "Введите фамилию")
     )
     
+    private lazy var genderLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .appSecondaryText
+        label.font = .systemFont(ofSize: 12, weight: .medium)
+        label.text = NSLocalizedString("gender", comment: "Выбор пола")
+        
+        return label
+    }()
+
+    private lazy var genderRadioGroup: GenderRadioGroupView = {
+        let view = GenderRadioGroupView()
+       view.translatesAutoresizingMaskIntoConstraints = false
+        
+        return view
+    }()
+
+    private lazy var genderStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [genderLabel, genderRadioGroup])
+        stack.axis = .vertical
+        stack.spacing = 6
+        
+        return stack
+    }()
+   
     private lazy var birthDatePicker: UIDatePicker = {
         let picker = UIDatePicker()
         picker.datePickerMode = .date
@@ -90,6 +114,7 @@ final class SignUpViewController: BaseScrollViewController {
         let stack = UIStackView(arrangedSubviews: [
             firstNameField,
             lastNameField,
+            genderStack,
             birthDateField,
             cityField,
             phoneField,
@@ -168,6 +193,11 @@ final class SignUpViewController: BaseScrollViewController {
     }
     
     private func bindViewModel() {
+        genderRadioGroup.selectedGender = viewModel.gender
+        genderRadioGroup.onGenderChanged = { [weak self] gender in
+            self?.viewModel.gender = gender
+        }
+        
         // Ошибки валидации / сети
         viewModel.errorText.binding { [weak self] text in
             guard let self, let text, !text.isEmpty else { return }

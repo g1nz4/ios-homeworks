@@ -43,13 +43,11 @@ final class ProfileEditViewController: BaseScrollViewController {
         placeholder: "Что нового?"
     )
 
-
     private lazy var aboutTitleLabel: UILabel = {
         let label = UILabel()
         label.text = "О себе"
         label.font = UIFont.preferredFont(forTextStyle: .footnote).withSize(14)
         label.textColor = .appPrimaryText
-    //    label.translatesAutoresizingMaskIntoConstraints = false
         
         return label
     }()
@@ -64,7 +62,6 @@ final class ProfileEditViewController: BaseScrollViewController {
         textView.isScrollEnabled = false
         textView.returnKeyType = .default
         textView.heightAnchor.constraint(equalToConstant: 200.0).isActive = true
-    //    textView.translatesAutoresizingMaskIntoConstraints = false
         
         return textView
     }()
@@ -74,7 +71,6 @@ final class ProfileEditViewController: BaseScrollViewController {
         let stack = UIStackView(arrangedSubviews: [aboutTitleLabel, aboutTextView])
         stack.axis = .vertical
         stack.spacing = 4
-     //   stack.translatesAutoresizingMaskIntoConstraints = false
         
         return stack
     }()

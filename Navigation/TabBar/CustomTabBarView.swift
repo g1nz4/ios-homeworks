@@ -33,7 +33,7 @@ final class CustomTabBarView: UIView {
     
     /// Базовая настройка внешнего вида и layout-а.
     private func setupView() {
-        backgroundColor = .appBackground
+        backgroundColor = .appTabBarBackground
         addSubview(stack)
         
         NSLayoutConstraint.activate([

@@ -10,6 +10,7 @@ final class PhotoCell: UICollectionViewCell {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.clipsToBounds = true
         view.contentMode = .scaleAspectFill
+        view.backgroundColor = .clear
         view.layer.cornerRadius = 6.0
         
         return view
@@ -36,7 +37,7 @@ final class PhotoCell: UICollectionViewCell {
     }
 
     private func setupUI() {
-        contentView.backgroundColor = .appBackground
+        contentView.backgroundColor = .clear
         contentView.addSubview(imageView)
         
         NSLayoutConstraint.activate([

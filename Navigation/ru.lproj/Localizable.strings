@@ -38,6 +38,26 @@
 "profile_title" = "Профиль";
 "profile_logout_button" = "Выйти";
 
+"menu_title" = "Меню";
+"language.russian" = "Русский";
+"language.english" = "Английский";
+"settings.notifications.title" = "Ежедневные обновления";
+"settings.notifications.footer.text" = "Уведомления отключены. Чтобы включить уведомления, откройте настройки приложения и разрешите уведомления.";
+"settings.permissions.camera.title" = "Доступ к камере";
+"settings.permissions.photos.title" = "Доступ к фото";
+"settings.permissions.footer.text" = "Доступ к камере и/или фото отключён. Чтобы изменить это, откройте настройки приложения и разрешите доступ.";
+"settings.openSettings.button" = "Открыть настройки";
+"settings.appearance.theme.title" = "Тема";
+"settings.language.row.title" = "Язык";
+"settings.navigation.tabSwipe.title" = "Свайп между вкладками";
+
+"search_header_view" = "Поиск...";
+"friends_title" = "Друзья";
+
+"gender_male" = "Мужской";
+"gender_female" = "Женский";
+"gender" = "ПОЛ";
+
 
 "error_phone_invalid" = "Некорректный формат номера телефона.";
 "error_auth_wrong_credentials" = "Неверный email или пароль";

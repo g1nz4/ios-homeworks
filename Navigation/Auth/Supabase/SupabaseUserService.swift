@@ -11,6 +11,8 @@ protocol UserServiceProtocol: AnyObject {
     func fetchProfile(phone: String) async throws -> User
     /// Обновить профиль пользователя и вернуть свежие пользовательские данные.
     func updateProfile(user: User) async throws -> User
+    /// Загрузить список друзей пользователя по его userId.
+    func fetchFriends(for userId: String) async throws -> [User]
 }
 
 /// Сервис для работы с таблицей profiles в Supabase.
@@ -144,6 +146,9 @@ final class SupabaseUserService: UserServiceProtocol {
             body["first_name"] = user.name.firstName
             body["last_name"]  = user.name.lastName
         }
+        if oldUser.gender != user.gender {
+            body["gender"] = user.gender.rawValue
+        }
         if oldUser.birthDate != user.birthDate {
             if let date = user.birthDate {
                 let iso = ISO8601DateFormatter()
@@ -174,6 +179,49 @@ final class SupabaseUserService: UserServiceProtocol {
         return fresh
     }
     
+    /// Загружает список друзей для заданного пользователя.
+    ///
+    /// 1. Чтение таблицы `friendships`, где user_id = userId или friend_id = userId,  и статус дружбы = accepted.
+    /// 2. Извлечение id друзей (второй стороны дружбы).
+    /// 3. Запрос в `profiles` по списку id через оператор `in`.
+    func fetchFriends(for userId: String) async throws -> [User] {
+        let queryItems = [
+            URLQueryItem(
+                name: "or",
+                value: "(user_id.eq.\(userId),friend_id.eq.\(userId))"
+            ),
+            URLQueryItem(name: "status", value: "eq.accepted"),
+            URLQueryItem(name: "select", value: "*")
+        ]
+        
+        let request = client.makeRESTRequest(
+            path: "friendships",
+            queryItems: queryItems
+        )
+        
+        let friendships: [FriendshipDTO] = try await client.perform(request)
+        if friendships.isEmpty { return [] }
+        
+        // получить список id друзей
+        let friendIDs: [String] = friendships.map { f in
+            f.userId == userId ? f.friendId : f.userId
+        }
+        
+        let idsList = friendIDs.joined(separator: ",")
+        
+        let profilesRequest = client.makeRESTRequest(
+            path: "profiles",
+            queryItems: [
+                URLQueryItem(name: "id", value: "in.(\(idsList))"),
+                URLQueryItem(name: "select", value: "*")
+            ]
+        )
+        
+        let dtos: [UserProfileDTO] = try await client.perform(profilesRequest)
+        let users = dtos.map { $0.toDomain() }
+        return users
+    }
+    
     /// Установить аватар из уже загруженного в Supabase фото.
     func setAvatarFromPhoto(userId: String, photoURL: URL) async throws {
         AppLogger.debug("[SERVICE] setAvatarFromPhoto url=\(photoURL)")
@@ -192,21 +240,10 @@ final class SupabaseUserService: UserServiceProtocol {
             AppLogger.error("[PHOTOS] failed to sync profile album with avatar: \(error)")
         }
         
-        // Обновить кэш
-        if let cached = try? await cacheStore.load(userID: userId) {
-            let updated = User(
-                id: cached.id,
-                nickname: cached.nickname,
-                name: cached.name,
-                email: cached.email,
-                phone: cached.phone,
-                city: cached.city,
-                birthDate: cached.birthDate,
-                status: cached.status,
-                avatarURL: photoURL,
-                coverURL: cached.coverURL
-            )
-            try? await cacheStore.save(updated)
+        //  только coverURL в кеш
+        if let cached = try await cacheStore.load(userID: userId) {
+            cached.avatarURL = photoURL
+            try await cacheStore.save(cached)
         }
     }
     
@@ -219,21 +256,10 @@ final class SupabaseUserService: UserServiceProtocol {
             body: ["cover_url": photoURL.absoluteString]
         )
         
-        // Обновляем кэш
-        if let cached = try? await cacheStore.load(userID: userId) {
-            let updated = User(
-                id: cached.id,
-                nickname: cached.nickname,
-                name: cached.name,
-                email: cached.email,
-                phone: cached.phone,
-                city: cached.city,
-                birthDate: cached.birthDate,
-                status: cached.status,
-                avatarURL: cached.avatarURL,
-                coverURL: photoURL
-            )
-            try? await cacheStore.save(updated)
+        // только coverURL в кеш
+        if let cached = try await cacheStore.load(userID: userId) {
+            cached.coverURL = photoURL
+            try await cacheStore.save(cached)
         }
     }
     

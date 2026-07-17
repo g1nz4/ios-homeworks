@@ -25,7 +25,6 @@ final class AlbumCell: UICollectionViewCell {
         label.numberOfLines = 2
         label.textAlignment = .center
         label.backgroundColor = UIColor.black.withAlphaComponent(0.4)
-        label.layer.cornerRadius = 10
         label.clipsToBounds = true
         
         return label
@@ -63,7 +62,7 @@ final class AlbumCell: UICollectionViewCell {
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             titleLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
-            titleLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 24)
+            titleLabel.heightAnchor.constraint(equalToConstant: 24)
         ])
     }
 

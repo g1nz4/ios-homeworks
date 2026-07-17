@@ -11,6 +11,14 @@ extension UIColor {
             return traitCollection.userInterfaceStyle == .light ? lightMode : darkMode
         }
     }
+    
+    /// Цвет таббара
+    static var appTabBarBackground: UIColor {
+        createColor(
+            lightMode: .white,
+            darkMode: .black
+        )
+    }
 
     /// Общий фон экранов
     static var appBackground: UIColor {
@@ -19,7 +27,7 @@ extension UIColor {
             darkMode: UIColor(red: 18/255, green: 18/255, blue: 18/255, alpha: 1)
         )
     }
-
+    
     /// Вторичный фон (поля, ячейки)
     static var appSecondaryBackground: UIColor {
         createColor(

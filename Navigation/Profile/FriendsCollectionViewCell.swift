@@ -2,9 +2,11 @@ import UIKit
 
 /// Ячейка блока "Друзья" в профиле. Показывает заголовок, количество друзей и три аватара друзей.
 final class FriendsCollectionViewCell: UICollectionViewCell {
-
+    
     static let reuseId = "FriendsCollectionViewCell"
-
+    
+    private var avatarTasks: [Task<Void, Never>] = []
+    
     /// Фоновая капсула.
     private lazy var containerView: UIView = {
         let view = UIView()
@@ -15,7 +17,7 @@ final class FriendsCollectionViewCell: UICollectionViewCell {
         
         return view
     }()
-
+    
     /// Заголовок блока.
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -25,7 +27,7 @@ final class FriendsCollectionViewCell: UICollectionViewCell {
         
         return label
     }()
-
+    
     /// Количество друзей.
     private lazy var countLabel: UILabel = {
         let label = UILabel()
@@ -34,7 +36,7 @@ final class FriendsCollectionViewCell: UICollectionViewCell {
         
         return label
     }()
-
+    
     /// Горизонтальный стек для аватарок друзей. Отрицательный spacing для эффекта наложения аватарок.
     private lazy var avatarsStackView: UIStackView = {
         let stack = UIStackView()
@@ -44,57 +46,73 @@ final class FriendsCollectionViewCell: UICollectionViewCell {
         
         return stack
     }()
-
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
         configureUI()
     }
-
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        
+        avatarTasks.forEach { $0.cancel() }
+        avatarTasks.removeAll()
+        avatarsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        countLabel.text = nil
+    }
+    
     private func configureUI() {
         contentView.backgroundColor = .clear
         contentView.addSubview(containerView)
-       
+        
         [titleLabel, countLabel, avatarsStackView].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             containerView.addSubview($0)
         }
-    
+        
         NSLayoutConstraint.activate([
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
             containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             containerView.heightAnchor.constraint(equalToConstant: 44),
-
+            
             titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
             titleLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-
+            
             countLabel.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 4),
             countLabel.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-
+            
             avatarsStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
             avatarsStackView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            avatarsStackView.heightAnchor.constraint(equalToConstant: 28)
+            avatarsStackView.heightAnchor.constraint(equalToConstant: 32)
         ])
     }
-
-    func configure(friendsCount: Int) {
+    
+    func configure(friendsCount: Int, avatarURLs: [URL]) {
         countLabel.text = "\(friendsCount)"
         avatarsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-
-        // Сейчас — заглушки из ассетов: friend1, friend2, friend3.
-        // В будущем реальные URL и загрузка картинок через ImageLoader.
-        for index in 0..<3 {
+        
+        avatarTasks.forEach { $0.cancel() }
+        avatarTasks.removeAll()
+        
+        for url in avatarURLs.prefix(3).reversed() {
             let imageView = makeAvatarImageView()
-            imageView.image = UIImage(named: "friend\(index + 1)")
+            _ = imageView.setImage(from: url.absoluteString, placeholder: UIImage(named: "avatar_placeholder"))
             avatarsStackView.addArrangedSubview(imageView)
         }
+        
+        let views = avatarsStackView.arrangedSubviews
+        for (index, view) in views.enumerated() {
+            view.layer.zPosition = CGFloat(views.count - index)
+        }
     }
+
 
     /// Создаёт настроенный UIImageView для аватарки друга.
     private func makeAvatarImageView() -> UIImageView {
@@ -102,14 +120,16 @@ final class FriendsCollectionViewCell: UICollectionViewCell {
         imageView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            imageView.widthAnchor.constraint(equalToConstant: 28),
-            imageView.heightAnchor.constraint(equalToConstant: 28)
+            imageView.widthAnchor.constraint(equalToConstant: 32),
+            imageView.heightAnchor.constraint(equalToConstant: 32)
         ])
 
-        imageView.layer.cornerRadius = 14
+        imageView.layer.cornerRadius = 16
         imageView.clipsToBounds = true
         imageView.contentMode = .scaleAspectFill
-        imageView.backgroundColor = .tertiarySystemFill // фон‑заглушка
+        imageView.layer.borderWidth = 0.15
+        imageView.layer.borderColor = UIColor.appPrimaryText.cgColor
+        imageView.backgroundColor = .tertiarySystemFill
 
         return imageView
     }

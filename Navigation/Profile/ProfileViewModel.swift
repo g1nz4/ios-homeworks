@@ -1,5 +1,4 @@
 import Foundation
-import StorageService
 
 /// Типы ячеек, которые отображатются в коллекции профиля.
 enum ProfileCellType {
@@ -31,6 +30,8 @@ final class ProfileViewModel {
     let photosVM: PhotosViewModel
     // let musicVM: MusicViewModel //  позже
 
+    private let userService: SupabaseUserService
+
     /// Чтобы не грузить фото на каждый заход во вкладку photos повторно, отмечаем, что начальная загрузка уже была.
     private var didInitialPhotosLoad = false
 
@@ -39,6 +40,10 @@ final class ProfileViewModel {
 
     /// Текущий выбранный таб.
     private(set) var selectedTab: ProfileTab = .main
+
+    // Состояние по друзьям
+    private(set) var friendsCount: Int = 0
+    private(set) var friendAvatarURLs: [URL] = []
 
     var hasStory: Bool { headerVM.hasStory }
     var headerUser: User? { user }
@@ -61,6 +66,8 @@ final class ProfileViewModel {
     /// Фото/альбомы были обновлены.
     var onPhotosChanged: (() -> Void)?
 
+    var onFriendsChanged: (() -> Void)?
+
     init(
         user: User,
         userService: SupabaseUserService,
@@ -70,7 +77,8 @@ final class ProfileViewModel {
         photosRepository: PhotosRepositoryProtocol
     ) {
         self.user = user
-
+        self.userService = userService
+        
         self.headerVM = ProfileHeaderViewModel(
             user: user,
             userService: userService,
@@ -87,6 +95,7 @@ final class ProfileViewModel {
         )
 
         bindSubViewModels()
+        observeSavedPhotosChanges()
     }
 
     /// Подписки на события дочерних вьюмоделей (header/posts/photos).
@@ -96,6 +105,12 @@ final class ProfileViewModel {
             guard let self else { return }
             self.user = user
             self.updateHeader?(user)
+            
+            NotificationCenter.default.post(
+                name: .currentUserDidUpdate,
+                object: nil,
+                userInfo: [CurrentUserUpdateKey.user: user]
+            )
         }
 
         // Ошибка headerVM
@@ -134,6 +149,45 @@ final class ProfileViewModel {
             }
         }
     }
+    
+    private func observeSavedPhotosChanges() {
+        NotificationCenter.default.addObserver(
+            forName: .savedPhotosDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { [weak self] in
+                await self?.reloadPhotos(force: true)
+            }
+        }
+    }
+    
+    private func loadFriends() async {
+        defer { onFriendsChanged?() }
+        
+        do {
+            let users = try await userService.fetchFriends(for: user.id)
+        
+            friendsCount = user.friendsCount ?? users.count
+            friendAvatarURLs = users
+                .compactMap { $0.avatarURL }
+                .prefix(3)
+                .map { $0 }
+            
+        } catch {
+            AppLogger.error("loadFriends error: \(error)")
+            friendsCount = 0
+            friendAvatarURLs = []
+        }
+    }
+    
+    
+    
+    // Данные для капсулы друзья, вызывается из хендлера
+    func friendsSummary() -> (count: Int, avatars: [URL]) {
+        (friendsCount, friendAvatarURLs)
+    }
+
 
     /// Полная перезагрузка профиля.
     /// header и посты грузятся параллельно, фото — только на вкладке .photos.
@@ -149,13 +203,14 @@ final class ProfileViewModel {
         }
 
         async let headerTask: Void = headerVM.reloadProfile()
-        async let postsTask: Void  = postsVM.loadPosts()
+        async let postsTask: Void  = postsVM.loadPosts(for: selectedTab)
+        async let friendsTask: Void = loadFriends()
 
         if selectedTab == .photos {
-            async let photosTask: Void = photosVM.load()
-            _ = await (headerTask, postsTask, photosTask)
+            async let photosTask: Void = photosVM.load(force: isPullToRefresh)
+            _ = await (headerTask, postsTask, friendsTask, photosTask)
         } else {
-            _ = await (headerTask, postsTask)
+            _ = await (headerTask, postsTask, friendsTask)
         }
 
         onStoryFlagChanged?(headerVM.hasStory)
@@ -174,8 +229,8 @@ final class ProfileViewModel {
     }
 
     /// Принудительно перезагружает только фото/альбомы.
-    func reloadPhotos() async {
-        await photosVM.load()
+    func reloadPhotos(force: Bool = false) async {
+        await photosVM.load(force: force)
     }
 
     /// Переключение вкладки (main/posts/photos/music).
@@ -191,6 +246,9 @@ final class ProfileViewModel {
             onTabChanged?()
             await photosVM.load()
         } else {
+            if tab == .main || tab == .posts {
+                await postsVM.loadPosts(for: tab)
+            }
             onTabChanged?()
         }
     }
@@ -355,18 +413,14 @@ final class ProfileViewModel {
     func insert(post: MyPost, at item: Int) {
         postsVM.insert(post, at: item)
     }
-
-    func favoritesDidChange() async {
-        await postsVM.favoritesDidChange()
+    
+    func addPostToWall(at item: Int) async {
+        await postsVM.addPostToWall(at: item)
     }
-
-    func setFavorite(_ isFavorite: Bool, forPostId id: String) {
-        postsVM.setFavorite(isFavorite, forPostId: id)
-    }
-
-    func applyUpdatedPostFromFavorites(_ post: MyPost) {
-        postsVM.applyUpdatedPostFromFavorites(post)
-    }
+    
+    func publish(post: MyPost) async {
+       await postsVM.publish(post)
+   }
 
     // MARK: - Аватар/обложка (мост к headerVM)
 

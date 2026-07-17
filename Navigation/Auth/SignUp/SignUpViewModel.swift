@@ -5,6 +5,7 @@ struct SignUpData {
     let password: String
     let firstName: String
     let lastName: String
+    let gender: Gender
     let city: String
     let phone: String
     let birthDate: Date
@@ -22,6 +23,7 @@ final class SignUpViewModel {
     var repeatPassword: String = ""
     var firstName: String = ""
     var lastName: String = ""
+    var gender: Gender = .male
     /// Телефон в формате +7XXXXXXXXXX, заполняется из маски в контроллере.
     var phone: String = ""
     var city: String = ""
@@ -79,6 +81,7 @@ final class SignUpViewModel {
                 password: password,
                 firstName: firstName,
                 lastName: lastName,
+                gender: Gender(rawValue: gender.rawValue) ?? .male,
                 city: city,
                 phone: phone,
                 birthDate: birthDate
