@@ -1,19 +1,12 @@
-//
-//  AppDelegate.swift
-//  Navigation
-//
-//  Created by g1nz4 on 15.11.2025.
-//
-
 import UIKit
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-
+    var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+
         return true
     }
 

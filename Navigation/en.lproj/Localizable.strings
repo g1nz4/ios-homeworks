@@ -1,0 +1,95 @@
+"alert_default_title" = "Error";
+
+
+"login_button_title" = "Sign in";
+"signup_button_title" = "Sign up";
+
+
+"login_phone_button_title" = "Sign in with phone number";
+"login_password_placeholder" = "Password";
+"login_email_placeholder" = "Email";
+"login_form_description" = "Enter your email and password to sign in";
+"login_welcome_back" = "Welcome back";
+
+
+"phone_login_form_description" = "Enter your phone number to sign in";
+"phone_login_send_code_button_title" = "Request code";
+"enter_code_from_SMS" = "Enter the code from the SMS";
+
+
+"signup_all_fields_required" = "All fields are required";
+"signup_first_name_title" = "FIRST NAME";
+"signup_first_name_placeholder" = "Enter first name";
+"signup_last_name_title" = "LAST NAME";
+"signup_last_name_placeholder" = "Enter last name";
+"signup_birthdate_title" = "DATE OF BIRTH";
+"signup_birthdate_placeholder" = "dd.MM.yyyy";
+"signup_city_title" = "CITY";
+"signup_city_placeholder" = "City name";
+"signup_phone_title" = "PHONE NUMBER";
+"signup_email_title" = "EMAIL ADDRESS";
+"signup_email_placeholder" = "Enter email";
+"signup_password_title" = "PASSWORD";
+"signup_password_placeholder" = "At least 6 characters";
+"signup_repeat_password_title" = "REPEAT PASSWORD";
+"signup_repeat_password_placeholder" = "Enter password again";
+"signup_screen_title" = "Sign Up";
+
+
+"profile_title" = "Profile";
+"profile_logout_button" = "Log out";
+
+
+"menu_title" = "Menu";
+"language.russian" = "Russian";
+"language.english" = "English";
+"settings.notifications.title" = "Daily updates";
+"settings.notifications.footer.text" = "Notifications are disabled. To enable them, open the app settings and allow notifications.";
+"settings.permissions.camera.title" = "Camera access";
+"settings.permissions.photos.title" = "Photos access";
+"settings.permissions.footer.text" = "Camera and/or photos access is disabled. To change this, open the app settings and allow access.";
+"settings.openSettings.button" = "Open Settings";
+"settings.appearance.theme.title" = "Theme";
+"settings.language.row.title" = "Language";
+"settings.navigation.tabSwipe.title" = "Swipe between tabs";
+
+"search_header_view" = "Search...";
+"friends_title" = "Friends";
+
+"gender_male" = "Male";
+"gender_female" = "Female";
+"gender" = "GENDER";
+
+"error_phone_invalid" = "Invalid phone format.";
+"error_auth_wrong_credentials" = "Invalid email or password";
+"error_auth_generic" = "Authorization error. Try again";
+"error_otp_not_found" = "No code found. Request a new code.";
+"error_otp_invalid" = "Incorrect code. Check your SMS and try again.";
+"error_otp_expired" = "The code has expired. Request a new code.";
+"error_otp_date_format" = "Code processing error. Request a new code.";
+"error_profile_not_found" = "The user's profile was not found.";
+"error_server_generic" = "Server error. Try again later.";
+"error_network" = "There is no network connection. Check your internet connection and try again.";
+"error_decoding" = "Data processing error";
+"error_unknown" = "Unknown error. Please try again later.";
+"error_otp_no_verification_id" = "Couldn't get the confirmation code";
+"error_otp_wrong_code_retry" = "Wrong code, try again";
+"error_auth_email_already_exists" = "Email already registered";
+"error_auth_no_user_id" = "Cannot get user id.";
+"cache_save_error" = "Couldn't save data to cache.";
+"error_cache_generic" = "Data cache error.";
+"error_empty_credentials" = "Enter your username and password.";
+"error_invalid_credentials" = "Invalid username or password.";
+"error_weak_password" = "The password must contain at least 6 characters.";
+"error_invalid_email" = "Invalid email address.";
+"error_passwords_do_not_match" = "The passwords don't match.";
+"error_feed_loading_failed" = "Couldn't load the news feed.";
+"error_feed_update_failed" = "Failed to update the feed. Please try again later.";
+"error_profile_loading_failed" = "Failed to upload profile data.";
+"error_status_update_failed" = "The status could not be updated.";
+"error_file_not_found" = "File not found.";
+"error_error_av_audio_player" = "Ошибка AVAudioPlayer.";
+"error_favorites_saving_failed" = "Couldn't save to favorites.";
+"error_favorites_loading_failed" = "Error loading data from selected posts.";
+"network_offline" = "There is no Internet connection, the cache is empty";
+

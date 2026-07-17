@@ -1,0 +1,93 @@
+"alert_default_title" = "Ошибка";
+
+
+"login_button_title" = "Войти";
+"signup_button_title" = "Зарегистрироваться";
+
+
+"login_phone_button_title" = "Войти по номеру телефона";
+"login_password_placeholder" = "Пароль";
+"login_email_placeholder" = "Email";
+"login_form_description" = "Введите email и пароль для входа в приложение";
+"login_welcome_back" = "С возвращением";
+
+
+"phone_login_form_description" = "Введите номер телефона";
+"phone_login_send_code_button_title" = "Запросить код";
+"enter_code_from_SMS" = "Введите код из SMS";
+
+"signup_all_fields_required" = "Все поля обязательны для заполнения";
+"signup_first_name_title" = "ИМЯ";
+"signup_first_name_placeholder" = "Введите имя";
+"signup_last_name_title" = "ФАМИЛИЯ";
+"signup_last_name_placeholder" = "Введите фамилию";
+"signup_birthdate_title" = "ДАТА РОЖДЕНИЯ";
+"signup_birthdate_placeholder" = "дд.MM.гггг";
+"signup_city_title" = "ГОРОД";
+"signup_city_placeholder" = "Название города";
+"signup_phone_title" = "НОМЕР ТЕЛЕФОНА";
+"signup_email_title" = "АДРЕС ЭЛЕКТРОННОЙ ПОЧТЫ";
+"signup_email_placeholder" = "Введите email";
+"signup_password_title" = "ПАРОЛЬ";
+"signup_password_placeholder" = "Минимум 6 символов";
+"signup_repeat_password_title" = "ПОВТОРИТЕ ПАРОЛЬ";
+"signup_repeat_password_placeholder" = "Еще раз пароль";
+"signup_screen_title" = "Регистрация";
+
+
+"profile_title" = "Профиль";
+"profile_logout_button" = "Выйти";
+
+"menu_title" = "Меню";
+"language.russian" = "Русский";
+"language.english" = "Английский";
+"settings.notifications.title" = "Ежедневные обновления";
+"settings.notifications.footer.text" = "Уведомления отключены. Чтобы включить уведомления, откройте настройки приложения и разрешите уведомления.";
+"settings.permissions.camera.title" = "Доступ к камере";
+"settings.permissions.photos.title" = "Доступ к фото";
+"settings.permissions.footer.text" = "Доступ к камере и/или фото отключён. Чтобы изменить это, откройте настройки приложения и разрешите доступ.";
+"settings.openSettings.button" = "Открыть настройки";
+"settings.appearance.theme.title" = "Тема";
+"settings.language.row.title" = "Язык";
+"settings.navigation.tabSwipe.title" = "Свайп между вкладками";
+
+"search_header_view" = "Поиск...";
+"friends_title" = "Друзья";
+
+"gender_male" = "Мужской";
+"gender_female" = "Женский";
+"gender" = "ПОЛ";
+
+
+"error_phone_invalid" = "Некорректный формат номера телефона.";
+"error_auth_wrong_credentials" = "Неверный email или пароль";
+"error_auth_generic" = "Ошибка авторизации. Попробуйте ещё раз";
+"error_otp_not_found" = "Код не найден. Запросите новый код.";
+"error_otp_invalid" = "Неверный код. Попробуйте ещё раз.";
+"error_otp_expired" = "Срок действия кода истёк. Запросите новый код.";
+"error_otp_date_format" = "Ошибка обработки кода. Запросите новый код.";
+"error_profile_not_found" = "Профиль пользователя не найден.";
+"error_server_generic" = "Ошибка сервера. Попробуйте позже.";
+"error_network" = "Нет соединения с сетью. Проверьте интернет и попробуйте снова.";
+"error_decoding" = "Ошибка обработки данных.";
+"error_unknown" = "Неизвестная ошибка. Попробуйте позже.";
+"error_otp_no_verification_id" = "Не удалось получить код подтверждения.";
+"error_otp_wrong_code_retry" = "Неверный код, повторите попытку.";
+"error_auth_email_already_exists" = "Пользователь с таким email уже зарегистрирован.";
+"error_auth_no_user_id" = "Не удалось получить данные пользователя.";
+"cache_save_error" = "Не удалось сохранить данные в кеш.";
+"error_cache_generic" = "Ошибка кеша данных.";
+"error_empty_credentials" = "Введите логин и пароль.";
+"error_invalid_credentials" = "Неверный логин или пароль.";
+"error_weak_password" = "Пароль должен содержать минимум 6 символов.";
+"error_invalid_email" = "Некорректный email.";
+"error_passwords_do_not_match" = "Пароли не совпадают.";
+"error_feed_loading_failed" = "Не удалось загрузить ленту новостей.";
+"error_feed_update_failed" = "Не удалось обновить ленту. Попробуйте позже.";
+"error_profile_loading_failed" = "Не удалось загрузить данные профиля.";
+"error_status_update_failed" = "Не удалось обновить статус.";
+"error_file_not_found" = "Файл не найден.";
+"error_av_audio_player" = "Ошибка AVAudioPlayer.";
+"error_favorites_saving_failed" = "Не удалось сохранить в избранное.";
+"error_favorites_loading_failed" = "Ошибка загрузки данных избранных постов.";
+"error_network_offline" = "Нет интернет соединения.";
