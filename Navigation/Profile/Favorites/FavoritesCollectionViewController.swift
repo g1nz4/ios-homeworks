@@ -305,6 +305,7 @@ extension FavoritesCollectionViewController: PostCollectionViewCellDelegate {
         coordinator.showPhotoViewer(
             photos: [photo],
             startIndex: 0,
+            in: navigationController ?? coordinator.navController,
             delegate: coordinator,
             showAddToSaved: true,
             viewInPost: true

@@ -416,6 +416,7 @@ extension PhotosViewController {
             coordinator?.showPhotoViewer(
                 photos: viewModel.photos,
                 startIndex: start,
+                in: navigationController ?? coordinator?.navController ?? UINavigationController(),
                 delegate: self,
                 showAddToSaved: showAddToSaved
             )
@@ -433,7 +434,11 @@ extension PhotosViewController {
                 case .albums:
                     // Переход в режим просмотра фото альбома
                     let album = viewModel.albums[indexPath.item]
-                    coordinator?.showAlbumPhotos(album: album, delegate: self)
+                    guard let host = navigationController ?? coordinator?.navController else {
+                        AppLogger.error("Нет navigationController для показа альбома")
+                        return
+                    }
+                    coordinator?.showAlbumPhotos(album: album, in: host, delegate: self)
 
                 case .photos:
                     // Открываем полноэкранный просмотр фото
@@ -441,6 +446,7 @@ extension PhotosViewController {
                     coordinator?.showPhotoViewer(
                         photos: viewModel.photos,
                         startIndex: start,
+                        in: navigationController ?? coordinator?.navController ?? UINavigationController(),
                         delegate: self,
                         showAddToSaved: true
                     )

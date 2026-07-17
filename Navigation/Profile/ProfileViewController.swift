@@ -572,7 +572,12 @@ extension ProfileViewController: ProfileCollectionHandlerOutput {
     }
 
     func didSelectAlbum(_ album: PhotoAlbum) {
-        coordinator?.showAlbumPhotos(album: album, delegate: coordinator)
+        // текущий nav‑стек профиля
+        guard let host = navigationController ?? coordinator?.navController else {
+            AppLogger.error("Нет navigationController для показа альбома из профиля")
+            return
+        }
+        coordinator?.showAlbumPhotos(album: album, in: host, delegate: coordinator)
     }
 
     func didSelectPhoto(at index: Int, allPhotos: [Photo]) {
@@ -690,6 +695,7 @@ extension ProfileViewController: ProfileCollectionHandlerOutput {
             coordinator.showPhotoViewer(
                 photos: [photo],
                 startIndex: 0,
+                in: navigationController ?? coordinator.navController,
                 delegate: coordinator,
                 showAddToSaved: true,
                 viewInPost: true

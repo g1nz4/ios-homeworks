@@ -347,6 +347,7 @@ extension ProfileCoordinator {
     /// Открыть экран фотографий конкретного альбома: `album`- альбом, содержимое которого нужно показать, `delegate`- тот, кого уведомлять об изменениях.
     func showAlbumPhotos(
         album: PhotoAlbum,
+        in host: UINavigationController,
         delegate: PhotosViewControllerDelegate?
     ) {
         let vm = PhotosViewModel(
@@ -371,7 +372,7 @@ extension ProfileCoordinator {
         let vc = PhotosViewController(viewModel: vm)
         vc.coordinator = self
         vc.delegate = delegate // проброс изменений наверх
-        navController.pushViewController(vc, animated: true)
+        host.pushViewController(vc, animated: true)
     }
     
     /// Открыть просмотрщик фото из ProfileViewController (координатор сам выступает делегатом PhotoViewerViewController).
@@ -385,6 +386,7 @@ extension ProfileCoordinator {
     func showPhotoViewer(
         photos: [Photo],
         startIndex: Int,
+        in host: UINavigationController,
         delegate: PhotoViewerViewControllerDelegate,
         showAddToSaved: Bool = true,
         viewInPost: Bool = false
@@ -396,7 +398,7 @@ extension ProfileCoordinator {
             viewInPost: viewInPost
         )
         vc.delegate = delegate
-        navController.pushViewController(vc, animated: true)
+        host.pushViewController(vc, animated: true)
     }
 }
 
