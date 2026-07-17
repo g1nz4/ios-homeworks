@@ -95,13 +95,20 @@ final class MusicCollectionViewController: UICollectionViewController {
 
    
     private func bindViewModel() {
-        // Полное обновление данных, когда VM сообщает об изменениях модели
+        // Сохранить предыдущие коллбэки, чтобы не затирать подписки других экранов
+        let previousOnUpdate = viewModel.onUpdate
         viewModel.onUpdate = { [weak self] in
+            // Сначала дергать тех, кто подписался раньше
+            previousOnUpdate?()
+            // Потом обновлять текущий экран
             self?.reloadAll()
         }
 
+        let previousOnPlaybackUpdate = viewModel.onPlaybackUpdate
+        
         // Локальное обновление только видимых треков при изменении воспроизведения
         viewModel.onPlaybackUpdate = { [weak self] in
+            previousOnPlaybackUpdate?()
             self?.reloadVisibleTrackCells()
         }
     }
